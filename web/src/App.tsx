@@ -56,7 +56,11 @@ function RequireRole({ roles, children }: { roles: Role[]; children: ReactNode }
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }), [pathname]);
+  // Фігурні дужки обовʼязкові: у нових Chrome window.scrollTo() повертає Promise, і React сприйняв би його
+  // як функцію очищення ефекту («TypeError: … is not a function» при наступному переході).
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [pathname]);
   return null;
 }
 

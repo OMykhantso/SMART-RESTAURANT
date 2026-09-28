@@ -55,7 +55,9 @@ export function StaffLayout() {
     queryFn: () => api.get<{ reservations: { pending: number }; orders: { byStatus: Record<string, number> } }>('/analytics/today'),
     refetchInterval: 60_000,
   });
-  useEffect(() => setOpen(false), [location.pathname]);
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
 
   const isAdmin = user?.role === 'ADMIN';
   const work: NavItem[] = [

@@ -218,8 +218,12 @@ export function NewReservationModal({ open, onClose }: { open: boolean; onClose:
     queryFn: () => api.get<TablesAvailability>('/booking/tables', { startAt, guests }),
     enabled: open && Boolean(startAt),
   });
-  useEffect(() => setStartAt(''), [date, guests]);
-  useEffect(() => setTableId(tables.data?.recommendedTableId ?? null), [tables.data]);
+  useEffect(() => {
+    setStartAt('');
+  }, [date, guests]);
+  useEffect(() => {
+    setTableId(tables.data?.recommendedTableId ?? null);
+  }, [tables.data]);
   const days = useMemo(() => Array.from({ length: 14 }, (_, i) => addDays(isoDay(), i)), []);
 
   const create = useMutation({
