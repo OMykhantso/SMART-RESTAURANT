@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Smart Restaurant",
+    "slug": "smart-restaurant",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ua.smartrest.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Камера потрібна для сканування QR-коду на столику."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#08080b",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "ua.smartrest.app",
+      "permissions": [
+        "CAMERA"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-image",
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Камера потрібна для сканування QR-коду на столику.",
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-notifications"
+    ],
+    "scheme": "smartrest",
+    "backgroundColor": "#08080b",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#08080b"
+    }
+  }
+}
