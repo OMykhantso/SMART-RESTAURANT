@@ -36,7 +36,7 @@ export function DishCard({ dish, onOpen, reason }: { dish: Dish; onOpen?: () => 
           <button type="button" onClick={onOpen} className="text-left font-display text-[1.15rem] leading-snug text-cream transition-colors hover:text-gold-100">
             {dish.name}
           </button>
-          {dish.avgRating !== null && (
+          {dish.avgRating != null && (
             <span className="mt-1 flex shrink-0 items-center gap-1 text-xs text-gold-200">
               <Star className="size-3.5 fill-current" /> {dish.avgRating.toFixed(1)}
             </span>

@@ -30,12 +30,23 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
   }
 
   render() {
-    if (!this.state.error) return this.props.children;
+    const { error } = this.state;
+    if (!error) return this.props.children;
+    const chunk = isChunkError(error);
     return (
       <div className="grid min-h-dvh place-items-center bg-ink-950 px-6 text-center">
-        <div className="max-w-md">
-          <div className="font-display text-3xl text-cream">Сторінку оновлено</div>
-          <p className="mt-3 text-ink-300">Схоже, сайт щойно оновився або сталася помилка. Перезавантажте сторінку — усі ваші дані збережено.</p>
+        <div className="w-full max-w-xl">
+          <div className="font-display text-3xl text-cream">{chunk ? 'Сайт оновився' : 'Щось пішло не так'}</div>
+          <p className="mt-3 text-ink-300">
+            {chunk ? 'Завантажилась нова версія сайту — оновіть сторінку.' : 'На сторінці сталася помилка. Оновіть сторінку; якщо повториться — надішліть текст нижче розробнику.'}
+          </p>
+          <pre className="mt-5 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left font-mono text-xs text-rose-200">
+            {window.location.pathname}
+            {'\n'}
+            {error.name}: {error.message}
+            {'\n'}
+            {(error.stack ?? '').split('\n').slice(1, 6).join('\n')}
+          </pre>
           <button
             onClick={() => window.location.reload()}
             className="gold-gradient mx-auto mt-6 inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold text-ink-950"

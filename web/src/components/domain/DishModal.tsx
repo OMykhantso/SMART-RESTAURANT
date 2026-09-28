@@ -35,7 +35,7 @@ export function DishModal({ dishId, onClose, onOpenDish }: { dishId: number | nu
             </div>
             <div className="text-right">
               <div className="font-display text-3xl text-gold-100">{money(dish.price)}</div>
-              {dish.avgRating !== null && (
+              {dish.avgRating != null && (
                 <div className="mt-1 flex items-center justify-end gap-1 text-sm text-gold-200">
                   <Star className="size-4 fill-current" /> {dish.avgRating.toFixed(1)} <span className="text-ink-400">· {dish.reviewsCount} оцінок</span>
                 </div>

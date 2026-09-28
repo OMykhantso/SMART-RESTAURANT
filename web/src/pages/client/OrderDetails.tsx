@@ -65,7 +65,7 @@ export default function OrderDetails() {
             </motion.h1>
             <p className="mt-1 text-ink-300">{meta.hint}</p>
           </div>
-          {o.etaMinutes !== null && (
+          {o.etaMinutes != null && (
             <div className="glass flex items-center gap-3 rounded-2xl px-5 py-3">
               <Timer className="size-6 text-gold-300" />
               <div>

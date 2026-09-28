@@ -12,6 +12,25 @@ import { CartProvider } from './lib/cart';
 import { App } from './App';
 import { ErrorBoundary, reloadOnce } from './components/ErrorBoundary';
 
+// Розширення браузера та автоперекладач змінюють DOM (обгортають текст у <font> тощо). Тоді React при переході
+// між сторінками намагається прибрати вузол, якого вже немає на місці, і падає з NotFoundError (removeChild /
+// insertBefore). Робимо ці операції терпимими до таких змін — стандартний обхід для React-застосунків.
+if (typeof Node === 'function' && Node.prototype) {
+  const removeChild = Node.prototype.removeChild;
+  Node.prototype.removeChild = function <T extends Node>(this: Node, child: T): T {
+    if (child.parentNode !== this) {
+      child.parentNode?.removeChild(child);
+      return child;
+    }
+    return removeChild.call(this, child) as T;
+  };
+  const insertBefore = Node.prototype.insertBefore;
+  Node.prototype.insertBefore = function <T extends Node>(this: Node, node: T, ref: Node | null): T {
+    if (ref && ref.parentNode !== this) return this.appendChild(node) as T;
+    return insertBefore.call(this, node, ref) as T;
+  };
+}
+
 // Після перезбирання (docker compose up --build) старі файли сторінок зникають. Якщо відкрита вкладка
 // не може їх довантажити — перезавантажуємо сторінку (не частіше разу на 10 с). Див. також lazy() в App.tsx.
 window.addEventListener('vite:preloadError', () => reloadOnce());
