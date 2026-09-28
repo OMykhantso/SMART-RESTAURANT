@@ -90,6 +90,23 @@ export async function refresh(refreshToken: string, userAgent?: string) {
   return issueTokens(record.user, userAgent);
 }
 
+/**
+ * Окрема сесія для нової вкладки браузера: чинний refresh-токен НЕ споживається (на відміну від /refresh),
+ * а видається нова незалежна пара токенів. Так кожна вкладка має власну ротацію і вкладки не «крадуть»
+ * токени одна в одної (що інакше спрацьовувало б як REFRESH_REUSED).
+ */
+export async function fork(refreshToken: string, userAgent?: string) {
+  const record = await prisma.refreshToken.findUnique({
+    where: { tokenHash: sha256(refreshToken) },
+    include: { user: true },
+  });
+  if (!record || record.revokedAt || record.expiresAt < new Date()) {
+    throw unauthorized('Сесію не знайдено', 'REFRESH_INVALID');
+  }
+  if (!record.user.isActive) throw new AppError(403, 'ACCOUNT_DISABLED', 'Обліковий запис деактивовано');
+  return issueTokens(record.user, userAgent);
+}
+
 export async function logout(refreshToken: string) {
   await prisma.refreshToken.updateMany({
     where: { tokenHash: sha256(refreshToken), revokedAt: null },

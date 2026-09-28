@@ -43,7 +43,7 @@ test('повний цикл: бронювання → замовлення → �
   const code = (await page.locator('text=/^R-[A-Z0-9]{6}$/').first().textContent())!.trim();
 
   // 3. Працівник підтверджує → клієнт отримує real-time сповіщення
-  const token = await page.evaluate(() => localStorage.getItem('sr.access'));
+  const token = await page.evaluate(() => sessionStorage.getItem('sr.access'));
   const mine = await (await request.get('/api/reservations/my', { headers: { Authorization: `Bearer ${token}` } })).json();
   const reservation = mine.find((r: { code: string }) => r.code === code);
   await call(request, 'PATCH', `/api/reservations/${reservation.id}/status`, staff, { status: 'CONFIRMED' });
@@ -114,9 +114,40 @@ test('RBAC у UI: клієнт не потрапляє в панель перс�
   const { accessToken, refreshToken } = await res.json();
   await page.goto('/');
   await page.evaluate(([a, r]) => {
-    localStorage.setItem('sr.access', a);
-    localStorage.setItem('sr.refresh', r);
+    sessionStorage.setItem('sr.access', a);
+    sessionStorage.setItem('sr.refresh', r);
   }, [accessToken, refreshToken]);
   await page.goto('/staff');
   await expect(page).toHaveURL(/\/account$/);
+});
+
+test('кожна вкладка має власну сесію: клієнт і офіціант поруч без F5', async ({ context }) => {
+  const client = await context.newPage();
+  await client.goto('/login');
+  await client.getByRole('button', { name: /Клієнт/ }).first().click();
+  await expect(client).toHaveURL(/\/account$/);
+
+  // нова вкладка підхоплює останній вхід (окрема сесія через /auth/fork)
+  const staff = await context.newPage();
+  await staff.goto('/account');
+  await expect(staff.getByRole('heading', { name: /Вітаємо/ })).toBeVisible();
+
+  // у другій вкладці входимо офіціантом — перша вкладка лишається клієнтом без перезавантаження
+  await staff.goto('/login');
+  await staff.getByRole('button', { name: /Офіціант/ }).first().click();
+  await expect(staff).toHaveURL(/\/staff$/);
+
+  await client.getByRole('link', { name: 'Меню', exact: true }).first().click();
+  await client.locator('header a[href="/account"]').first().click();
+  await expect(client).toHaveURL(/\/account$/);
+  await expect(client.getByRole('heading', { name: /Вітаємо/ })).toBeVisible();
+
+  await staff.locator('aside a[href="/staff/reservations"]').first().click();
+  await expect(staff).toHaveURL(/\/staff\/reservations$/);
+
+  // F5 зберігає сесію саме цієї вкладки
+  await client.reload();
+  await expect(client).toHaveURL(/\/account$/);
+  await staff.reload();
+  await expect(staff).toHaveURL(/\/staff\/reservations$/);
 });

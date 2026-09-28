@@ -3,25 +3,66 @@ import type { ApiErrorBody, AuthResponse } from './types';
 
 const ACCESS_KEY = 'sr.access';
 const REFRESH_KEY = 'sr.refresh';
+/** Сесія, з якої нова вкладка може відкрити власну (див. bootstrapSession). */
+const HANDOFF_KEY = 'sr.handoff';
 
+function safe<T>(fn: () => T, fallback: T): T {
+  try {
+    return fn();
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Кожна вкладка має ВЛАСНУ сесію (sessionStorage): у сусідніх вкладках можна одночасно працювати
+ * клієнтом, офіціантом і кухарем, і вони не перезаписують токени одна одної. localStorage зберігає
+ * лише refresh-токен останнього входу — з нього нова вкладка відкриває незалежну сесію (/auth/fork).
+ */
 export const tokens = {
   get access() {
-    return localStorage.getItem(ACCESS_KEY);
+    return safe(() => sessionStorage.getItem(ACCESS_KEY), null);
   },
   get refresh() {
-    return localStorage.getItem(REFRESH_KEY);
+    return safe(() => sessionStorage.getItem(REFRESH_KEY), null);
   },
   set(access: string, refresh: string) {
-    localStorage.setItem(ACCESS_KEY, access);
-    localStorage.setItem(REFRESH_KEY, refresh);
+    safe(() => {
+      sessionStorage.setItem(ACCESS_KEY, access);
+      sessionStorage.setItem(REFRESH_KEY, refresh);
+      localStorage.setItem(HANDOFF_KEY, refresh);
+    }, undefined);
     window.dispatchEvent(new Event('sr:tokens'));
   },
   clear() {
-    localStorage.removeItem(ACCESS_KEY);
-    localStorage.removeItem(REFRESH_KEY);
+    safe(() => {
+      const mine = sessionStorage.getItem(REFRESH_KEY);
+      sessionStorage.removeItem(ACCESS_KEY);
+      sessionStorage.removeItem(REFRESH_KEY);
+      if (mine && localStorage.getItem(HANDOFF_KEY) === mine) localStorage.removeItem(HANDOFF_KEY);
+    }, undefined);
     window.dispatchEvent(new Event('sr:tokens'));
   },
 };
+
+/** Нова вкладка без власної сесії відкриває незалежну сесію на основі останнього входу в цьому браузері. */
+export async function bootstrapSession(): Promise<void> {
+  if (tokens.refresh) return;
+  const handoff = safe(() => {
+    // міграція зі старої схеми, де токени зберігались у спільному localStorage
+    const legacy = localStorage.getItem(REFRESH_KEY);
+    localStorage.removeItem(ACCESS_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+    return localStorage.getItem(HANDOFF_KEY) ?? legacy;
+  }, null);
+  if (!handoff) return;
+  try {
+    const res = await axios.post<AuthResponse>('/api/auth/fork', { refreshToken: handoff });
+    tokens.set(res.data.accessToken, res.data.refreshToken);
+  } catch {
+    safe(() => localStorage.getItem(HANDOFF_KEY) === handoff && localStorage.removeItem(HANDOFF_KEY), undefined);
+  }
+}
 
 export const http = axios.create({ baseURL: '/api', timeout: 20000 });
 

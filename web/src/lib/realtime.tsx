@@ -67,7 +67,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       }
     });
     s.on('reservation:created', (p: { code: string }) => {
-      invalidate('reservations', 'tables-live', 'today', 'availability', 'my-reservations', 'current-visit');
+      invalidate('reservations', 'tables-live', 'today', 'availability', 'booking-tables', 'my-reservations', 'current-visit');
       const role = roleRef.current;
       if (role === 'STAFF' || role === 'ADMIN') {
         toast(`Нове бронювання ${p.code}`);
@@ -75,14 +75,14 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       }
     });
     s.on('reservation:updated', (p: { code: string; status: ReservationStatus }) => {
-      invalidate('reservations', 'reservation', 'tables-live', 'today', 'availability', 'my-reservations', 'current-visit');
+      invalidate('reservations', 'reservation', 'tables-live', 'today', 'availability', 'booking-tables', 'my-reservations', 'current-visit');
       if (roleRef.current === 'CLIENT') {
         const meta = RESERVATION_STATUS[p.status];
         if (p.status === 'CONFIRMED') toast.success(`Бронювання ${p.code} підтверджено! 🎉`);
         else toast(`Бронювання ${p.code}: ${meta.label}`);
       }
     });
-    s.on('tables:changed', () => invalidate('tables-live', 'today'));
+    s.on('tables:changed', () => invalidate('tables-live', 'tables-admin', 'booking-tables', 'today'));
     s.on('menu:changed', () => invalidate('dishes', 'dish', 'categories', 'recommendations'));
     s.on('payment:succeeded', (p: { orderId: number; amount: number; tableNumber: number }) => {
       invalidate('orders', 'order', 'payments', 'today', 'analytics', 'tables-live', 'my-orders', 'reservation', 'current-visit');

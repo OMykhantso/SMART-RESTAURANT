@@ -55,6 +55,21 @@ describe('Автентифікація', () => {
     expect(afterReuse.status).toBe(401);
   });
 
+  it('окрема сесія для нової вкладки: fork не споживає вихідний refresh-токен (TC-05a)', async () => {
+    const first = await api().post('/api/auth/login').send({ email: fx.users.client.email, password: fx.users.client.password });
+    const r1 = first.body.refreshToken;
+    const forked = await api().post('/api/auth/fork').send({ refreshToken: r1 });
+    expect(forked.status).toBe(200);
+    expect(forked.body.user.email).toBe(fx.users.client.email);
+    // обидві вкладки ротують свої токени незалежно — без REFRESH_REUSED
+    expect((await api().post('/api/auth/refresh').send({ refreshToken: r1 })).status).toBe(200);
+    expect((await api().post('/api/auth/refresh').send({ refreshToken: forked.body.refreshToken })).status).toBe(200);
+    // відкликаний (вже використаний) токен не можна «розмножити»
+    const stale = await api().post('/api/auth/fork').send({ refreshToken: r1 });
+    expect(stale.status).toBe(401);
+    expect(stale.body.error.code).toBe('REFRESH_INVALID');
+  });
+
   it('деактивований користувач втрачає доступ навіть з валідним токеном (TC-06)', async () => {
     const token = await login(fx.users.client2);
     expect((await api().get('/api/auth/me').set(bearer(token))).status).toBe(200);

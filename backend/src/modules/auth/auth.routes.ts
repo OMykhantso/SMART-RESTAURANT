@@ -56,6 +56,17 @@ define({
 
 define({
   method: 'post',
+  path: '/fork',
+  summary: 'Нова незалежна сесія для іншої вкладки (refresh-токен не споживається)',
+  tags: ['Auth'],
+  body: refreshSchema,
+  middleware: [authLimiter],
+  responses: { 200: 'Нова пара токенів', 401: 'Сесію не знайдено або відкликано' },
+  handler: ({ body, req }) => auth.fork(body.refreshToken, req.headers['user-agent']),
+});
+
+define({
+  method: 'post',
   path: '/logout',
   summary: 'Вихід — відкликання refresh-токена',
   tags: ['Auth'],

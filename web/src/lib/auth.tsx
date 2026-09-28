@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { api, tokens } from './api';
+import { api, bootstrapSession, tokens } from './api';
 import type { AuthResponse, Role, User } from './types';
 
 interface AuthState {
@@ -33,7 +33,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refreshUser().finally(() => setLoading(false));
+    bootstrapSession()
+      .then(refreshUser)
+      .finally(() => setLoading(false));
     const onTokens = () => {
       if (!tokens.access) setUser(null);
     };
