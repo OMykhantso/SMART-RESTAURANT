@@ -10,16 +10,11 @@ import { AuthProvider } from './lib/auth';
 import { RealtimeProvider } from './lib/realtime';
 import { CartProvider } from './lib/cart';
 import { App } from './App';
+import { ErrorBoundary, reloadOnce } from './components/ErrorBoundary';
 
-// Після перезбирання (docker compose up --build) старі файли сторінок зникають: відкрита вкладка не може
-// їх довантажити й «зависає» до F5. Перезавантажуємо сторінку автоматично (не частіше разу на 10 с).
-window.addEventListener('vite:preloadError', (event) => {
-  const last = Number(sessionStorage.getItem('sr.reloadedAt') ?? 0);
-  if (Date.now() - last < 10_000) return;
-  event.preventDefault();
-  sessionStorage.setItem('sr.reloadedAt', String(Date.now()));
-  window.location.reload();
-});
+// Після перезбирання (docker compose up --build) старі файли сторінок зникають. Якщо відкрита вкладка
+// не може їх довантажити — перезавантажуємо сторінку (не частіше разу на 10 с). Див. також lazy() в App.tsx.
+window.addEventListener('vite:preloadError', () => reloadOnce());
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +33,9 @@ createRoot(document.getElementById('root')!).render(
         <AuthProvider>
           <RealtimeProvider>
             <CartProvider>
-              <App />
+              <ErrorBoundary>
+                <App />
+              </ErrorBoundary>
               <Toaster
                 theme="dark"
                 position="top-right"

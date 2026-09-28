@@ -4,18 +4,14 @@ import { PublicLayout } from './components/layout/PublicLayout';
 import { StaffLayout } from './components/layout/StaffLayout';
 import { Spinner } from './components/ui/primitives';
 import { homeFor, useAuth } from './lib/auth';
+import { reloadOnce } from './components/ErrorBoundary';
 import type { Role } from './lib/types';
 
 /** lazy() з автоматичним перезавантаженням, якщо файл сторінки вже замінено новою збіркою. */
 function lazy<T extends ComponentType<object>>(load: () => Promise<{ default: T }>) {
   return reactLazy(() =>
     load().catch((err) => {
-      const last = Number(sessionStorage.getItem('sr.reloadedAt') ?? 0);
-      if (Date.now() - last > 10_000) {
-        sessionStorage.setItem('sr.reloadedAt', String(Date.now()));
-        window.location.reload();
-        return new Promise<{ default: T }>(() => undefined);
-      }
+      if (reloadOnce()) return new Promise<{ default: T }>(() => undefined);
       throw err;
     }),
   );
