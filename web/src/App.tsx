@@ -1,10 +1,25 @@
-import { lazy, Suspense, useEffect, type ReactNode } from 'react';
+import { lazy as reactLazy, Suspense, useEffect, type ComponentType, type ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { StaffLayout } from './components/layout/StaffLayout';
 import { Spinner } from './components/ui/primitives';
 import { homeFor, useAuth } from './lib/auth';
 import type { Role } from './lib/types';
+
+/** lazy() з автоматичним перезавантаженням, якщо файл сторінки вже замінено новою збіркою. */
+function lazy<T extends ComponentType<object>>(load: () => Promise<{ default: T }>) {
+  return reactLazy(() =>
+    load().catch((err) => {
+      const last = Number(sessionStorage.getItem('sr.reloadedAt') ?? 0);
+      if (Date.now() - last > 10_000) {
+        sessionStorage.setItem('sr.reloadedAt', String(Date.now()));
+        window.location.reload();
+        return new Promise<{ default: T }>(() => undefined);
+      }
+      throw err;
+    }),
+  );
+}
 
 const Landing = lazy(() => import('./pages/public/Landing'));
 const MenuPage = lazy(() => import('./pages/public/Menu'));
