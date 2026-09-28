@@ -1,0 +1,23 @@
+{
+  "name": "smart-restaurant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SMART RESTAURANT — бронювання, QR check-in, замовлення, кухня та оплата: Web + Mobile + Backend/API",
+  "scripts": {
+    "install:all": "npm --prefix backend ci && npm --prefix web ci && npm --prefix mobile ci && npm install",
+    "db:setup": "npm --prefix backend run setup",
+    "db:seed": "npm --prefix backend run db:seed",
+    "dev": "concurrently -k -n api,web -c yellow,cyan \"npm --prefix backend run dev\" \"npm --prefix web run dev\"",
+    "dev:api": "npm --prefix backend run dev",
+    "dev:web": "npm --prefix web run dev",
+    "mobile": "npm --prefix mobile start",
+    "test": "npm --prefix backend test",
+    "typecheck": "npm --prefix backend run typecheck && npm --prefix web run typecheck && npm --prefix mobile run typecheck",
+    "docs:api": "npm --prefix backend run docs:api",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

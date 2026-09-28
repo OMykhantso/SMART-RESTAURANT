@@ -16,7 +16,8 @@
     "db:studio": "prisma studio",
     "setup": "prisma migrate deploy && tsx prisma/seed.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "docs:api": "tsx scripts/generate-api-docs.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

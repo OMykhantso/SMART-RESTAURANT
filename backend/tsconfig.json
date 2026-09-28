@@ -15,5 +15,5 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["node"]
   },
-  "include": ["src", "prisma", "tests", "vitest.config.mts"]
+  "include": ["src", "prisma", "tests", "scripts", "vitest.config.mts"]
 }
