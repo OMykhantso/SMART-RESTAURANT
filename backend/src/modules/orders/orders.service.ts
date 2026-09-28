@@ -10,7 +10,7 @@ import { logStatus } from '../reservations/reservations.service';
 
 export const orderInclude = {
   items: {
-    include: { dish: { select: { id: true, name: true, imageUrl: true, prepTimeMin: true, category: { select: { name: true, emoji: true } } } } },
+    include: { dish: { select: { id: true, name: true, imageUrl: true, prepTimeMin: true, category: { select: { name: true, emoji: true, slug: true } } } } },
     orderBy: { id: 'asc' },
   },
   table: { select: { id: true, number: true, zone: true } },

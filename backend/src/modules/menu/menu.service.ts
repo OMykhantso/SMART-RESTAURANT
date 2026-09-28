@@ -5,6 +5,8 @@ export interface DishStats {
   avgRating: number | null;
   reviewsCount: number;
   ordersCount: number;
+  /** Входить у топ-6 за продажами за 30 днів */
+  isHit: boolean;
 }
 
 /** Агреговані показники страв: середній рейтинг, к-сть відгуків, популярність (к-сть порцій за 30 днів). */
@@ -27,7 +29,7 @@ export async function dishStats(): Promise<Map<number, DishStats>> {
   const get = (id: number) => {
     let s = map.get(id);
     if (!s) {
-      s = { avgRating: null, reviewsCount: 0, ordersCount: 0 };
+      s = { avgRating: null, reviewsCount: 0, ordersCount: 0, isHit: false };
       map.set(id, s);
     }
     return s;
@@ -39,6 +41,8 @@ export async function dishStats(): Promise<Map<number, DishStats>> {
     s.reviewsCount = r._count._all;
   }
   for (const r of sales) get(r.dishId).ordersCount = r._sum.quantity ?? 0;
+  const threshold = [...map.values()].map((s) => s.ordersCount).sort((a, b) => b - a)[5] ?? 0;
+  for (const s of map.values()) s.isHit = s.ordersCount > 0 && s.ordersCount >= threshold;
   return map;
 }
 
@@ -66,6 +70,7 @@ export function serializeDish(dish: Dish & { category?: Category | null }, stats
     avgRating: stats?.avgRating ?? null,
     reviewsCount: stats?.reviewsCount ?? 0,
     ordersCount: stats?.ordersCount ?? 0,
+    isHit: stats?.isHit ?? false,
   };
 }
 

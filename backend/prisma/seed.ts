@@ -197,11 +197,14 @@ async function main() {
   let ordersCount = 0;
   let reviewsCount = 0;
 
-  for (let offset = HISTORY_DAYS; offset >= 1; offset--) {
+  const seedNow = DateTime.now().setZone(TZ);
+  // offset 0 — сьогодні: лише візити, що вже завершились (щоб дашборд мав виручку за день)
+  for (let offset = HISTORY_DAYS; offset >= 0; offset--) {
     const day = today.minus({ days: offset });
     const { open, close } = openingWindow(day);
     const weekend = day.weekday === 5 || day.weekday === 6;
     const target = weekend ? randInt(20, 28) : day.weekday === 7 ? randInt(14, 20) : randInt(10, 17);
+    const isToday = offset === 0;
     const busy: BusyInterval[] = [];
 
     for (let v = 0; v < target; v++) {
@@ -216,6 +219,7 @@ async function main() {
       const duration = restaurant.durationForParty(guests);
       const end = start.plus({ minutes: duration });
       if (start < open || end > close) continue;
+      if (isToday && end > seedNow.minus({ minutes: 30 })) continue;
 
       const ranked = rankTables(tables, busy, guests, start.toJSDate(), end.toJSDate(), open.toJSDate(), close.toJSDate(), {
         bufferMin: restaurant.bufferMin,
@@ -224,14 +228,14 @@ async function main() {
       if (!ranked.length) continue;
       const table = ranked[0].table;
 
-      const status = weighted<ReservationStatus>([['COMPLETED', 85], ['NO_SHOW', 6], ['CANCELLED', 9]]);
+      const status = isToday ? 'COMPLETED' : weighted<ReservationStatus>([['COMPLETED', 85], ['NO_SHOW', 6], ['CANCELLED', 9]]);
       const source = weighted<ReservationSource>([['APP', 45], ['WEB', 22], ['STAFF', 21], ['WALK_IN', 12]]);
       const hasAccount = source === 'APP' || source === 'WEB' || (source === 'WALK_IN' && chance(0.4));
       const client = hasAccount ? (chance(0.07) ? demoClient : chance(0.05) ? maria : pick(allClients)) : null;
       const waiter = pick(waiters);
       const createdAt = start.minus({ hours: source === 'WALK_IN' ? 0 : randInt(2, 96) });
-      const checkedIn = status === 'COMPLETED' ? start.plus({ minutes: randInt(-10, 12) }) : null;
-      const completedAt = checkedIn ? checkedIn.plus({ minutes: duration - randInt(0, 35) }) : null;
+      const checkedIn = status === 'COMPLETED' ? start.plus({ minutes: randInt(-10, isToday ? 0 : 12) }) : null;
+      const completedAt = checkedIn ? checkedIn.plus({ minutes: duration - randInt(isToday ? 10 : 0, 35) }) : null;
 
       busy.push({ reservationId: -v - 1, tableId: table.id, startAt: start.toJSDate(), endAt: end.toJSDate() });
       const reservation = await prisma.reservation.create({
