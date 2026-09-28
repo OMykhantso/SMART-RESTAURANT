@@ -9,6 +9,20 @@ export type TabParamList = {
   Profile: undefined;
 };
 
+export type StaffTabParamList = {
+  Shift: undefined;
+  Floor: undefined;
+  StaffScanTab: undefined;
+  StaffReservations: undefined;
+  StaffOrders: undefined;
+};
+
+export type KitchenTabParamList = {
+  KitchenBoard: undefined;
+  StopListTab: undefined;
+  KitchenProfile: undefined;
+};
+
 export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
@@ -22,6 +36,15 @@ export type RootStackParamList = {
   Review: { orderId: number };
   Dish: { id: number };
   Scan: undefined;
+  // робочі ролі
+  StaffTabs: NavigatorScreenParams<StaffTabParamList> | undefined;
+  KitchenTabs: NavigatorScreenParams<KitchenTabParamList> | undefined;
+  StaffScan: undefined;
+  StaffProfile: undefined;
+  KitchenView: undefined;
+  StopList: undefined;
+  Analytics: undefined;
+  Users: undefined;
 };
 
 export type ScreenProps<K extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, K>;

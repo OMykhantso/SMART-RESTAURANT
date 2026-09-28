@@ -65,6 +65,13 @@ export function WelcomeScreen({ navigation }: ScreenProps<'Welcome'>) {
   );
 }
 
+const DEMO = [
+  { label: 'Гість', email: 'client@smartrest.ua', password: 'Client123!' },
+  { label: 'Офіціант', email: 'staff@smartrest.ua', password: 'Staff123!' },
+  { label: 'Кухар', email: 'kitchen@smartrest.ua', password: 'Kitchen123!' },
+  { label: 'Адмін', email: 'admin@smartrest.ua', password: 'Admin123!' },
+];
+
 export function LoginScreen() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -94,17 +101,22 @@ export function LoginScreen() {
       <Button title="Увійти" loading={loading} onPress={() => submit()} />
       <View style={styles.demo}>
         <Caption style={{ textAlign: 'center' }}>Демо-доступ для захисту</Caption>
-        <Button
-          title="Увійти як демо-клієнт"
-          variant="outline"
-          size="md"
-          style={{ marginTop: 10 }}
-          onPress={() => {
-            setEmail('client@smartrest.ua');
-            setPassword('Client123!');
-            submit('client@smartrest.ua', 'Client123!');
-          }}
-        />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+          {DEMO.map((d) => (
+            <Button
+              key={d.email}
+              title={d.label}
+              variant="outline"
+              size="sm"
+              style={{ flexGrow: 1, flexBasis: '46%' }}
+              onPress={() => {
+                setEmail(d.email);
+                setPassword(d.password);
+                submit(d.email, d.password);
+              }}
+            />
+          ))}
+        </View>
       </View>
     </AuthLayout>
   );

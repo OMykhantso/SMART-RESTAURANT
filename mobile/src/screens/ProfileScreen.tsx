@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, LogOut, Receipt, Server, UserRound, Wifi, WifiOff } from 'lucide-react-native';
-import { Button, Caption, Card, Eyebrow, Field, Screen, Title } from '../components/ui';
+import { ChevronLeft, ChevronRight, LogOut, Receipt, Server, UserRound, Wifi, WifiOff } from 'lucide-react-native';
+import { Badge, Button, Caption, Card, Eyebrow, Field, IconButton, Screen, Title } from '../components/ui';
+import { ROLE_LABEL } from '../lib/staff';
 import { colors, fonts } from '../theme';
 import { api } from '../api/client';
 import { apiConfig } from '../config';
@@ -11,16 +12,18 @@ import { useRealtime } from '../lib/realtime';
 import { useMyOrders, useMyReservations } from '../lib/queries';
 import { useToast } from '../lib/toast';
 import { money } from '../lib/format';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 export function ProfileScreen() {
   const { user, logout, reload } = useAuth();
   const { connected } = useRealtime();
   const nav = useNavigation();
+  const route = useRoute();
   const toast = useToast();
   const qc = useQueryClient();
-  const orders = useMyOrders();
-  const reservations = useMyReservations();
+  const isClient = user?.role === 'CLIENT';
+  const orders = useMyOrders(isClient);
+  const reservations = useMyReservations(isClient);
   const [name, setName] = useState(user?.name ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [server, setServer] = useState(apiConfig.baseUrl);
@@ -38,6 +41,13 @@ export function ProfileScreen() {
 
   return (
     <Screen>
+      {route.name === 'StaffProfile' && (
+        <View style={{ marginBottom: 14 }}>
+          <IconButton label="Назад" onPress={() => nav.goBack()}>
+            <ChevronLeft color={colors.text} size={22} />
+          </IconButton>
+        </View>
+      )}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <View style={styles.avatar}>
           <Text style={{ fontFamily: fonts.display, fontSize: 24, color: colors.goldLight }}>
@@ -51,9 +61,16 @@ export function ProfileScreen() {
         <View style={{ flex: 1 }}>
           <Title style={{ fontSize: 26 }}>{user?.name}</Title>
           <Caption>{user?.email}</Caption>
+          {!isClient && user && (
+            <View style={{ flexDirection: 'row', marginTop: 6 }}>
+              <Badge tone={user.role === 'ADMIN' ? 'gold' : user.role === 'KITCHEN' ? 'orange' : 'info'}>{ROLE_LABEL[user.role]}</Badge>
+            </View>
+          )}
         </View>
       </View>
 
+      {isClient && (
+      <>
       <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
         <Stat label="Візитів" value={String(visits)} />
         <Stat label="Замовлень" value={String(orders.data?.length ?? 0)} />
@@ -65,6 +82,8 @@ export function ProfileScreen() {
         <Text style={styles.linkText}>Історія замовлень</Text>
         <ChevronRight size={18} color={colors.faint} />
       </Pressable>
+      </>
+      )}
 
       <Eyebrow style={{ marginTop: 26, marginBottom: 12 }}>Особисті дані</Eyebrow>
       <Card>

@@ -22,7 +22,7 @@
 | 409 | Конфлікт бізнес-правил (`INVALID_TRANSITION`, `TABLE_ALREADY_BOOKED`, `NOT_CHECKED_IN`, `ALREADY_PAID`…) |
 | 422 | Дані коректні синтаксично, але порушують правило (`OUTSIDE_OPENING_HOURS`, `CARD_INVALID`…) |
 
-## Endpoints (58)
+## Endpoints (59)
 
 ### Auth
 
@@ -31,6 +31,7 @@
 | `POST` | `/api/auth/register` | публічний | Реєстрація нового клієнта → **201** |
 | `POST` | `/api/auth/login` | публічний | Вхід (email + пароль) → access + refresh токени |
 | `POST` | `/api/auth/refresh` | публічний | Оновлення пари токенів (ротація refresh-токена) |
+| `POST` | `/api/auth/fork` | публічний | Нова незалежна сесія для іншої вкладки (refresh-токен не споживається) |
 | `POST` | `/api/auth/logout` | публічний | Вихід — відкликання refresh-токена |
 | `GET` | `/api/auth/me` | будь-який автентифікований | Поточний користувач |
 | `PATCH` | `/api/auth/me` | будь-який автентифікований | Оновлення профілю (імʼя, телефон) |

@@ -5,9 +5,9 @@
 | Роль | Код | Клієнт системи | Тип |
 |---|---|---|---|
 | Клієнт | `CLIENT` | Mobile (основний), Web | бізнес-роль |
-| Працівник залу (хостес / офіціант) | `STAFF` | Web | бізнес-роль |
-| Кухар | `KITCHEN` | Web (Kitchen display) | бізнес-роль |
-| Адміністратор | `ADMIN` | Web | технічна роль (+ усі права персоналу) |
+| Працівник залу (хостес / офіціант) | `STAFF` | Web, Mobile | бізнес-роль |
+| Кухар | `KITCHEN` | Web, Mobile (Kitchen display) | бізнес-роль |
+| Адміністратор | `ADMIN` | Web, Mobile (аналітика, користувачі) | технічна роль (+ усі права персоналу) |
 
 Ролі відрізняються операціями, правами, сценаріями й доступними даними; усі перевірки виконуються **на сервері** (RBAC у кожному endpoint + права переходів у скінченних автоматах).
 
@@ -93,18 +93,18 @@
 | Перегляд меню, пошук, фільтри | Client | ✓ | ✓ | ✓ | Dish, Category, Review | КТ2 |
 | Доступність слотів (booking engine) | Client, Staff | ✓ | ✓ | ✓ | Table, Reservation | КТ2/3 |
 | Створення бронювання | Client, Staff | ✓ | ✓ | ✓ | Reservation | КТ2/3 |
-| Підтвердження / відхилення | Staff | ✓ | – | ✓ | Reservation, StatusChange | КТ2 |
-| QR бронювання → check-in хостес | Staff | ✓ | QR показ | ✓ | Reservation | КТ3 |
+| Підтвердження / відхилення | Staff | ✓ | ✓ | ✓ | Reservation, StatusChange | КТ2 |
+| QR бронювання → check-in хостес | Staff | ✓ | ✓ (показ гостем, сканування камерою офіціанта) | ✓ | Reservation | КТ3 |
 | QR столика → check-in / walk-in | Client | – | ✓ (камера) | ✓ | Table, Reservation | КТ3 |
 | Замовлення за столиком | Client, Staff | ✓ | ✓ | ✓ | Order, OrderItem | КТ2/3 |
-| Kitchen display | Kitchen | ✓ | – | ✓ | Order, OrderItem | КТ3 |
+| Kitchen display | Kitchen | ✓ | ✓ | ✓ | Order, OrderItem | КТ3 |
 | Статус у реальному часі | усі | ✓ | ✓ | WS | Order, Reservation | КТ3 |
 | Оплата (sandbox) | Client, Staff | ✓ | ✓ | ✓ | Payment | КТ3 |
 | Відгуки | Client | ✓ | ✓ | ✓ | Review | КТ3 |
 | Рекомендації | Client | ✓ | ✓ | ✓ | OrderItem, Review | КТ3 |
-| План залу (live / редактор) | Staff / Admin | ✓ | – | ✓ | Table | КТ3 |
-| Меню, столики, користувачі | Admin | ✓ | – | ✓ | Dish, Table, User | КТ2 |
-| Аналітика | Admin, Staff | ✓ | – | ✓ | Payment, Order, Reservation | КТ3 |
+| План залу (live / редактор) | Staff / Admin | ✓ | live | ✓ | Table | КТ3 |
+| Меню, столики, користувачі | Admin | ✓ | користувачі, стоп-лист | ✓ | Dish, Table, User | КТ2 |
+| Аналітика | Admin, Staff | ✓ | ✓ (Admin) | ✓ | Payment, Order, Reservation | КТ3 |
 
 ## 2.5 CORE / ADVANCED / BONUS
 
@@ -112,4 +112,4 @@
 |---|---|
 | **CORE** | Web, Mobile, Backend/API, єдина БД PostgreSQL, 4 ролі, JWT + RBAC, меню, столи, бронювання, замовлення, статуси, Web/Mobile-інтеграція, автотести |
 | **ADVANCED** | Booking engine (слоти, best-fit, фрагментація, альтернативи, EXCLUDE), QR (бронювання, столики, walk-in, сканер у Web і Mobile), sandbox payment (Luhn, 3-D Secure, ідемпотентність, чайові, готівка) |
-| **BONUS** | Kitchen display, рекомендації (асоціативні правила + персоналізація + байєс), real-time (Socket.IO), прогноз ETA, аналітика, Docker, CI, Swagger, 76 автотестів, стоп-лист, журнал змін статусів |
+| **BONUS** | Kitchen display, рекомендації (асоціативні правила + персоналізація + байєс), real-time (Socket.IO), прогноз ETA, аналітика, Docker, CI, Swagger, 77 автотестів + E2E, стоп-лист, журнал змін статусів |

@@ -4,15 +4,41 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
-import { CalendarDays, House, ScanLine, UserRound, UtensilsCrossed } from 'lucide-react-native';
+import { CalendarDays, ChefHat, ClipboardList, House, LayoutGrid, Receipt, ScanLine, Soup, UserRound, UtensilsCrossed } from 'lucide-react-native';
 import { colors, fonts, goldGradient } from '../theme';
 import { haptic } from '../lib/notify';
 
-const ICONS = { Home: House, Menu: UtensilsCrossed, Visits: CalendarDays, Profile: UserRound } as const;
-const LABELS = { Home: 'Головна', Menu: 'Меню', Visits: 'Візити', Profile: 'Профіль' } as const;
+const ICONS = {
+  Home: House,
+  Menu: UtensilsCrossed,
+  Visits: CalendarDays,
+  Profile: UserRound,
+  Shift: House,
+  Floor: LayoutGrid,
+  StaffReservations: ClipboardList,
+  StaffOrders: Receipt,
+  KitchenBoard: ChefHat,
+  StopListTab: Soup,
+  KitchenProfile: UserRound,
+} as const;
+const LABELS: Record<keyof typeof ICONS, string> = {
+  Home: 'Головна',
+  Menu: 'Меню',
+  Visits: 'Візити',
+  Profile: 'Профіль',
+  Shift: 'Зміна',
+  Floor: 'Зал',
+  StaffReservations: 'Бронювання',
+  StaffOrders: 'Замовлення',
+  KitchenBoard: 'Кухня',
+  StopListTab: 'Стоп-лист',
+  KitchenProfile: 'Профіль',
+};
+/** Центральна кнопка сканера: гість сканує QR столика, офіціант — QR бронювання гостя. */
+const SCAN_TARGET = { ScanTab: 'Scan', StaffScanTab: 'StaffScan' } as const;
 
-/** Плаваючий «скляний» таб-бар з центральною кнопкою QR-сканера. */
-export function TabBar({ state, navigation }: BottomTabBarProps) {
+/** Плаваючий «скляний» таб-бар з центральною кнопкою QR-сканера (спільний для всіх ролей). */
+export function TabBar({ state, navigation, badges }: BottomTabBarProps & { badges?: Partial<Record<string, number>> }) {
   const insets = useSafeAreaInsets();
   const root = useNavigation();
   return (
@@ -21,14 +47,14 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
         {Platform.OS === 'ios' ? <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} /> : null}
         {state.routes.map((route, index) => {
           const focused = state.index === index;
-          if (route.name === 'ScanTab') {
+          if (route.name in SCAN_TARGET) {
             return (
               <Pressable
                 key={route.key}
-                accessibilityLabel="Сканувати QR столика"
+                accessibilityLabel={route.name === 'ScanTab' ? 'Сканувати QR столика' : 'Сканувати QR гостя'}
                 onPress={() => {
                   haptic.light();
-                  root.navigate('Scan');
+                  root.navigate(SCAN_TARGET[route.name as keyof typeof SCAN_TARGET]);
                 }}
                 style={styles.scanWrap}
               >
@@ -52,7 +78,14 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               style={styles.tab}
             >
               <Icon size={22} color={focused ? colors.gold : colors.faint} strokeWidth={focused ? 2.4 : 2} />
-              <Text style={[styles.label, { color: focused ? colors.goldLight : colors.faint }]}>{LABELS[route.name as keyof typeof LABELS]}</Text>
+              <Text style={[styles.label, { color: focused ? colors.goldLight : colors.faint }]} numberOfLines={1}>
+                {LABELS[route.name as keyof typeof LABELS]}
+              </Text>
+              {badges?.[route.name] ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{badges[route.name]! > 9 ? '9+' : badges[route.name]}</Text>
+                </View>
+              ) : null}
               {focused && <View style={styles.dot} />}
             </Pressable>
           );
@@ -81,6 +114,8 @@ const styles = StyleSheet.create({
   },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, height: '100%' },
   label: { fontFamily: fonts.semibold, fontSize: 10.5 },
+  badge: { position: 'absolute', top: 9, left: '56%', minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#141419' },
+  badgeText: { fontFamily: fonts.bold, fontSize: 9.5, color: '#fff' },
   dot: { position: 'absolute', bottom: 6, width: 4, height: 4, borderRadius: 2, backgroundColor: colors.gold },
   scanWrap: { flex: 1, alignItems: 'center', marginTop: -30 },
   scan: {

@@ -46,9 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handle = useCallback(
     async (res: AuthResponse) => {
-      if (res.user.role !== 'CLIENT') {
-        throw new Error('Мобільний застосунок призначений для гостей. Працівники користуються web-панеллю.');
-      }
       await session.set(res.accessToken, res.refreshToken);
       qc.clear();
       setUser(res.user);

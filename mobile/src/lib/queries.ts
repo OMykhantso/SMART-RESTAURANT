@@ -11,7 +11,7 @@ export const useCurrentVisit = () =>
     queryFn: () => api.get<{ active: Reservation | null; next: Reservation | null }>('/reservations/current'),
     refetchInterval: 60_000,
   });
-export const useMyReservations = () => useQuery({ queryKey: ['reservations', 'my'], queryFn: () => api.get<Reservation[]>('/reservations/my') });
-export const useMyOrders = () => useQuery({ queryKey: ['orders', 'my'], queryFn: () => api.get<Order[]>('/orders/my') });
+export const useMyReservations = (enabled = true) => useQuery({ queryKey: ['reservations', 'my'], queryFn: () => api.get<Reservation[]>('/reservations/my'), enabled });
+export const useMyOrders = (enabled = true) => useQuery({ queryKey: ['orders', 'my'], queryFn: () => api.get<Order[]>('/orders/my'), enabled });
 export const useRecommendations = (cart: number[], limit = 6) =>
   useQuery({ queryKey: ['recommendations', cart.join(','), limit], queryFn: () => api.get<Recommendation[]>('/recommendations', { cart: cart.join(','), limit }), staleTime: 20_000 });
