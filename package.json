@@ -12,7 +12,7 @@
     "dev:web": "npm --prefix web run dev",
     "mobile": "npm --prefix mobile start",
     "test": "npm --prefix backend test",
-    "typecheck": "npm --prefix backend run typecheck && npm --prefix web run typecheck && npm --prefix mobile run typecheck",
+    "typecheck": "npm --prefix backend run typecheck && npm --prefix web run typecheck && npm --prefix mobile run typecheck && tsc -p e2e",
     "docs:api": "npm --prefix backend run docs:api",
     "docker:up": "docker compose up -d --build",
     "docker:down": "docker compose down",
@@ -20,6 +20,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
-    "concurrently": "^9.2.1"
+    "@types/node": "^22.20.4",
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3"
   }
 }
