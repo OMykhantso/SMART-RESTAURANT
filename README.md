@@ -46,7 +46,7 @@
 | **Адміністратор** | меню (фото, архів) · **редактор плану залу drag-and-drop** · друк / перевипуск QR · користувачі та ролі · **аналітика** | — |
 
 **ADVANCED:** booking engine (слоти, best-fit, анти-фрагментація, альтернативи, EXCLUDE-обмеження PostgreSQL) · QR (бронювання, столики, walk-in) · sandbox-платежі (Luhn, 3-D Secure, ідемпотентність, чайові).
-**BONUS:** kitchen display · пояснювані рекомендації (асоціативні правила + персоналізація + байєсівський рейтинг) · real-time (Socket.IO) · прогноз ETA · аналітика · Swagger · Docker · CI · 76 автотестів.
+**BONUS:** kitchen display · пояснювані рекомендації (асоціативні правила + персоналізація + байєсівський рейтинг) · real-time (Socket.IO) · прогноз ETA · аналітика · Swagger · Docker · CI · 76 автотестів + E2E (Playwright).
 
 <table>
 <tr>
@@ -111,7 +111,7 @@ npx expo start
 1. Встановіть **Expo Go** на телефон (App Store / Google Play).
 2. Телефон і компʼютер — **в одній Wi-Fi мережі**. Відскануйте QR з терміналу.
 3. Адреса API визначається автоматично (IP компʼютера з Metro, порт 4000). Якщо потрібно — змініть у застосунку: **Профіль → Підключення**, або задайте `EXPO_PUBLIC_API_URL=http://192.168.x.x:4000`.
-4. Для check-in відскануйте QR столика: **Web → Адміністрування → Столики та QR → QR** (можна прямо з екрана монітора).
+4. Для check-in відскануйте QR столика: **Web → Адміністрування → Столики та QR → QR** (можна прямо з екрана монітора) або роздрукуйте настільні картки всіх столиків кнопкою **«Друк усіх QR»**.
 
 > Android-емулятор: API за адресою `http://10.0.2.2:4000` визначається автоматично. Web-превʼю мобільного: `npx expo start --web`.
 
@@ -170,8 +170,13 @@ flowchart LR
 ```bash
 cd backend && npm test        # 76 тестів: модульні + інтеграційні з PostgreSQL + WebSocket
 npm run typecheck             # TypeScript strict для backend, web, mobile
+
+# E2E у браузері (Playwright): сценарій захисту через UI
+npm install && npx playwright install chromium   # один раз
+npm run dev                                       # в окремому терміналі
+npm run e2e                                       # реєстрація → бронювання → check-in → замовлення → кухня → оплата 3-D Secure → відгук → завершення візиту
 ```
-Тести використовують окрему БД `smart_restaurant_test` (див. `backend/.env.test`). Сценарії та трасування вимог — [docs/09-testing.md](docs/09-testing.md). CI: `.github/workflows/ci.yml`.
+Тести API використовують окрему БД `smart_restaurant_test` (див. `backend/.env.test`). E2E працює з демо-БД і прибирає за собою (візит завершується); запускайте в робочі години ресторану (10:00–23:00 за Києвом), іншу адресу можна задати `E2E_BASE_URL=http://localhost:8080`. Сценарії та трасування вимог — [docs/09-testing.md](docs/09-testing.md). CI: `.github/workflows/ci.yml`.
 
 ## Документація курсової
 

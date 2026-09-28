@@ -15,9 +15,11 @@
     "typecheck": "npm --prefix backend run typecheck && npm --prefix web run typecheck && npm --prefix mobile run typecheck",
     "docs:api": "npm --prefix backend run docs:api",
     "docker:up": "docker compose up -d --build",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "concurrently": "^9.2.1"
   }
 }

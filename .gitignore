@@ -10,3 +10,4 @@ coverage
 web-build
 playwright-report
 test-results
+*.tsbuildinfo

@@ -8,9 +8,42 @@ import { Card, Field, Input, SectionTitle, Select, Skeleton, Switch } from '@/co
 import { Modal } from '@/components/ui/Modal';
 import { FloorPlan } from '@/components/domain/FloorPlan';
 import { LogoMark } from '@/components/domain/Logo';
-import { api, errorMessage } from '@/lib/api';
+import { api, errorMessage, http } from '@/lib/api';
 import { ZONES } from '@/lib/constants';
 import type { Table, TableShape, TableZone } from '@/lib/types';
+
+/** Друк QR-карток столиків: SVG генерує backend, стилі — інлайн, щоб коректно друкувалось у новому вікні. */
+async function printQrCards(tables: Table[]) {
+  const w = window.open('', '_blank', 'width=900,height=1000');
+  if (!w) {
+    toast.error('Дозвольте спливаючі вікна для друку');
+    return;
+  }
+  w.document.write('<p style="font-family:sans-serif">Генеруємо QR-коди…</p>');
+  try {
+    const cards = await Promise.all(
+      tables.map(async (t) => {
+        const res = await http.get<string>(`/tables/${t.id}/qr`, { params: { format: 'svg' }, responseType: 'text' });
+        return `<div class="card"><div class="brand">Smart Restaurant</div><div class="qr">${res.data}</div><div class="num">Столик №${t.number}</div><div class="hint">Відскануйте в застосунку Smart Restaurant,<br/>щоб зробити check-in і замовити</div></div>`;
+      }),
+    );
+    w.document.open();
+    w.document.write(`<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>QR-коди столиків</title><style>
+      @page { size: A4; margin: 12mm; }
+      body { margin: 0; font-family: Georgia, 'Times New Roman', serif; color: #0d0d11; }
+      .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10mm; }
+      .card { border: 1.5px solid #c8933a; border-radius: 6mm; padding: 8mm; text-align: center; break-inside: avoid; }
+      .brand { letter-spacing: 3px; text-transform: uppercase; font-size: 11pt; color: #845a24; }
+      .qr svg { width: 62mm; height: 62mm; margin: 5mm auto; display: block; }
+      .num { font-size: 26pt; }
+      .hint { margin-top: 2mm; font-family: Arial, sans-serif; font-size: 9pt; color: #555; }
+    </style></head><body><div class="grid">${cards.join('')}</div><script>window.onload = () => setTimeout(() => window.print(), 300);<\/script></body></html>`);
+    w.document.close();
+  } catch (e) {
+    w.close();
+    toast.error(errorMessage(e));
+  }
+}
 
 export default function TablesAdmin() {
   const qc = useQueryClient();
@@ -43,9 +76,14 @@ export default function TablesAdmin() {
         title="Столики та QR-коди"
         subtitle="Перетягуйте столики на плані — позиції одразу оновляться у бронюванні та в залі."
         action={
-          <Button variant="gold" icon={<Plus className="size-4" />} onClick={() => setCreating(true)}>
-            Додати столик
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="glass" icon={<Printer className="size-4" />} disabled={!tables.data} onClick={() => printQrCards((tables.data ?? []).filter((t) => t.isActive !== false))}>
+              Друк усіх QR
+            </Button>
+            <Button variant="gold" icon={<Plus className="size-4" />} onClick={() => setCreating(true)}>
+              Додати столик
+            </Button>
+          </div>
         }
       />
       <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -211,7 +249,7 @@ function QrPrint({ table, onClose }: { table: Table | null; onClose: () => void 
     <Modal open={Boolean(table)} onClose={onClose} size="sm" title={`QR-код столика №${table?.number}`} subtitle="Роздрукуйте й поставте на столик — гості скануватимуть його для check-in та замовлення.">
       {qr.data && table && (
         <div>
-          <div id="qr-print" className="mx-auto w-fit rounded-3xl bg-cream p-6 text-center text-ink-950">
+          <div className="mx-auto w-fit rounded-3xl bg-cream p-6 text-center text-ink-950">
             <div className="flex items-center justify-center gap-2">
               <LogoMark className="size-7" />
               <span className="font-display text-lg">Smart Restaurant</span>
@@ -224,14 +262,7 @@ function QrPrint({ table, onClose }: { table: Table | null; onClose: () => void 
             <Button
               variant="gold"
               icon={<Printer className="size-4" />}
-              onClick={() => {
-                const w = window.open('', '_blank', 'width=480,height=640');
-                if (!w) return;
-                w.document.write(`<html><head><title>QR №${table.number}</title></head><body style="display:grid;place-items:center;height:100vh;margin:0;font-family:serif">${document.getElementById('qr-print')!.outerHTML}</body></html>`);
-                w.document.close();
-                w.focus();
-                w.print();
-              }}
+              onClick={() => printQrCards([table])}
             >
               Друк
             </Button>
