@@ -1,19 +1,13 @@
 #!/bin/sh
-# HTTPS для nginx: якщо довіреного сертифіката (mkcert, див. scripts/setup-https.sh) немає —
-# створюємо тимчасовий самопідписаний, щоб сайт одразу працював через https://.
+# HTTPS для nginx: якщо довіреного сертифіката (mkcert, див. scripts/setup-https.sh) у /etc/nginx/certs
+# немає — кладемо запасний самопідписаний, створений під час збирання образу.
 set -e
 CERT_DIR="${SSL_CERT_DIR:-/etc/nginx/certs}"
-CRT="$CERT_DIR/localhost.pem"
-KEY="$CERT_DIR/localhost-key.pem"
-mkdir -p "$CERT_DIR"
-if [ -s "$CRT" ] && [ -s "$KEY" ]; then
-  echo "ssl: використовую сертифікат $CRT"
+DEFAULT_DIR="${SSL_DEFAULT_DIR:-/etc/nginx/default-certs}"
+if [ -s "$CERT_DIR/localhost.pem" ] && [ -s "$CERT_DIR/localhost-key.pem" ]; then
+  echo "ssl: використовую сертифікат $CERT_DIR/localhost.pem"
   exit 0
 fi
-echo "ssl: сертифікат не знайдено — створюю самопідписаний для localhost (для «замочка» без попереджень: scripts/setup-https.sh)"
-openssl req -x509 -newkey rsa:2048 -nodes -days 825 \
-  -keyout "$KEY" -out "$CRT" \
-  -subj "/CN=localhost/O=Smart Restaurant (dev)" \
-  -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:::1" >/dev/null 2>&1
-chmod 644 "$CRT"
-chmod 600 "$KEY"
+echo "ssl: довіреного сертифіката немає — використовую самопідписаний (для «замочка» без попереджень: scripts/setup-https.sh)"
+mkdir -p "$CERT_DIR"
+cp "$DEFAULT_DIR/localhost.pem" "$DEFAULT_DIR/localhost-key.pem" "$CERT_DIR/"
