@@ -151,7 +151,7 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
                 </div>
                 <div className="absolute inset-0 overflow-hidden rounded-3xl bg-ink-800 shadow-2xl [backface-visibility:hidden] [transform:rotateY(180deg)]">
                   <div className="mt-8 h-10 bg-black/80" />
-                  <div className="mx-6 mt-5 flex h-9 items-center justify-end rounded bg-cream/90 px-3 font-mono text-ink-950">{cvc || '•••'}</div>
+                  <div className="mx-6 mt-5 flex h-9 items-center justify-end rounded bg-cream/90 px-3 font-mono text-ink-950">{cvc ? '•'.repeat(cvc.length) : '•••'}</div>
                 </div>
               </motion.div>
             </div>
@@ -173,7 +173,19 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
                 />
               </Field>
               <Field label="CVC">
-                <Input inputMode="numeric" value={cvc} onFocus={() => setFlipped(true)} onBlur={() => setFlipped(false)} onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="123" autoComplete="cc-csc" />
+                <Input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  name="cc-csc"
+                  value={cvc}
+                  onFocus={() => setFlipped(true)}
+                  onBlur={() => setFlipped(false)}
+                  onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="•••"
+                  autoComplete="cc-csc"
+                  aria-label="CVC — три цифри на звороті картки"
+                />
               </Field>
               <Field label="Власник картки" className="col-span-2">
                 <Input value={holder} onChange={(e) => setHolder(e.target.value.toUpperCase())} placeholder="OLEKSANDR MELNYK" autoComplete="cc-name" />
@@ -205,6 +217,10 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
             <Button variant="gold" size="lg" className="w-full" disabled={!valid} loading={pay.isPending} onClick={() => pay.mutate()} icon={<Lock className="size-4" />}>
               Сплатити {money(order.total + tip)}
             </Button>
+            <p className="flex items-center justify-center gap-1.5 text-center text-xs text-ink-400">
+              <ShieldCheck className={cn('size-3.5', window.location.protocol === 'https:' ? 'text-emerald-300' : 'text-ink-400')} />
+              {window.location.protocol === 'https:' ? 'Захищене зʼєднання HTTPS · ' : ''}номер картки й CVC не зберігаються — лише останні 4 цифри
+            </p>
 
             <details className="rounded-2xl border border-white/6 bg-white/[0.02] p-3 text-xs text-ink-300">
               <summary className="cursor-pointer select-none text-ink-200">Тестові картки sandbox</summary>
