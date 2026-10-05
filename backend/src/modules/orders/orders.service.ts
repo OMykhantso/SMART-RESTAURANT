@@ -299,6 +299,7 @@ export async function createOrder(actor: AuthUser, input: CreateOrderInput) {
     const created = await tx.order.create({
       data: {
         type: 'DINE_IN',
+        createdAt: t, // час застосунку: KDS, ETA і «за сьогодні» рахуються від нього
         reservationId: reservation.id,
         tableId: reservation.tableId,
         userId: reservation.userId,

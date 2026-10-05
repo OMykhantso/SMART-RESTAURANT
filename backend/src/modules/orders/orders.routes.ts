@@ -217,9 +217,9 @@ define({
     }
     const uniqueDishes = [...new Map(body.dishes.map((d) => [d.dishId, d])).values()];
     await prisma.$transaction([
-      prisma.review.create({ data: { userId: user!.id, orderId: o.id, rating: body.rating, comment: body.comment } }),
+      prisma.review.create({ data: { userId: user!.id, orderId: o.id, rating: body.rating, comment: body.comment, createdAt: now() } }),
       ...uniqueDishes.map((d) =>
-        prisma.review.create({ data: { userId: user!.id, orderId: o.id, dishId: d.dishId, rating: d.rating } }),
+        prisma.review.create({ data: { userId: user!.id, orderId: o.id, dishId: d.dishId, rating: d.rating, createdAt: now() } }),
       ),
     ]);
     return { ok: true, reviewsCreated: 1 + uniqueDishes.length };

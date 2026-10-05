@@ -102,7 +102,8 @@ export async function logStatus(
   note?: string,
 ) {
   await db.statusChange.create({
-    data: { ...target, fromStatus: from, toStatus: to, actorId, note: note?.slice(0, 255) },
+    // час — з годинника застосунку (той самий, що в бізнес-правилах), а не з БД
+    data: { ...target, fromStatus: from, toStatus: to, actorId, note: note?.slice(0, 255), createdAt: now() },
   });
 }
 
@@ -199,6 +200,7 @@ export async function createReservation(actor: AuthUser, input: CreateReservatio
     const status: ReservationStatus = isStaff ? 'CONFIRMED' : 'PENDING';
     const reservation = await tx.reservation.create({
       data: {
+        createdAt: now(),
         code: `R-${randomCode(6)}`,
         checkinToken: randomToken(18),
         userId: isStaff ? null : actor.id,
@@ -516,6 +518,7 @@ export async function createWalkIn(
 
     const r = await tx.reservation.create({
       data: {
+        createdAt: now(),
         code: `R-${randomCode(6)}`,
         checkinToken: randomToken(18),
         userId: isStaff ? null : actor.id,
