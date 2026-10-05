@@ -1,4 +1,4 @@
-import type { OrderStatus, ReservationStatus, Role } from '@prisma/client';
+import type { OrderStatus, OrderType, ReservationStatus, Role } from '@prisma/client';
 import { AppError } from './errors';
 
 /**
@@ -6,7 +6,7 @@ import { AppError } from './errors';
  *
  * Для кожного переходу from → to вказано, ХТО може його виконати:
  *   OWNER  — клієнт, якому належить бронювання/замовлення
- *   STAFF / KITCHEN / ADMIN — ролі працівників
+ *   STAFF / KITCHEN / ADMIN / COURIER — ролі працівників
  *   SYSTEM — лише сервер (фонові задачі, платіжний шлюз)
  */
 export type Actor = 'OWNER' | Role | 'SYSTEM';
@@ -53,6 +53,41 @@ export const ORDER_FLOW: Machine<OrderStatus> = {
     PAID: ['SYSTEM'],
   },
   PAID: {},
+  DELIVERING: {},
+  DELIVERED: {},
+  CANCELLED: {},
+};
+
+/**
+ * Автомат замовлення ДОСТАВКИ (Delivery API).
+ * Картка: NEW (очікує онлайн-оплати) → CONFIRMED лише після успішної оплати (SYSTEM).
+ * Готівка: замовлення створюється одразу CONFIRMED.
+ * Кухня працює так само, як із замовленнями в залі; далі — курʼєр.
+ */
+export const DELIVERY_FLOW: Machine<OrderStatus> = {
+  NEW: {
+    CONFIRMED: ['SYSTEM'],
+    CANCELLED: ['OWNER', 'STAFF', 'ADMIN', 'SYSTEM'],
+  },
+  CONFIRMED: {
+    PREPARING: ['KITCHEN', 'ADMIN'],
+    CANCELLED: ['OWNER', 'STAFF', 'KITCHEN', 'ADMIN'],
+  },
+  PREPARING: {
+    READY: ['KITCHEN', 'ADMIN', 'SYSTEM'],
+    CANCELLED: ['ADMIN'],
+  },
+  READY: {
+    DELIVERING: ['COURIER', 'ADMIN'],
+    CANCELLED: ['ADMIN'],
+  },
+  DELIVERING: {
+    DELIVERED: ['COURIER', 'ADMIN'],
+    CANCELLED: ['ADMIN'],
+  },
+  SERVED: {},
+  PAID: {},
+  DELIVERED: {},
   CANCELLED: {},
 };
 
@@ -73,8 +108,19 @@ export const ORDER_LABELS: Record<OrderStatus, string> = {
   READY: 'Готово',
   SERVED: 'Подано',
   PAID: 'Оплачено',
+  DELIVERING: 'В дорозі',
+  DELIVERED: 'Доставлено',
   CANCELLED: 'Скасовано',
 };
+
+export const DELIVERY_LABELS: Record<OrderStatus, string> = {
+  ...ORDER_LABELS,
+  NEW: 'Очікує оплати',
+  READY: 'Чекає курʼєра',
+};
+
+export const orderFlow = (type: OrderType) => (type === 'DELIVERY' ? DELIVERY_FLOW : ORDER_FLOW);
+export const orderLabels = (type: OrderType) => (type === 'DELIVERY' ? DELIVERY_LABELS : ORDER_LABELS);
 
 export function allowedActors<S extends string>(machine: Machine<S>, from: S, to: S): Actor[] | undefined {
   return machine[from]?.[to];

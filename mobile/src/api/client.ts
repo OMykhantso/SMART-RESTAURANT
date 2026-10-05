@@ -79,12 +79,16 @@ async function tryRefresh(): Promise<boolean> {
   return refreshing;
 }
 
-async function request<T>(method: string, path: string, body?: unknown, headers: Record<string, string> = {}, retried = false): Promise<T> {
+type Target = 'restaurant' | 'delivery';
+const baseFor = (target: Target) => (target === 'delivery' ? apiConfig.deliveryUrl : apiConfig.baseUrl);
+
+async function request<T>(target: Target, method: string, path: string, body?: unknown, headers: Record<string, string> = {}, retried = false): Promise<T> {
   let res: Response;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20000);
+  const base = baseFor(target);
   try {
-    res = await fetch(`${apiConfig.baseUrl}/api${path}`, {
+    res = await fetch(`${base}/api${path}`, {
       method,
       signal: controller.signal,
       headers: {
@@ -96,7 +100,11 @@ async function request<T>(method: string, path: string, body?: unknown, headers:
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw new ApiError(`Немає зʼєднання з сервером (${apiConfig.baseUrl}). Перевірте, що телефон і компʼютер в одній Wi-Fi мережі.`, 'NETWORK', 0);
+    throw new ApiError(
+      `Немає зʼєднання з ${target === 'delivery' ? 'сервісом доставки' : 'сервером'} (${base}). Перевірте, що телефон і компʼютер в одній Wi-Fi мережі.`,
+      'NETWORK',
+      0,
+    );
   } finally {
     clearTimeout(timer);
   }
@@ -104,8 +112,9 @@ async function request<T>(method: string, path: string, body?: unknown, headers:
   const data = (await res.json().catch(() => null)) as (ApiErrorBody & T) | null;
   if (!res.ok) {
     const err = data?.error;
+    // токен оновлює Restaurant API (єдиний вхід для обох систем)
     if (res.status === 401 && err?.code === 'TOKEN_INVALID' && !retried && (await tryRefresh())) {
-      return request<T>(method, path, body, headers, true);
+      return request<T>(target, method, path, body, headers, true);
     }
     let message = err?.message ?? `Помилка ${res.status}`;
     if (err?.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details[0]) message = (err.details[0] as { message: string }).message;
@@ -121,11 +130,19 @@ function qs(params?: Record<string, unknown>) {
   return '?' + entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join('&');
 }
 
-export const api = {
-  get: <T,>(path: string, params?: Record<string, unknown>) => request<T>('GET', path + qs(params)),
-  post: <T,>(path: string, body?: unknown, headers?: Record<string, string>) => request<T>('POST', path, body ?? {}, headers),
-  patch: <T,>(path: string, body?: unknown) => request<T>('PATCH', path, body ?? {}),
-};
+function client(target: Target) {
+  return {
+    get: <T,>(path: string, params?: Record<string, unknown>) => request<T>(target, 'GET', path + qs(params)),
+    post: <T,>(path: string, body?: unknown, headers?: Record<string, string>) => request<T>(target, 'POST', path, body ?? {}, headers),
+    patch: <T,>(path: string, body?: unknown) => request<T>(target, 'PATCH', path, body ?? {}),
+    delete: <T,>(path: string) => request<T>(target, 'DELETE', path),
+  };
+}
+
+/** Restaurant API: меню, бронювання, QR, замовлення за столиком, вхід. */
+export const api = client('restaurant');
+/** Delivery API — окрема система доставки (та сама база даних і той самий обліковий запис). */
+export const dapi = client('delivery');
 
 export function imageUrl(url: string | null | undefined): string | null {
   if (!url) return null;

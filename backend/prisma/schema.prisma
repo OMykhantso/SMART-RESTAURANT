@@ -18,6 +18,7 @@ enum Role {
   STAFF // працівник залу: хостес / офіціант
   KITCHEN // кухар — kitchen display
   ADMIN // технічна роль: користувачі, меню, столики, аналітика
+  COURIER // курʼєр служби доставки (мобільний застосунок)
 }
 
 enum TableZone {
@@ -51,13 +52,21 @@ enum ReservationSource {
 }
 
 enum OrderStatus {
-  NEW // створено клієнтом
-  CONFIRMED // прийнято офіціантом, передано на кухню
+  NEW // створено клієнтом (доставка карткою — очікує оплати)
+  CONFIRMED // прийнято, передано на кухню
   PREPARING // готується
-  READY // готово до подачі
-  SERVED // подано до столу
-  PAID // оплачено
+  READY // готово до подачі / чекає курʼєра
+  SERVED // подано до столу (у залі)
+  PAID // оплачено (у залі)
+  DELIVERING // курʼєр забрав замовлення і везе клієнту
+  DELIVERED // доставлено клієнту
   CANCELLED
+}
+
+/// Тип замовлення: у залі ресторану (Restaurant API) або доставка (Delivery API)
+enum OrderType {
+  DINE_IN
+  DELIVERY
 }
 
 enum OrderItemStatus {
@@ -76,6 +85,7 @@ enum PaymentStatus {
   REQUIRES_ACTION // 3-D Secure підтвердження
   SUCCEEDED
   FAILED
+  REFUNDED // кошти повернуто (скасована оплачена доставка)
 }
 
 // ─────────────────────────────────── Таблиці ───────────────────────────────────
@@ -99,20 +109,22 @@ model User {
   reviews             Review[]
   refreshTokens       RefreshToken[]
   statusChanges       StatusChange[]
+  addresses           Address[]
+  courierDeliveries   Delivery[]     @relation("DeliveryCourier")
 
   @@index([role])
   @@map("users")
 }
 
 model RefreshToken {
-  id         Int       @id @default(autoincrement())
-  userId     Int       @map("user_id")
-  tokenHash  String    @unique @map("token_hash") @db.Char(64)
-  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
-  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(3)
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  userAgent  String?   @map("user_agent") @db.VarChar(255)
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  tokenHash String    @unique @map("token_hash") @db.Char(64)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  userAgent String?   @map("user_agent") @db.VarChar(255)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("refresh_tokens")
@@ -214,8 +226,9 @@ model Reservation {
 
 model Order {
   id               Int         @id @default(autoincrement())
-  reservationId    Int         @map("reservation_id")
-  tableId          Int         @map("table_id")
+  type             OrderType   @default(DINE_IN)
+  reservationId    Int?        @map("reservation_id") // лише для DINE_IN
+  tableId          Int?        @map("table_id") // лише для DINE_IN
   userId           Int?        @map("user_id")
   createdById      Int         @map("created_by_id")
   status           OrderStatus @default(NEW)
@@ -233,15 +246,17 @@ model Order {
   createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  reservation   Reservation    @relation(fields: [reservationId], references: [id], onDelete: Restrict)
-  table         DiningTable    @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  reservation   Reservation?   @relation(fields: [reservationId], references: [id], onDelete: Restrict)
+  table         DiningTable?   @relation(fields: [tableId], references: [id], onDelete: Restrict)
   user          User?          @relation("OrderClient", fields: [userId], references: [id], onDelete: SetNull)
   createdBy     User           @relation("OrderCreator", fields: [createdById], references: [id], onDelete: Restrict)
   items         OrderItem[]
   payments      Payment[]
   reviews       Review[]
   statusChanges StatusChange[]
+  delivery      Delivery?
 
+  @@index([type, status, createdAt])
   @@index([status, createdAt])
   @@index([userId, createdAt])
   @@index([reservationId])
@@ -327,4 +342,76 @@ model StatusChange {
   @@index([reservationId])
   @@index([orderId])
   @@map("status_changes")
+}
+
+// ─────────────────────────────── Доставка (Delivery API) ───────────────────────────────
+
+/// Зона доставки: район міста з власною вартістю, мінімальною сумою і часом у дорозі
+model DeliveryZone {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique @db.VarChar(60)
+  description String? @db.VarChar(255)
+  fee         Int // вартість доставки, копійки
+  minOrder    Int     @map("min_order") // мінімальна сума замовлення, копійки
+  freeFrom    Int?    @map("free_from") // безкоштовна доставка від суми, копійки
+  travelMin   Int     @map("travel_min") // орієнтовний час у дорозі, хв
+  isActive    Boolean @default(true) @map("is_active")
+  sortOrder   Int     @default(0) @map("sort_order")
+
+  addresses  Address[]
+  deliveries Delivery[]
+
+  @@map("delivery_zones")
+}
+
+/// Збережені адреси клієнта
+model Address {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  zoneId    Int      @map("zone_id")
+  label     String   @db.VarChar(40) // «Дім», «Робота»
+  street    String   @db.VarChar(120)
+  house     String   @db.VarChar(20)
+  apartment String?  @db.VarChar(20)
+  entrance  String?  @db.VarChar(10)
+  floor     String?  @db.VarChar(10)
+  comment   String?  @db.VarChar(255)
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  zone DeliveryZone @relation(fields: [zoneId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+/// Доставка замовлення (1 : 1 з orders.type = DELIVERY). Адреса зберігається знімком на момент замовлення.
+model Delivery {
+  orderId       Int           @id @map("order_id")
+  zoneId        Int           @map("zone_id")
+  courierId     Int?          @map("courier_id")
+  recipientName String        @map("recipient_name") @db.VarChar(100)
+  phone         String        @db.VarChar(20)
+  street        String        @db.VarChar(120)
+  house         String        @db.VarChar(20)
+  apartment     String?       @db.VarChar(20)
+  entrance      String?       @db.VarChar(10)
+  floor         String?       @db.VarChar(10)
+  comment       String?       @db.VarChar(255)
+  fee           Int // вартість доставки, копійки
+  paymentMethod PaymentMethod @map("payment_method") // CARD — онлайн одразу, CASH — курʼєру
+  changeFrom    Int?          @map("change_from") // готівка: решта з суми, копійки
+  etaAt         DateTime?     @map("eta_at") @db.Timestamptz(3) // прогноз часу доставки
+  assignedAt    DateTime?     @map("assigned_at") @db.Timestamptz(3)
+  pickedUpAt    DateTime?     @map("picked_up_at") @db.Timestamptz(3)
+  deliveredAt   DateTime?     @map("delivered_at") @db.Timestamptz(3)
+
+  order   Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  zone    DeliveryZone @relation(fields: [zoneId], references: [id], onDelete: Restrict)
+  courier User?        @relation("DeliveryCourier", fields: [courierId], references: [id], onDelete: SetNull)
+
+  @@index([courierId])
+  @@index([zoneId])
+  @@map("deliveries")
 }

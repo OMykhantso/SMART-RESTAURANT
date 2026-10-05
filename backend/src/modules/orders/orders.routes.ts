@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { DateTime } from 'luxon';
-import { OrderItemStatus, OrderStatus, type Prisma } from '@prisma/client';
+import { OrderItemStatus, OrderStatus, OrderType, type Prisma } from '@prisma/client';
 import { createRouter, idParam } from '../../lib/router';
 import { prisma } from '../../lib/prisma';
 import { conflict, forbidden, unprocessable } from '../../lib/errors';
@@ -44,12 +44,13 @@ define({
   summary: 'Мої замовлення (історія клієнта)',
   tags: ['Orders'],
   auth: true,
-  query: z.object({ active: z.stringbool().optional() }),
+  query: z.object({ active: z.stringbool().optional(), type: z.enum(OrderType).optional() }),
   handler: async ({ user, query }) => {
     const orders = await prisma.order.findMany({
       where: {
         userId: user!.id,
-        ...(query.active ? { status: { notIn: ['PAID', 'CANCELLED'] } } : {}),
+        ...(query.type ? { type: query.type } : {}),
+        ...(query.active ? { status: { notIn: ['PAID', 'DELIVERED', 'CANCELLED'] } } : {}),
       },
       include: svc.orderInclude,
       orderBy: { createdAt: 'desc' },
@@ -74,10 +75,13 @@ define({
     date: z.iso.date().optional(),
     tableId: z.coerce.number().int().positive().optional(),
     reservationId: z.coerce.number().int().positive().optional(),
+    type: z.enum(OrderType).optional(),
   }),
   handler: async ({ user, query }) => {
-    const where: Prisma.OrderWhereInput = {};
+    // неоплачені онлайн-замовлення доставки ще не стосуються ні залу, ні кухні
+    const where: Prisma.OrderWhereInput = { NOT: { type: 'DELIVERY', status: 'NEW' } };
     if (query.status) where.status = { in: query.status };
+    if (query.type) where.type = query.type;
     if (query.tableId) where.tableId = query.tableId;
     if (query.reservationId) where.reservationId = query.reservationId;
     const day = query.date
@@ -123,7 +127,8 @@ define({
   summary: 'Змінити статус замовлення (підтвердити / готувати / готово / подано / скасувати)',
   description:
     'NEW→CONFIRMED (офіціант) → PREPARING (кухня) → READY (кухня) → SERVED (офіціант) → PAID (лише через оплату). ' +
-    'Скасування: клієнт — лише NEW; офіціант/кухня — до початку приготування, з причиною.',
+    'Скасування: клієнт — лише NEW; офіціант/кухня — до початку приготування, з причиною. ' +
+      'Для доставки діє окремий автомат (DELIVERY_FLOW): статуси курʼєра змінюються лише через Delivery API.',
   tags: ['Orders'],
   auth: true,
   params: idParam,
@@ -133,6 +138,9 @@ define({
   }),
   handler: async ({ user, params, body }) => {
     if (body.status === 'PAID') throw forbidden('Статус «Оплачено» встановлюється лише платіжною системою');
+    if (body.status === 'DELIVERING' || body.status === 'DELIVERED') {
+      throw conflict('Статуси доставки змінює курʼєр у Delivery API', 'USE_DELIVERY_API');
+    }
     const o = await svc.transitionOrder(user!, params.id, body.status, { reason: body.reason });
     return svc.serializeOrder(o, user);
   },
@@ -179,7 +187,7 @@ define({
 define({
   method: 'post',
   path: '/orders/:id/review',
-  summary: 'Залишити відгук про візит і оцінити страви (лише після оплати)',
+  summary: 'Залишити відгук про візит / доставку і оцінити страви (після оплати або доставки)',
   tags: ['Reviews'],
   roles: ['CLIENT'],
   status: 201,
@@ -195,7 +203,12 @@ define({
   handler: async ({ user, params, body }) => {
     const o = await svc.loadOrder(params.id);
     if (o.userId !== user!.id) throw forbidden('Це не ваше замовлення');
-    if (o.status !== 'PAID') throw conflict('Відгук можна залишити після оплати замовлення', 'ORDER_NOT_PAID');
+    if (o.status !== 'PAID' && o.status !== 'DELIVERED') {
+      throw conflict(
+        o.type === 'DELIVERY' ? 'Відгук можна залишити після отримання доставки' : 'Відгук можна залишити після оплати замовлення',
+        'ORDER_NOT_PAID',
+      );
+    }
     if (o.reviews.length > 0) throw conflict('Ви вже залишили відгук на це замовлення', 'ALREADY_REVIEWED');
     const orderedDishIds = new Set(o.items.map((i) => i.dishId));
     const foreign = body.dishes.filter((d) => !orderedDishIds.has(d.dishId));

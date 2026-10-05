@@ -1,3 +1,4 @@
+import { orderPlace } from './constants';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, errorMessage } from './api';
@@ -66,7 +67,7 @@ export function useOrderAction() {
   return useMutation({
     mutationFn: ({ id, status, reason }: { id: number; status: OrderStatus; reason?: string }) => api.patch<Order>(`/orders/${id}/status`, { status, reason }),
     onSuccess: (o) => {
-      toast.success(ORDER_SUCCESS[o.status] ?? 'Статус оновлено', { description: `#${o.id} · столик №${o.table.number}` });
+      toast.success(ORDER_SUCCESS[o.status] ?? 'Статус оновлено', { description: `#${o.id} · ${orderPlace(o)}` });
       invalidate();
     },
     onError: (e) => toast.error(errorMessage(e)),

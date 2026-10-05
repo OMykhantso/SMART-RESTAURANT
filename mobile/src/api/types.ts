@@ -1,8 +1,10 @@
-export type Role = 'CLIENT' | 'STAFF' | 'KITCHEN' | 'ADMIN';
+export type Role = 'CLIENT' | 'STAFF' | 'KITCHEN' | 'ADMIN' | 'COURIER';
 export type TableZone = 'HALL' | 'TERRACE' | 'VIP' | 'BAR';
 export type TableShape = 'ROUND' | 'SQUARE' | 'RECT';
 export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CHECKED_IN' | 'COMPLETED' | 'CANCELLED' | 'REJECTED' | 'NO_SHOW';
-export type OrderStatus = 'NEW' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'SERVED' | 'PAID' | 'CANCELLED';
+export type OrderStatus = 'NEW' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'SERVED' | 'PAID' | 'DELIVERING' | 'DELIVERED' | 'CANCELLED';
+export type OrderType = 'DINE_IN' | 'DELIVERY';
+export type PayMethod = 'CARD' | 'CASH';
 export type OrderItemStatus = 'QUEUED' | 'COOKING' | 'READY';
 
 export interface User {
@@ -169,14 +171,38 @@ export interface OrderItem {
   status: OrderItemStatus;
 }
 
+export interface DeliveryInfo {
+  zone: { id: number; name: string; travelMin: number };
+  courier: { id: number; name: string; phone: string | null } | null;
+  recipientName: string;
+  phone: string;
+  street: string;
+  house: string;
+  apartment: string | null;
+  entrance: string | null;
+  floor: string | null;
+  comment: string | null;
+  addressLine: string;
+  fee: number;
+  paymentMethod: PayMethod;
+  changeFrom: number | null;
+  etaAt: string | null;
+  assignedAt: string | null;
+  pickedUpAt: string | null;
+  deliveredAt: string | null;
+}
+
 export interface Order {
   id: number;
   number: number;
+  type: OrderType;
   status: OrderStatus;
   statusLabel: string;
-  reservationId: number;
-  reservation: { id: number; code: string; status: ReservationStatus; guests: number };
-  table: { id: number; number: number; zone: TableZone };
+  reservationId: number | null;
+  reservation: { id: number; code: string; status: ReservationStatus; guests: number } | null;
+  table: { id: number; number: number; zone: TableZone } | null;
+  delivery: DeliveryInfo | null;
+  refunded: { id: number; amount: number } | null;
   user: { id: number; name: string } | null;
   createdBy: { id: number; name: string; role: Role };
   items: OrderItem[];
@@ -215,7 +241,95 @@ export interface Order {
     canCancel: boolean;
     canPay: boolean;
     canReview: boolean;
+    canTake: boolean;
+    canDeliver: boolean;
   };
+}
+
+// ─────────────────────────────── Доставка (Delivery API) ───────────────────────────────
+
+export interface DeliveryZone {
+  id: number;
+  name: string;
+  description: string | null;
+  fee: number;
+  minOrder: number;
+  freeFrom: number | null;
+  travelMin: number;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface DeliveryWindow {
+  isOpen: boolean;
+  opensAt: string;
+  lastOrderAt: string;
+  closesAt: string;
+  nextOpenAt: string | null;
+  nextOpenLabel: string | null;
+}
+
+export interface DeliveryOverview {
+  window: DeliveryWindow;
+  kitchenEtaMin: number;
+  zones: DeliveryZone[];
+  fromPrice: number | null;
+  minOrderFrom: number | null;
+}
+
+export interface Address {
+  id: number;
+  label: string;
+  zoneId: number;
+  zone: Pick<DeliveryZone, 'id' | 'name' | 'fee' | 'minOrder' | 'freeFrom' | 'travelMin' | 'isActive'>;
+  street: string;
+  house: string;
+  apartment: string | null;
+  entrance: string | null;
+  floor: string | null;
+  comment: string | null;
+  isDefault: boolean;
+}
+
+export interface AddressInput {
+  zoneId: number;
+  street: string;
+  house: string;
+  apartment?: string;
+  entrance?: string;
+  floor?: string;
+  comment?: string;
+}
+
+export interface Quote {
+  zone: { id: number; name: string; travelMin: number };
+  subtotal: number;
+  fee: number;
+  total: number;
+  minOrder: number;
+  missingToMin: number;
+  missingToFree: number | null;
+  canOrder: boolean;
+  reason: string | null;
+  etaMinutes: number;
+  window: DeliveryWindow;
+}
+
+export interface CourierSummary {
+  deliveredToday: number;
+  active: number;
+  capacity: number;
+  cashOnHand: number;
+  tipsToday: number;
+  feesToday: number;
+  avgRideMin: number | null;
+}
+
+export interface CourierLite {
+  id: number;
+  name: string;
+  phone: string | null;
+  active: number;
 }
 
 export interface LiveTable extends Table {
@@ -258,14 +372,14 @@ export interface Payment {
   tip: number;
   total: number;
   method: 'CARD' | 'CASH';
-  status: 'PENDING' | 'REQUIRES_ACTION' | 'SUCCEEDED' | 'FAILED';
+  status: 'PENDING' | 'REQUIRES_ACTION' | 'SUCCEEDED' | 'FAILED' | 'REFUNDED';
   providerRef: string;
   cardBrand: string | null;
   cardLast4: string | null;
   failureMessage: string | null;
   paidAt: string | null;
   createdAt: string;
-  tableNumber?: number;
+  tableNumber?: number | null;
 }
 
 export interface PayResult {

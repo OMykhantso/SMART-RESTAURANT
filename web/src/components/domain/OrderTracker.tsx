@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
-import { Bell, Check, ChefHat, ClipboardCheck, CreditCard, HandPlatter, Send } from 'lucide-react';
-import { ORDER_FLOW, ORDER_STATUS } from '@/lib/constants';
+import { Bell, Bike, Check, ChefHat, ClipboardCheck, CreditCard, HandPlatter, House, Send } from 'lucide-react';
+import { DELIVERY_FLOW, ORDER_FLOW, ORDER_STATUS } from '@/lib/constants';
 import { cn, fmtTime } from '@/lib/format';
 import type { Order } from '@/lib/types';
 
@@ -11,6 +11,8 @@ const ICONS = {
   READY: <Bell className="size-4" />,
   SERVED: <HandPlatter className="size-4" />,
   PAID: <CreditCard className="size-4" />,
+  DELIVERING: <Bike className="size-4" />,
+  DELIVERED: <House className="size-4" />,
 } as const;
 
 /** Візуальний трекер статусу замовлення (горизонтальний на desktop, вертикальний на mobile). */
@@ -18,7 +20,8 @@ export function OrderTracker({ order }: { order: Order }) {
   if (order.status === 'CANCELLED') {
     return <div className="rounded-2xl bg-rose-500/10 p-4 text-sm text-rose-200 ring-1 ring-rose-400/20">Замовлення скасовано{order.cancelReason ? `: ${order.cancelReason}` : ''}</div>;
   }
-  const current = ORDER_FLOW.indexOf(order.status);
+  const flow = order.type === 'DELIVERY' ? DELIVERY_FLOW : ORDER_FLOW;
+  const current = flow.indexOf(order.status);
   const times: Record<string, string | null> = {
     NEW: order.createdAt,
     CONFIRMED: order.confirmedAt,
@@ -26,14 +29,16 @@ export function OrderTracker({ order }: { order: Order }) {
     READY: order.readyAt,
     SERVED: order.servedAt,
     PAID: order.paidAt,
+    DELIVERING: order.delivery?.pickedUpAt ?? null,
+    DELIVERED: order.delivery?.deliveredAt ?? null,
   };
   return (
     <div className="relative">
       <div className="absolute left-5 right-5 top-5 hidden h-0.5 rounded-full bg-white/8 sm:block">
-        <motion.div className="gold-gradient h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${(current / (ORDER_FLOW.length - 1)) * 100}%` }} transition={{ type: 'spring', stiffness: 80, damping: 20 }} />
+        <motion.div className="gold-gradient h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${(Math.max(0, current) / (flow.length - 1)) * 100}%` }} transition={{ type: 'spring', stiffness: 80, damping: 20 }} />
       </div>
       <ol className="relative grid gap-4 sm:grid-cols-6 sm:gap-2">
-        {ORDER_FLOW.map((s, i) => {
+        {flow.map((s, i) => {
           const done = i < current;
           const active = i === current;
           return (

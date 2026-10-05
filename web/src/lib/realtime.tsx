@@ -41,11 +41,13 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
     const invalidate = (...keys: string[]) => keys.forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
 
-    s.on('order:created', (p: { id: number; status: OrderStatus; tableNumber: number }) => {
+    s.on('order:created', (p: { id: number; status: OrderStatus; tableNumber: number | null }) => {
       invalidate('orders', 'kitchen', 'tables-live', 'today', 'reservation', 'my-orders', 'current-visit');
       const role = roleRef.current;
       if (role === 'STAFF' || role === 'ADMIN') {
-        toast(`Нове замовлення #${p.id}`, { description: `Столик №${p.tableNumber} · ${ORDER_STATUS[p.status].label}` });
+        toast(p.tableNumber ? `Нове замовлення #${p.id}` : `Нова доставка #${p.id}`, {
+          description: `${p.tableNumber ? `Столик №${p.tableNumber}` : 'Доставка'} · ${ORDER_STATUS[p.status].label}`,
+        });
         chime('new');
       } else if (role === 'KITCHEN' && p.status === 'CONFIRMED') {
         chime('new');
@@ -59,10 +61,12 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         toast(`Замовлення #${p.id}: ${s.label}`, { description: s.hint });
         if (p.status === 'READY') chime('ready');
       } else if ((role === 'STAFF' || role === 'ADMIN') && p.status === 'READY') {
-        toast.success(`Замовлення #${p.id} готове до подачі`, { description: p.tableNumber ? `Столик №${p.tableNumber}` : undefined });
+        toast.success(p.tableNumber ? `Замовлення #${p.id} готове до подачі` : `Доставка #${p.id} готова — чекає курʼєра`, {
+          description: p.tableNumber ? `Столик №${p.tableNumber}` : undefined,
+        });
         chime('ready');
       } else if (role === 'KITCHEN' && p.status === 'CONFIRMED') {
-        toast(`Нове замовлення #${p.id} на кухню`, { description: p.tableNumber ? `Столик №${p.tableNumber}` : undefined });
+        toast(`Нове замовлення #${p.id} на кухню`, { description: p.tableNumber ? `Столик №${p.tableNumber}` : 'Доставка' });
         chime('new');
       }
     });
@@ -84,11 +88,11 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     });
     s.on('tables:changed', () => invalidate('tables-live', 'tables-admin', 'booking-tables', 'today'));
     s.on('menu:changed', () => invalidate('dishes', 'dish', 'categories', 'recommendations'));
-    s.on('payment:succeeded', (p: { orderId: number; amount: number; tableNumber: number }) => {
+    s.on('payment:succeeded', (p: { orderId: number; amount: number; tableNumber: number | null }) => {
       invalidate('orders', 'order', 'payments', 'today', 'analytics', 'tables-live', 'my-orders', 'reservation', 'current-visit');
       const role = roleRef.current;
       if (role === 'STAFF' || role === 'ADMIN') {
-        toast.success(`Оплата замовлення #${p.orderId}`, { description: `Столик №${p.tableNumber}` });
+        toast.success(`Оплата замовлення #${p.orderId}`, { description: p.tableNumber ? `Столик №${p.tableNumber}` : 'Доставка (онлайн)' });
       }
     });
 

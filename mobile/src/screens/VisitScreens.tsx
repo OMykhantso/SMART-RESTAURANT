@@ -5,9 +5,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import Svg, { Circle } from 'react-native-svg';
-import { CalendarPlus, CircleCheck, CreditCard, DoorOpen, MessageSquareHeart, Receipt, UtensilsCrossed, XCircle } from 'lucide-react-native';
+import { Bike, CalendarPlus, CircleCheck, CreditCard, DoorOpen, MessageSquareHeart, Receipt, UtensilsCrossed, XCircle } from 'lucide-react-native';
 import { Badge, Body, Button, Caption, Card, Divider, DishImage, EmptyState, Eyebrow, Header, Screen, Skeleton, Title } from '../components/ui';
 import { OrderRow, OrderTimeline, ReservationRow } from '../components/domain';
+import { DeliveryRow } from '../components/delivery';
+import { isActiveDelivery, useMyDeliveries } from '../lib/delivery';
 import { Qr } from '../components/Qr';
 import { colors, fonts, goldGradient, radius } from '../theme';
 import { api } from '../api/client';
@@ -15,16 +17,17 @@ import { useMyOrders, useMyReservations } from '../lib/queries';
 import { haptic } from '../lib/notify';
 import { useToast } from '../lib/toast';
 import { fmtFullDate, fmtTime, money } from '../lib/format';
-import { ORDER_META, RESERVATION_META, ZONE_LABEL } from '../lib/status';
+import { ORDER_META, RESERVATION_META, ZONE_LABEL, placeOf } from '../lib/status';
 import type { Order, Reservation } from '../api/types';
 import type { ScreenProps, TabParamList } from '../navigation/types';
 
 export function VisitsScreen() {
   const nav = useNavigation();
   const route = useRoute<RouteProp<TabParamList, 'Visits'>>();
-  const [tab, setTab] = useState<'reservations' | 'orders'>(route.params?.tab ?? 'reservations');
+  const [tab, setTab] = useState<'deliveries' | 'reservations' | 'orders'>(route.params?.tab ?? 'reservations');
   const reservations = useMyReservations();
   const orders = useMyOrders();
+  const deliveries = useMyDeliveries();
   const qc = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
   useEffect(() => {
@@ -40,9 +43,9 @@ export function VisitsScreen() {
 
   return (
     <Screen refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.gold} />}>
-      <Title>Мої візити</Title>
+      <Title>Історія</Title>
       <View style={styles.segment}>
-        {(['reservations', 'orders'] as const).map((t) => (
+        {(['deliveries', 'reservations', 'orders'] as const).map((t) => (
           <Pressable
             key={t}
             onPress={() => {
@@ -53,17 +56,42 @@ export function VisitsScreen() {
           >
             {tab === t ? (
               <LinearGradient colors={goldGradient} style={styles.segBtn}>
-                <Text style={[styles.segText, { color: '#141008' }]}>{t === 'reservations' ? 'Бронювання' : 'Замовлення'}</Text>
+                <Text style={[styles.segText, { color: '#141008' }]}>{SEG_LABEL[t]}</Text>
               </LinearGradient>
             ) : (
               <View style={styles.segBtn}>
-                <Text style={styles.segText}>{t === 'reservations' ? 'Бронювання' : 'Замовлення'}</Text>
+                <Text style={styles.segText}>{SEG_LABEL[t]}</Text>
               </View>
             )}
           </Pressable>
         ))}
       </View>
-      {tab === 'reservations' ? (
+      {tab === 'deliveries' ? (
+        deliveries.isLoading ? (
+          <Skeleton height={200} />
+        ) : !deliveries.data?.length ? (
+          <EmptyState
+            icon={<Bike size={26} color={colors.gold} />}
+            title="Доставок ще не було"
+            text="Додайте страви в кошик і оформіть доставку додому — привеземо гарячим"
+            action={<Button title="До меню" onPress={() => nav.navigate('Tabs', { screen: 'Menu' })} />}
+          />
+        ) : (
+          <>
+            {deliveries.data.some(isActiveDelivery) && <Eyebrow style={{ marginBottom: 10 }}>Зараз</Eyebrow>}
+            {deliveries.data.filter(isActiveDelivery).map((o) => (
+              <DeliveryRow key={o.id} order={o} onPress={() => nav.navigate('DeliveryOrder', { id: o.id })} />
+            ))}
+            {deliveries.data.some((o) => !isActiveDelivery(o)) && <Eyebrow style={{ marginTop: 14, marginBottom: 10, color: colors.muted }}>Раніше</Eyebrow>}
+            {deliveries.data
+              .filter((o) => !isActiveDelivery(o))
+              .slice(0, 40)
+              .map((o) => (
+                <DeliveryRow key={o.id} order={o} onPress={() => nav.navigate('DeliveryOrder', { id: o.id })} />
+              ))}
+          </>
+        )
+      ) : tab === 'reservations' ? (
         reservations.isLoading ? (
           <Skeleton height={200} />
         ) : (
@@ -94,6 +122,8 @@ export function VisitsScreen() {
     </Screen>
   );
 }
+
+const SEG_LABEL = { deliveries: 'Доставка', reservations: 'Бронювання', orders: 'У залі' } as const;
 
 export function ReservationScreen({ route, navigation }: ScreenProps<'Reservation'>) {
   const qc = useQueryClient();
@@ -241,6 +271,10 @@ export function OrderScreen({ route, navigation }: ScreenProps<'Order'>) {
     },
     onError: (e) => toast({ title: (e as Error).message, tone: 'danger' }),
   });
+  // доставку відстежуємо на окремому екрані (Delivery API)
+  useEffect(() => {
+    if (o?.type === 'DELIVERY') navigation.replace('DeliveryOrder', { id: o.id });
+  }, [o?.type, o?.id, navigation]);
   if (!o) {
     return (
       <Screen edges={['top']}>
@@ -254,7 +288,7 @@ export function OrderScreen({ route, navigation }: ScreenProps<'Order'>) {
 
   return (
     <Screen edges={['top']}>
-      <Header title={`Замовлення #${o.id}`} subtitle={`Столик №${o.table.number} · ${fmtTime(o.createdAt)}`} />
+      <Header title={`Замовлення #${o.id}`} subtitle={`${placeOf(o)} · ${fmtTime(o.createdAt)}`} />
       <LinearGradient colors={['rgba(220,171,74,0.14)', 'rgba(20,20,25,0.96)']} style={styles.statusCard}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
           <View style={{ flex: 1 }}>

@@ -2,23 +2,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  Armchair,
-  BellRing,
-  CalendarClock,
-  ChartColumn,
-  ChefHat,
-  ChevronRight,
-  ClipboardList,
-  DoorOpen,
-  LogIn,
-  Receipt,
-  Soup,
-  UserRound,
-  Users,
-  UsersRound,
-  Wallet,
-} from 'lucide-react-native';
+import { Armchair, BellRing, Bike, CalendarClock, ChartColumn, ChefHat, ChevronRight, ClipboardList, DoorOpen, LogIn, MapPinned, Receipt, Soup, UserRound, Users, UsersRound, Wallet } from 'lucide-react-native';
 import { Badge, Button, Caption, Card, EmptyState, Eyebrow, Screen, Skeleton, Title } from '../../components/ui';
 import { SectionTitle } from '../../components/domain';
 import { LiveFloorPlan, Legend, OrderTicket, ReservationCard, Segmented, StatTile, TABLE_STATE } from '../../components/staff';
@@ -125,6 +109,8 @@ export function ShiftScreen() {
       <View style={{ gap: 10 }}>
         <QuickLink icon={<ChefHat size={20} color={colors.orange} />} title="Кухня" text="Черга страв і таймери (перегляд)" onPress={() => nav.navigate('KitchenView')} />
         <QuickLink icon={<Soup size={20} color={colors.warning} />} title="Стоп-лист" text="Вимкнути страву, що закінчилась" onPress={() => nav.navigate('StopList')} />
+        <QuickLink icon={<Bike size={20} color={colors.info} />} title="Доставка" text="Диспетчерська: курʼєри, статуси, призначення" onPress={() => nav.navigate('Dispatch')} />
+        {isAdmin && <QuickLink icon={<MapPinned size={20} color={colors.success} />} title="Зони доставки" text="Райони, тарифи, мінімальна сума" onPress={() => nav.navigate('Zones')} />}
         {isAdmin && <QuickLink icon={<ChartColumn size={20} color={colors.goldLight} />} title="Аналітика" text="Виручка, топ страв, навантаження" onPress={() => nav.navigate('Analytics')} />}
         {isAdmin && <QuickLink icon={<UsersRound size={20} color={colors.violet} />} title="Користувачі та ролі" text="Персонал, гості, доступи" onPress={() => nav.navigate('Users')} />}
       </View>

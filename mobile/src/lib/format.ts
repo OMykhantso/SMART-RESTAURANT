@@ -4,6 +4,13 @@ export function money(kop: number): string {
   return new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 0 }).format(kop / 100) + ' ₴';
 }
 
+/** Компактна сума для плиток статистики: 120 949 ₴ → «121 тис. ₴». */
+export function moneyShort(kop: number): string {
+  const uah = kop / 100;
+  if (uah >= 100_000) return `${new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 0 }).format(uah / 1000)} тис ₴`;
+  return money(kop);
+}
+
 const dtf = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('uk-UA', { timeZone: TZ, ...opts });
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 

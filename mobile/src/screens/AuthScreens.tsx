@@ -70,6 +70,7 @@ const DEMO = [
   { label: 'Офіціант', email: 'staff@smartrest.ua', password: 'Staff123!' },
   { label: 'Кухар', email: 'kitchen@smartrest.ua', password: 'Kitchen123!' },
   { label: 'Адмін', email: 'admin@smartrest.ua', password: 'Admin123!' },
+  { label: 'Курʼєр', email: 'courier@smartrest.ua', password: 'Courier123!' },
 ];
 
 export function LoginScreen() {

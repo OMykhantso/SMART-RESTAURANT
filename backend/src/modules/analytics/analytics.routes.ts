@@ -11,10 +11,20 @@ const avg = (values: number[]) => (values.length ? values.reduce((a, b) => a + b
 
 async function periodMetrics(from: Date, to: Date) {
   const [payments, orders, reservations, reviews] = await Promise.all([
-    prisma.payment.findMany({ where: { status: 'SUCCEEDED', paidAt: { gte: from, lt: to } } }),
+    prisma.payment.findMany({ where: { status: 'SUCCEEDED', paidAt: { gte: from, lt: to } }, include: { order: { select: { type: true } } } }),
     prisma.order.findMany({
       where: { createdAt: { gte: from, lt: to } },
-      select: { id: true, status: true, total: true, createdAt: true, confirmedAt: true, readyAt: true, tableId: true },
+      select: {
+        id: true,
+        type: true,
+        status: true,
+        total: true,
+        createdAt: true,
+        confirmedAt: true,
+        readyAt: true,
+        tableId: true,
+        delivery: { select: { fee: true, deliveredAt: true, zone: { select: { name: true } } } },
+      },
     }),
     prisma.reservation.findMany({
       where: { startAt: { gte: from, lt: to } },
@@ -94,7 +104,7 @@ define({
 
     // Топ страв і частка категорій
     const items = await prisma.orderItem.findMany({
-      where: { order: { status: 'PAID', paidAt: { gte: start.toJSDate(), lte: end.toJSDate() } } },
+      where: { order: { status: { in: ['PAID', 'DELIVERED'] }, paidAt: { gte: start.toJSDate(), lte: end.toJSDate() } } },
       include: { dish: { select: { id: true, name: true, imageUrl: true, category: { select: { name: true, emoji: true } } } } },
     });
     const dishAgg = new Map<number, { dishId: number; name: string; imageUrl: string | null; quantity: number; revenue: number }>();
@@ -120,6 +130,19 @@ define({
     // Завантаженість столиків: частка столиків, що мали хоча б один візит на день
     const tablesCount = await prisma.diningTable.count({ where: { isActive: true } });
 
+    // Доставка (Delivery API): обсяг, виручка, швидкість, зони
+    const deliveries = curr.orders.filter((o) => o.type === 'DELIVERY');
+    const delivered = deliveries.filter((o) => o.status === 'DELIVERED' && o.delivery?.deliveredAt);
+    const deliveryRevenue = curr.payments.filter((p) => p.order.type === 'DELIVERY').reduce((s, p) => s + p.amount, 0);
+    const zoneAgg = new Map<string, { zone: string; orders: number; revenue: number }>();
+    for (const o of deliveries) {
+      if (o.status === 'CANCELLED' || !o.delivery) continue;
+      const z = zoneAgg.get(o.delivery.zone.name) ?? { zone: o.delivery.zone.name, orders: 0, revenue: 0 };
+      z.orders += 1;
+      z.revenue += o.total;
+      zoneAgg.set(o.delivery.zone.name, z);
+    }
+
     return {
       period: { from: start.toISODate(), to: end.toISODate(), days: query.days },
       kpis: curr.kpis,
@@ -137,6 +160,16 @@ define({
       reservationsByStatus: [...statusCounts.entries()].map(([status, count]) => ({ status, count })),
       reservationsBySource: [...sourceCounts.entries()].map(([source, count]) => ({ source, count })),
       tablesCount,
+      delivery: {
+        orders: deliveries.filter((o) => o.status !== 'CANCELLED').length,
+        delivered: delivered.length,
+        cancelled: deliveries.filter((o) => o.status === 'CANCELLED').length,
+        revenue: deliveryRevenue,
+        share: curr.kpis.revenue ? Math.round((deliveryRevenue / curr.kpis.revenue) * 1000) / 10 : 0,
+        fees: deliveries.filter((o) => o.status !== 'CANCELLED').reduce((s, o) => s + (o.delivery?.fee ?? 0), 0),
+        avgDeliveryMin: Math.round(avg(delivered.map((o) => (o.delivery!.deliveredAt!.getTime() - o.createdAt.getTime()) / 60000))),
+        byZone: [...zoneAgg.values()].sort((a, b) => b.orders - a.orders),
+      },
     };
   },
 });
@@ -152,13 +185,15 @@ define({
     const day = DateTime.fromJSDate(t, { zone: TZ() }).startOf('day');
     const from = day.toJSDate();
     const to = day.plus({ days: 1 }).toJSDate();
-    const [reservations, orders, payments, tables, seated] = await Promise.all([
+    const [reservations, orders, payments, tables, seated, deliveryByStatus] = await Promise.all([
       prisma.reservation.groupBy({ by: ['status'], where: { startAt: { gte: from, lt: to } }, _count: { _all: true }, _sum: { guests: true } }),
       prisma.order.groupBy({ by: ['status'], where: { createdAt: { gte: from, lt: to } }, _count: { _all: true } }),
       prisma.payment.aggregate({ where: { status: 'SUCCEEDED', paidAt: { gte: from, lt: to } }, _sum: { amount: true, tip: true }, _count: { _all: true } }),
       prisma.diningTable.count({ where: { isActive: true } }),
       prisma.reservation.findMany({ where: { status: 'CHECKED_IN' }, select: { guests: true, tableId: true } }),
+      prisma.order.groupBy({ by: ['status'], where: { type: 'DELIVERY', createdAt: { gte: from, lt: to } }, _count: { _all: true } }),
     ]);
+    const delBy = Object.fromEntries(deliveryByStatus.map((o) => [o.status, o._count._all]));
     const resBy = Object.fromEntries(reservations.map((r) => [r.status, r._count._all]));
     const ordBy = Object.fromEntries(orders.map((o) => [o.status, o._count._all]));
     const readyOrders = await prisma.order.findMany({
@@ -178,7 +213,15 @@ define({
       orders: {
         total: orders.reduce((s, o) => s + o._count._all, 0),
         byStatus: ordBy,
-        active: (ordBy.NEW ?? 0) + (ordBy.CONFIRMED ?? 0) + (ordBy.PREPARING ?? 0) + (ordBy.READY ?? 0) + (ordBy.SERVED ?? 0),
+        active:
+          (ordBy.NEW ?? 0) + (ordBy.CONFIRMED ?? 0) + (ordBy.PREPARING ?? 0) + (ordBy.READY ?? 0) + (ordBy.SERVED ?? 0) + (ordBy.DELIVERING ?? 0),
+      },
+      delivery: {
+        total: deliveryByStatus.reduce((s, o) => s + o._count._all, 0),
+        inKitchen: (delBy.CONFIRMED ?? 0) + (delBy.PREPARING ?? 0),
+        waitingCourier: delBy.READY ?? 0,
+        onTheWay: delBy.DELIVERING ?? 0,
+        delivered: delBy.DELIVERED ?? 0,
       },
       revenue: payments._sum.amount ?? 0,
       tips: payments._sum.tip ?? 0,

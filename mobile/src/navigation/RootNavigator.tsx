@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../lib/auth';
 import { colors } from '../theme';
 import { TabBar } from './TabBar';
-import type { KitchenTabParamList, RootStackParamList, StaffTabParamList, TabParamList } from './types';
+import type { CourierTabParamList, KitchenTabParamList, RootStackParamList, StaffTabParamList, TabParamList } from './types';
 import { LoginScreen, RegisterScreen, WelcomeScreen } from '../screens/AuthScreens';
 import { HomeScreen } from '../screens/HomeScreen';
 import { CartScreen, DishScreen, MenuScreen } from '../screens/MenuScreens';
@@ -18,6 +18,10 @@ import { FloorScreen, ShiftScreen, StaffOrdersScreen, StaffReservationsScreen } 
 import { StaffScanScreen } from '../screens/staff/StaffScanScreen';
 import { KitchenScreen, StopListScreen } from '../screens/staff/KitchenScreens';
 import { AnalyticsScreen, UsersScreen } from '../screens/staff/AdminScreens';
+import { DispatchScreen, ZonesScreen } from '../screens/staff/DeliveryAdminScreens';
+import { AddressesScreen, AddressFormScreen, CheckoutScreen, DeliveryOrderScreen } from '../screens/DeliveryScreens';
+import { CourierActiveScreen, CourierQueueScreen, CourierShiftScreen } from '../screens/courier/CourierScreens';
+import { useCourierOrders } from '../lib/delivery';
 import { isoDay } from '../lib/format';
 import { useKitchenOrders, useStaffOrders, useStaffReservations } from '../lib/staff';
 
@@ -25,6 +29,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 const StaffTab = createBottomTabNavigator<StaffTabParamList>();
 const KitchenTab = createBottomTabNavigator<KitchenTabParamList>();
+const CourierTab = createBottomTabNavigator<CourierTabParamList>();
 
 const theme: Theme = {
   ...DarkTheme,
@@ -91,6 +96,24 @@ function KitchenTabs() {
   );
 }
 
+/** Курʼєр (Delivery API): черга замовлень, мої доставки, зміна, профіль. */
+function CourierTabs() {
+  const available = useCourierOrders('available');
+  const mine = useCourierOrders('mine');
+  const badges = {
+    CourierQueue: available.data?.length ?? 0,
+    CourierActive: (mine.data ?? []).filter((o) => o.status === 'READY' || o.status === 'DELIVERING').length,
+  };
+  return (
+    <CourierTab.Navigator tabBar={(props) => <TabBar {...props} badges={badges} />} screenOptions={tabOptions}>
+      <CourierTab.Screen name="CourierQueue" component={CourierQueueScreen} />
+      <CourierTab.Screen name="CourierActive" component={CourierActiveScreen} />
+      <CourierTab.Screen name="CourierShift" component={CourierShiftScreen} />
+      <CourierTab.Screen name="CourierProfile" component={ProfileScreen} />
+    </CourierTab.Navigator>
+  );
+}
+
 export function RootNavigator() {
   const { user, ready } = useAuth();
   if (!ready) {
@@ -109,6 +132,10 @@ export function RootNavigator() {
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
           </>
+        ) : user.role === 'COURIER' ? (
+          <>
+            <Stack.Screen name="CourierTabs" component={CourierTabs} options={{ animation: 'fade' }} />
+          </>
         ) : user.role === 'KITCHEN' ? (
           <>
             <Stack.Screen name="KitchenTabs" component={KitchenTabs} options={{ animation: 'fade' }} />
@@ -123,6 +150,8 @@ export function RootNavigator() {
             <Stack.Screen name="StopList" component={StopList} />
             <Stack.Screen name="Analytics" component={AnalyticsScreen} />
             <Stack.Screen name="Users" component={UsersScreen} />
+            <Stack.Screen name="Dispatch" component={DispatchScreen} />
+            <Stack.Screen name="Zones" component={ZonesScreen} />
           </>
         ) : (
           <>
@@ -135,6 +164,10 @@ export function RootNavigator() {
             <Stack.Screen name="Review" component={ReviewScreen} options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="Dish" component={DishScreen} options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="Scan" component={ScanScreen} options={{ animation: 'fade_from_bottom', presentation: 'fullScreenModal' }} />
+            <Stack.Screen name="Checkout" component={CheckoutScreen} />
+            <Stack.Screen name="DeliveryOrder" component={DeliveryOrderScreen} />
+            <Stack.Screen name="Addresses" component={AddressesScreen} />
+            <Stack.Screen name="AddressForm" component={AddressFormScreen} options={{ animation: 'slide_from_bottom' }} />
           </>
         )}
       </Stack.Navigator>

@@ -22,6 +22,7 @@ export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   isTest: process.env.NODE_ENV === 'test',
   port: num('PORT', 4000),
+  deliveryPort: num('DELIVERY_PORT', 4100),
   databaseUrl: process.env.DATABASE_URL ?? '',
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET ?? 'dev-access-secret-change-me',
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET ?? 'dev-refresh-secret-change-me',
@@ -76,3 +77,20 @@ export const restaurant = {
     return 180;
   },
 };
+
+/** Бізнес-правила служби доставки (Delivery API). */
+export const delivery = {
+  /** Останнє замовлення приймається за N хв до закриття кухні */
+  lastOrderBeforeCloseMin: 45,
+  /** Неоплачене онлайн-замовлення автоматично скасовується через N хв */
+  unpaidTimeoutMin: 15,
+  /** Скільки активних доставок може мати клієнт одночасно */
+  maxActivePerClient: 3,
+  /** Скільки замовлень курʼєр може везти одночасно */
+  maxActivePerCourier: 2,
+  /** Час на передачу замовлення курʼєру, хв (входить у прогноз доставки) */
+  handoverMin: 5,
+  /** Для демонстрацій поза годинами роботи: DELIVERY_IGNORE_HOURS=true */
+  ignoreHours: process.env.DELIVERY_IGNORE_HOURS === 'true',
+};
+

@@ -2,6 +2,8 @@
 
 СУБД — **PostgreSQL 16**, схема описана в `backend/prisma/schema.prisma`, створюється міграціями (`backend/prisma/migrations`). Гроші зберігаються цілими числами в копійках.
 
+**Одна база даних для двох систем.** З нею працюють Restaurant API (порт 4000) і Delivery API (порт 4100). Міграції застосовує Restaurant API; обидва сервіси користуються тією самою Prisma-схемою. Замовлення доставки зберігаються в тій самій таблиці `orders` (`type = 'DELIVERY'`), тому кухня бачить їх разом із замовленнями в залі, а аналітика рахує обидва канали продажів.
+
 ## 5.1 ER-діаграма (логічна модель)
 
 ```mermaid
@@ -25,6 +27,11 @@ erDiagram
     orders ||--o{ reviews : "оцінюється"
     dishes ||--o{ reviews : "оцінюється"
     orders ||--o{ status_changes : "історія"
+    orders ||--o| deliveries : "доставка (type = DELIVERY)"
+    delivery_zones ||--o{ deliveries : "тариф"
+    delivery_zones ||--o{ addresses : "район"
+    users ||--o{ addresses : "зберігає"
+    users ||--o{ deliveries : "везе (courier_id)"
 
     users {
       int id PK
@@ -32,7 +39,7 @@ erDiagram
       text password_hash "bcrypt"
       varchar name
       varchar phone
-      enum role "CLIENT|STAFF|KITCHEN|ADMIN"
+      enum role "CLIENT|STAFF|KITCHEN|ADMIN|COURIER"
       bool is_active
       timestamptz created_at
     }
@@ -98,8 +105,9 @@ erDiagram
     }
     orders {
       int id PK "починається з 1001"
-      int reservation_id FK
-      int table_id FK
+      enum type "DINE_IN|DELIVERY"
+      int reservation_id FK "лише DINE_IN"
+      int table_id FK "лише DINE_IN"
       int user_id FK
       int created_by_id FK
       enum status
@@ -127,7 +135,7 @@ erDiagram
       int amount
       int tip
       enum method "CARD|CASH"
-      enum status "PENDING|REQUIRES_ACTION|SUCCEEDED|FAILED"
+      enum status "PENDING|REQUIRES_ACTION|SUCCEEDED|FAILED|REFUNDED"
       varchar provider_ref UK
       varchar card_brand
       char card_last4
@@ -141,6 +149,41 @@ erDiagram
       int dish_id FK "NULL = відгук про візит"
       smallint rating "CHECK 1..5"
       varchar comment
+    }
+    delivery_zones {
+      int id PK
+      varchar name UK
+      int fee "коп., CHECK >= 0"
+      int min_order "коп."
+      int free_from "безкоштовно від"
+      int travel_min "CHECK 5..180"
+      bool is_active
+    }
+    addresses {
+      int id PK
+      int user_id FK
+      int zone_id FK
+      varchar label "Дім / Робота"
+      varchar street
+      varchar house
+      varchar apartment
+      bool is_default "одна на клієнта"
+    }
+    deliveries {
+      int order_id PK "FK → orders"
+      int zone_id FK
+      int courier_id FK "users.role = COURIER"
+      varchar recipient_name
+      varchar phone "CHECK +380XXXXXXXXX"
+      varchar street "знімок адреси"
+      varchar house
+      int fee "коп."
+      enum payment_method "CARD|CASH"
+      int change_from "решта з (лише CASH)"
+      timestamptz eta_at "прогноз доставки"
+      timestamptz assigned_at
+      timestamptz picked_up_at
+      timestamptz delivered_at
     }
     status_changes {
       int id PK
@@ -163,8 +206,11 @@ erDiagram
 | `categories`, `dishes` | Меню. `is_available` — стоп-лист, `is_archived` — м'яке видалення страв, що вже є в історії. |
 | `tables` | Столики з координатами на плані залу та унікальним QR-токеном. |
 | `reservations` | Бронювання / візити (у т.ч. walk-in) — центральна сутність бізнес-процесу. |
-| `orders`, `order_items` | Замовлення за столиком у межах візиту; ціна фіксується на момент замовлення. |
-| `payments` | Спроби оплат (карткою через sandbox або готівкою). |
+| `orders`, `order_items` | Замовлення: у залі (`DINE_IN`, у межах візиту) або доставка (`DELIVERY`); ціна фіксується на момент замовлення. |
+| `delivery_zones` | Райони доставки: вартість, мінімальна сума, поріг безкоштовної доставки, час у дорозі, увімкнено / вимкнено. |
+| `addresses` | Збережені адреси клієнта («Дім», «Робота»). |
+| `deliveries` | Доставка замовлення (1 : 1 з `orders`): знімок адреси, отримувач, тариф, спосіб оплати, курʼєр і хронологія (призначено → забрав → вручив). |
+| `payments` | Спроби оплат (карткою через sandbox або готівкою; для доставки готівку фіксує курʼєр, скасування оплаченої — `REFUNDED`). |
 | `reviews` | Відгуки про візит (dish_id = NULL) та оцінки страв. |
 | `status_changes` | Аудит бізнес-процесу: хто, коли і з якого в який стан перевів бронювання / замовлення. |
 
@@ -178,6 +224,11 @@ erDiagram
 | `status_changes_single_target` | CHECK `num_nonnulls(reservation_id, order_id) = 1` | Запис історії належить рівно одному обʼєкту |
 | `reservations_guest_identity` | CHECK `user_id IS NOT NULL OR guest_name IS NOT NULL` | Бронювання завжди має гостя |
 | `reservations_time_order` | CHECK `end_at > start_at` | Коректний інтервал |
+| `orders_type_consistency` | CHECK: `DINE_IN` має `reservation_id` і `table_id`, `DELIVERY` — не має | Замовлення в залі завжди привʼязане до візиту, доставка — ні |
+| `deliveries_order_type` | **тригер** `BEFORE INSERT/UPDATE` | Рядок доставки можна створити лише для замовлення типу `DELIVERY` |
+| `addresses_one_default_per_user` | partial UNIQUE (`user_id`) `WHERE is_default` | Не більше однієї основної адреси |
+| `deliveries_phone_format`, `deliveries_change_only_cash`, `deliveries_timeline_order` | CHECK | Телефон `+380XXXXXXXXX`; «решта з» лише для готівки; час «забрав» ≥ «призначено», «вручив» ≥ «забрав» |
+| `delivery_zones_*` | CHECK | Тариф ≥ 0, мінімальна сума ≥ 0, час у дорозі 5–180 хв |
 | Діапазони | CHECK: ціна > 0, кількість 1..50, місць 1..20, рейтинг 1..5, час приготування 1..180, координати 0..100, `card_last4 ~ '^[0-9]{4}$'` | Валідність даних незалежно від клієнта |
 | FK | `ON DELETE RESTRICT` для бізнес-даних (страва в замовленні, столик у бронюванні), `CASCADE` для залежних (позиції, історія), `SET NULL` для авторів | Referential integrity |
 
@@ -187,7 +238,9 @@ erDiagram
 |---|---|
 | `reservations (table_id, start_at)` | пошук зайнятості столика — booking engine |
 | `reservations (status, start_at)`, `(user_id, start_at)` | списки бронювань персоналу та клієнта, фонові задачі |
-| `orders (status, created_at)`, `(user_id, created_at)`, `(reservation_id)` | kanban, KDS, історія клієнта, рахунок візиту |
+| `orders (status, created_at)`, `(user_id, created_at)`, `(reservation_id)`, `(type, status, created_at)` | kanban, KDS, історія клієнта, рахунок візиту, черга доставок |
+| `deliveries (courier_id)`, `(zone_id)` | завантаження курʼєра, аналітика за районами |
+| `addresses (user_id)` | адреси клієнта |
 | `order_items (order_id)`, `(dish_id)` | склад замовлення, аналітика продажів і рекомендації |
 | `payments (order_id)`, `(status, paid_at)` | оплати замовлення, виручка за період |
 | `dishes (category_id)`, `(is_available, is_archived)` | меню |
@@ -197,4 +250,5 @@ erDiagram
 
 Схема відповідає **3НФ**: кожен неключовий атрибут залежить лише від ключа своєї таблиці. Свідома денормалізація:
 * `order_items.unit_price` — **знімок** ціни на момент замовлення (історична правильність рахунку при зміні меню);
-* `orders.table_id` — копія столика візиту для швидких запитів KDS / плану залу (оновлюється при пересадці гостей разом із бронюванням).
+* `orders.table_id` — копія столика візиту для швидких запитів KDS / плану залу (оновлюється при пересадці гостей разом із бронюванням);
+* `deliveries.street/house/…` — **знімок** адреси на момент замовлення: зміна чи видалення збереженої адреси не змінює історію доставок.

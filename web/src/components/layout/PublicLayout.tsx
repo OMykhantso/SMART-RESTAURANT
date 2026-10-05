@@ -93,6 +93,8 @@ export function PublicLayout() {
                           <MenuLink to="/account" icon={<UserRound className="size-4" />}>Мої візити</MenuLink>
                         ) : user.role === 'KITCHEN' ? (
                           <MenuLink to="/kitchen" icon={<ChefHat className="size-4" />}>Kitchen display</MenuLink>
+                        ) : user.role === 'COURIER' ? (
+                          <MenuLink to="/courier" icon={<UserRound className="size-4" />}>Курʼєр</MenuLink>
                         ) : (
                           <MenuLink to="/staff" icon={<LayoutDashboard className="size-4" />}>Панель керування</MenuLink>
                         )}

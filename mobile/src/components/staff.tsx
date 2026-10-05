@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ban, Banknote, BellRing, Check, CheckCheck, Clock, DoorOpen, HandPlatter, LogIn, UserX, Users, X } from 'lucide-react-native';
+import { Ban, Banknote, BellRing, Bike, Check, CheckCheck, Clock, DoorOpen, HandPlatter, LogIn, UserX, Users, X } from 'lucide-react-native';
 import { Badge, Button } from './ui';
 import { colors, fonts, goldGradient, radius, tones, type Tone } from '../theme';
-import { ORDER_META, RESERVATION_META, ZONE_LABEL } from '../lib/status';
+import { ORDER_META, RESERVATION_META, ZONE_LABEL, placeOf } from '../lib/status';
 import { fmtTime, guestsLabel, minutesSince, money } from '../lib/format';
 import { confirmAction } from '../lib/confirm';
 import { useCashPayment, useOrderAction, useReservationAction } from '../lib/staff';
@@ -74,12 +74,19 @@ export function OrderTicket({ order, compact }: { order: Order; compact?: boolea
   return (
     <View style={[styles.ticket, order.status === 'READY' && { borderColor: 'rgba(52,211,153,0.45)' }, order.status === 'NEW' && { borderColor: 'rgba(251,191,36,0.4)' }]}>
       <View style={styles.ticketHead}>
-        <View style={styles.tableBadge}>
-          <Text style={styles.tableBadgeText}>{order.table.number}</Text>
-        </View>
+        {order.table ? (
+          <View style={styles.tableBadge}>
+            <Text style={styles.tableBadgeText}>{order.table.number}</Text>
+          </View>
+        ) : (
+          <View style={[styles.tableBadge, { backgroundColor: colors.infoSoft, borderColor: 'rgba(125,211,252,0.35)' }]}>
+            <Bike size={20} color={colors.info} />
+          </View>
+        )}
         <View style={{ flex: 1 }}>
           <Text style={styles.ticketTitle}>
             #{order.id} · {order.user?.name ?? order.createdBy.name}
+            {order.delivery ? ` · ${order.delivery.zone.name}` : ''}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
             <Clock size={12} color={colors.faint} />
@@ -116,7 +123,7 @@ export function OrderTicket({ order, compact }: { order: Order; compact?: boolea
               variant="glass"
               icon={<X size={16} color={colors.danger} />}
               disabled={busy}
-              onPress={() => confirmAction('Скасувати замовлення?', `#${order.id} · столик №${order.table.number}`, 'Скасувати', () => action.mutate({ id: order.id, status: 'CANCELLED', reason: 'Скасовано офіціантом' }))}
+              onPress={() => confirmAction('Скасувати замовлення?', `#${order.id} · ${placeOf(order)}`, 'Скасувати', () => action.mutate({ id: order.id, status: 'CANCELLED', reason: 'Скасовано офіціантом' }))}
             />
           )}
           {a.canConfirm && <Button title="Прийняти" size="sm" icon={<Check size={16} color="#141008" />} loading={busy} onPress={() => action.mutate({ id: order.id, status: 'CONFIRMED' })} />}
@@ -133,10 +140,22 @@ export function OrderTicket({ order, compact }: { order: Order; compact?: boolea
           )}
         </View>
       </View>
-      {order.status === 'READY' && (
+      {order.status === 'READY' && !order.delivery && (
         <View style={styles.readyStrip}>
           <BellRing size={14} color={colors.success} />
           <Text style={{ fontFamily: fonts.semibold, color: colors.success, fontSize: 12.5 }}>Готово на кухні — віднесіть гостям</Text>
+        </View>
+      )}
+      {order.delivery && ['CONFIRMED', 'PREPARING', 'READY', 'DELIVERING'].includes(order.status) && (
+        <View style={[styles.readyStrip, { backgroundColor: colors.infoSoft }]}>
+          <Bike size={14} color={colors.info} />
+          <Text style={{ fontFamily: fonts.semibold, color: colors.info, fontSize: 12.5 }}>
+            {order.status === 'DELIVERING'
+              ? `В дорозі · ${order.delivery.courier?.name ?? 'курʼєр'}`
+              : order.delivery.courier
+                ? `Курʼєр: ${order.delivery.courier.name}`
+                : 'Доставка — шукаємо курʼєра'}
+          </Text>
         </View>
       )}
     </View>

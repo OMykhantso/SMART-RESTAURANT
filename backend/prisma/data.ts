@@ -10,6 +10,39 @@ export const USERS: { email: string; name: string; phone: string; role: Role; pa
   { email: 'kitchen@smartrest.ua', name: 'Марко Лисенко', phone: '+380674445566', role: 'KITCHEN', password: 'Kitchen123!' },
   { email: 'client@smartrest.ua', name: 'Олександр Мельник', phone: '+380501234567', role: 'CLIENT', password: 'Client123!' },
   { email: 'maria@smartrest.ua', name: 'Марія Ткаченко', phone: '+380502345678', role: 'CLIENT', password: 'Client123!' },
+  { email: 'courier@smartrest.ua', name: 'Тарас Гуменюк', phone: '+380675556677', role: 'COURIER', password: 'Courier123!' },
+  { email: 'courier2@smartrest.ua', name: 'Віктор Савчук', phone: '+380676667788', role: 'COURIER', password: 'Courier123!' },
+];
+
+/** Зони доставки (райони Києва; ресторан — вул. Хрещатик, 1): вартість і мінімальна сума — у гривнях, час у дорозі — у хвилинах. */
+export const DELIVERY_ZONES: {
+  name: string;
+  description: string;
+  fee: number;
+  minOrder: number;
+  freeFrom: number | null;
+  travelMin: number;
+  isActive?: boolean;
+  streets: string[];
+  weight: number;
+}[] = [
+  { name: 'Печерський', description: 'Центр, Липки, Печерськ', fee: 49, minOrder: 300, freeFrom: 800, travelMin: 15, streets: ['вул. Мечникова', 'вул. Інститутська', 'бульв. Лесі Українки', 'вул. Шовковична', 'вул. Хрещатик'], weight: 30 },
+  { name: 'Шевченківський', description: 'Золоті ворота, Лукʼянівка', fee: 59, minOrder: 350, freeFrom: 900, travelMin: 20, streets: ['вул. Січових Стрільців', 'вул. Ярославів Вал', 'вул. Велика Житомирська', 'вул. Богдана Хмельницького'], weight: 22 },
+  { name: 'Подільський', description: 'Поділ, Контрактова площа', fee: 59, minOrder: 350, freeFrom: 900, travelMin: 20, streets: ['вул. Покровська', 'вул. Сагайдачного', 'вул. Костянтинівська'], weight: 14 },
+  { name: 'Голосіївський', description: 'Олімпійська, Деміївка', fee: 69, minOrder: 400, freeFrom: 1000, travelMin: 25, streets: ['вул. Антоновича', 'вул. Велика Васильківська', 'просп. Голосіївський'], weight: 12 },
+  { name: 'Солом’янський', description: 'Вокзал, Чоколівка', fee: 69, minOrder: 400, freeFrom: 1000, travelMin: 25, streets: ['просп. Повітрофлотський', 'вул. Солом’янська', 'бульв. Вацлава Гавела'], weight: 10 },
+  { name: 'Дніпровський', description: 'Лівий берег, Русанівка', fee: 79, minOrder: 400, freeFrom: 1100, travelMin: 30, streets: ['бульв. Верховної Ради', 'вул. Микільсько-Слобідська', 'просп. Соборності'], weight: 7 },
+  { name: 'Оболонський', description: 'Оболонь, Мінський масив', fee: 89, minOrder: 500, freeFrom: 1200, travelMin: 35, streets: ['просп. Оболонський', 'вул. Йорданська', 'вул. Героїв полку «Азов»'], weight: 5 },
+  { name: 'Бровари', description: 'Передмістя — тимчасово не обслуговується', fee: 149, minOrder: 800, freeFrom: null, travelMin: 45, isActive: false, streets: ['бульв. Незалежності (Бровари)'], weight: 0 },
+];
+
+export const DELIVERY_COMMENTS = [
+  { rating: 5, text: 'Привезли гарячим і швидше, ніж обіцяли. Курʼєр дуже ввічливий!' },
+  { rating: 5, text: 'Карбонара як у ресторані — навіть упаковка продумана.' },
+  { rating: 4, text: 'Все смачно, трохи затримались, але попередили в застосунку.' },
+  { rating: 5, text: 'Зручно бачити, де замовлення — від кухні до дверей.' },
+  { rating: 4, text: 'Піца трохи остигла, але смак чудовий.' },
+  { rating: 3, text: 'Довелося чекати курʼєра, хоча кухня приготувала швидко.' },
 ];
 
 export const CLIENT_NAMES = [

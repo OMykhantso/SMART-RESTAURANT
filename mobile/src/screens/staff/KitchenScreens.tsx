@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, RefreshControl, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Check, ChefHat, Clock, Flame, Play, Search, UserRound } from 'lucide-react-native';
+import { Bike, Check, ChefHat, Clock, Flame, Play, Search, UserRound } from 'lucide-react-native';
 import { Badge, Button, Caption, EmptyState, Eyebrow, Header, Screen, Skeleton, Title } from '../../components/ui';
 import { Segmented } from '../../components/staff';
 import { colors, fonts, radius } from '../../theme';
@@ -95,7 +95,7 @@ function KitchenTicket({ order, now, canCook }: { order: Order; now: number; can
     mutationFn: (status: 'PREPARING' | 'READY') => api.patch<Order>(`/orders/${order.id}/status`, { status }),
     onSuccess: (o) => {
       haptic.success();
-      if (o.status === 'READY') toast({ title: `#${o.id} готове — стіл №${o.table.number}`, tone: 'success' });
+      if (o.status === 'READY') toast({ title: o.table ? `#${o.id} готове — стіл №${o.table.number}` : `#${o.id} готове — передайте курʼєру`, tone: 'success' });
       ['kitchen', 'orders', 'order', 'tables-live'].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
     },
     onError: (e) => toast({ title: (e as Error).message, tone: 'danger' }),
@@ -110,14 +110,21 @@ function KitchenTicket({ order, now, canCook }: { order: Order; now: number; can
   return (
     <View style={[styles.ticket, order.status !== 'READY' && ratio >= 1 && { borderColor: 'rgba(251,113,133,0.5)' }]}>
       <View style={styles.head}>
-        <View style={styles.table}>
-          <Caption style={{ fontSize: 9.5, letterSpacing: 1 }}>СТІЛ</Caption>
-          <Text style={{ fontFamily: fonts.display, fontSize: 24, color: colors.goldLight, marginTop: -2 }}>{order.table.number}</Text>
-        </View>
+        {order.table ? (
+          <View style={styles.table}>
+            <Caption style={{ fontSize: 9.5, letterSpacing: 1 }}>СТІЛ</Caption>
+            <Text style={{ fontFamily: fonts.display, fontSize: 24, color: colors.goldLight, marginTop: -2 }}>{order.table.number}</Text>
+          </View>
+        ) : (
+          <View style={[styles.table, { backgroundColor: colors.infoSoft, borderColor: 'rgba(125,211,252,0.35)' }]}>
+            <Bike size={20} color={colors.info} />
+            <Caption style={{ fontSize: 8.5, letterSpacing: 0.6, color: colors.info, marginTop: 2 }}>ДОСТАВКА</Caption>
+          </View>
+        )}
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: fonts.bold, fontSize: 16, color: colors.text }}>#{order.id}</Text>
           <Caption>
-            прийнято {fmtTime(order.confirmedAt ?? order.createdAt)} · норма {norm} хв
+            {order.delivery ? `${order.delivery.zone.name} · ` : ''}прийнято {fmtTime(order.confirmedAt ?? order.createdAt)} · норма {norm} хв
           </Caption>
         </View>
         <View style={{ alignItems: 'flex-end' }}>

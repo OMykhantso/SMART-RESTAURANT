@@ -4,13 +4,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Clock, Flame, Leaf, QrCode, Scale, Search, ShoppingBag, Sparkles, Star, Trash, UtensilsCrossed, X, Zap } from 'lucide-react-native';
+import { Bike, Clock, Flame, Leaf, QrCode, Scale, Search, ShoppingBag, Sparkles, Star, Trash, UtensilsCrossed, X, Zap } from 'lucide-react-native';
 import { Body, Button, Caption, Chip, DishImage, EmptyState, Eyebrow, Header, IconButton, Screen, Skeleton, Title } from '../components/ui';
 import { AddButton, DishTile, QtyStepper, SectionTitle } from '../components/domain';
 import { colors, fonts, goldGradient, radius } from '../theme';
 import { api } from '../api/client';
 import { useCart } from '../lib/cart';
 import { useCategories, useCurrentVisit, useDishes, useRecommendations } from '../lib/queries';
+import { useDeliveryInfo } from '../lib/delivery';
 import { haptic } from '../lib/notify';
 import { useToast } from '../lib/toast';
 import { money } from '../lib/format';
@@ -49,6 +50,7 @@ export function MenuScreen() {
   const [veg, setVeg] = useState(false);
   const categories = useCategories();
   const visit = useCurrentVisit();
+  const delivery = useDeliveryInfo();
   const dishes = useDishes({ category: cat ?? undefined, search: search || undefined, vegetarian: veg || undefined, sort: cat ? 'menu' : 'popular' });
   const tileW = (Math.min(width, 560) - 20 * 2 - 12) / 2;
 
@@ -73,10 +75,20 @@ export function MenuScreen() {
                   <Text style={{ fontFamily: fonts.semibold, color: colors.success, fontSize: 13 }}>Столик №{visit.data.active.table.number} — замовлення йде прямо на кухню</Text>
                 </View>
               ) : (
-                <Pressable onPress={() => nav.navigate('Scan')} style={styles.hint}>
-                  <QrCode size={16} color={colors.gold} />
-                  <Text style={{ flex: 1, fontFamily: fonts.medium, color: colors.textSoft, fontSize: 13 }}>Відскануйте QR на столику, щоб замовляти</Text>
-                </Pressable>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                  <View style={[styles.hint, { flex: 1.25, marginTop: 0 }]}>
+                    <Bike size={16} color={colors.gold} />
+                    <Text style={{ flex: 1, fontFamily: fonts.medium, color: colors.textSoft, fontSize: 12.5 }} numberOfLines={2}>
+                      Доставка додому{delivery.data?.fromPrice != null ? ` від ${money(delivery.data.fromPrice)}` : ''} · ~{delivery.data ? delivery.data.kitchenEtaMin + 15 : 45} хв
+                    </Text>
+                  </View>
+                  <Pressable onPress={() => nav.navigate('Scan')} style={[styles.hint, { flex: 1, marginTop: 0, backgroundColor: 'rgba(255,255,255,0.04)' }]}>
+                    <QrCode size={16} color={colors.gold} />
+                    <Text style={{ flex: 1, fontFamily: fonts.medium, color: colors.textSoft, fontSize: 12.5 }} numberOfLines={2}>
+                      Я в ресторані
+                    </Text>
+                  </Pressable>
+                </View>
               )}
               <View style={styles.search}>
                 <Search size={18} color={colors.faint} />
@@ -265,7 +277,7 @@ export function CartScreen({ navigation }: ScreenProps<'Cart'>) {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <Screen edges={['top']} contentStyle={{ paddingBottom: 200 }}>
-          <Header title="Кошик" subtitle={active ? `Столик №${active.table.number} · ${active.code}` : undefined} />
+          <Header title="Кошик" subtitle={active ? `Столик №${active.table.number} · ${active.code}` : 'Доставка додому або замовлення в ресторані'} />
           {cart.lines.length === 0 ? (
             <EmptyState icon={<UtensilsCrossed size={26} color={colors.gold} />} title="Кошик порожній" text="Додайте страви з меню" action={<Button title="До меню" variant="glass" onPress={() => navigation.navigate('Tabs', { screen: 'Menu' })} />} />
           ) : (
@@ -326,9 +338,21 @@ export function CartScreen({ navigation }: ScreenProps<'Cart'>) {
             <Text style={{ fontFamily: fonts.display, fontSize: 28, color: colors.goldLight }}>{money(cart.total)}</Text>
           </View>
           {active ? (
-            <Button title="Надіслати на кухню" loading={place.isPending} onPress={() => place.mutate()} />
+            <>
+              <Button title="Надіслати на кухню" loading={place.isPending} onPress={() => place.mutate()} />
+              <Pressable onPress={() => navigation.navigate('Checkout')} style={styles.altCta}>
+                <Bike size={15} color={colors.muted} />
+                <Text style={{ fontFamily: fonts.medium, color: colors.muted, fontSize: 13 }}>Або оформити доставку додому</Text>
+              </Pressable>
+            </>
           ) : (
-            <Button title="Скануйте QR столика" variant="outline" icon={<QrCode size={18} color={colors.goldLight} />} onPress={() => navigation.navigate('Scan')} />
+            <>
+              <Button title="Оформити доставку" icon={<Bike size={18} color="#141008" />} onPress={() => navigation.navigate('Checkout')} />
+              <Pressable onPress={() => navigation.navigate('Scan')} style={styles.altCta}>
+                <QrCode size={15} color={colors.muted} />
+                <Text style={{ fontFamily: fonts.medium, color: colors.muted, fontSize: 13 }}>Я в ресторані — скануйте QR столика</Text>
+              </Pressable>
+            </>
           )}
         </View>
       )}
@@ -353,5 +377,6 @@ const styles = StyleSheet.create({
   lineNote: { color: colors.muted, fontFamily: fonts.body, fontSize: 12.5, paddingVertical: 6 },
   upsell: { width: 140, padding: 8, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   notes: { marginTop: 18, minHeight: 80, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(255,255,255,0.03)', padding: 14, color: colors.text, fontFamily: fonts.medium, textAlignVertical: 'top' },
+  altCta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 12, paddingBottom: 2 },
   checkout: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 20, paddingTop: 16, backgroundColor: 'rgba(12,12,16,0.98)', borderTopWidth: 1, borderTopColor: colors.border, borderTopLeftRadius: 26, borderTopRightRadius: 26 },
 });

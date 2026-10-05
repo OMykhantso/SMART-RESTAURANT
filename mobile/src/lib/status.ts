@@ -18,10 +18,26 @@ export const ORDER_META: Record<OrderStatus, { label: string; tone: Tone; hint: 
   READY: { label: 'Готово', tone: 'success', hint: 'Офіціант уже несе страви' },
   SERVED: { label: 'Подано', tone: 'violet', hint: 'Смачного! Оплатити можна в один дотик' },
   PAID: { label: 'Оплачено', tone: 'gold', hint: 'Дякуємо! Чекаємо на вас знову' },
+  DELIVERING: { label: 'В дорозі', tone: 'info', hint: 'Курʼєр уже везе ваше замовлення' },
+  DELIVERED: { label: 'Доставлено', tone: 'gold', hint: 'Смачного! Дякуємо, що обрали нас' },
   CANCELLED: { label: 'Скасовано', tone: 'danger', hint: 'Замовлення скасовано' },
 };
 
+/** Статуси доставки очима клієнта (Delivery API). */
+export const DELIVERY_META: Record<OrderStatus, { label: string; tone: Tone; hint: string }> = {
+  ...ORDER_META,
+  NEW: { label: 'Очікує оплати', tone: 'warning', hint: 'Оплатіть замовлення — і ми почнемо готувати' },
+  CONFIRMED: { label: 'Прийнято', tone: 'info', hint: 'Кухня отримала замовлення' },
+  PREPARING: { label: 'Готується', tone: 'orange', hint: 'Кухар уже працює над вашими стравами' },
+  READY: { label: 'Чекає курʼєра', tone: 'success', hint: 'Страви готові й запаковані' },
+};
+
 export const ORDER_FLOW: OrderStatus[] = ['NEW', 'CONFIRMED', 'PREPARING', 'READY', 'SERVED', 'PAID'];
+export const DELIVERY_FLOW: OrderStatus[] = ['CONFIRMED', 'PREPARING', 'READY', 'DELIVERING', 'DELIVERED'];
+
+export const metaOf = (o: { type?: string; status: OrderStatus }) => (o.type === 'DELIVERY' ? DELIVERY_META : ORDER_META)[o.status];
+export const placeOf = (o: { table: { number: number } | null; delivery?: { zone: { name: string } } | null }) =>
+  o.table ? `Столик №${o.table.number}` : `Доставка${o.delivery ? ` · ${o.delivery.zone.name}` : ''}`;
 
 export const ZONE_LABEL: Record<TableZone, string> = { HALL: 'Головна зала', TERRACE: 'Тераса', VIP: 'VIP-зала', BAR: 'Бар' };
 

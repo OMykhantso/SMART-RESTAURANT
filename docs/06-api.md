@@ -1,7 +1,14 @@
 # 6. Специфікація REST API
 
-> Файл згенеровано автоматично командою `npm run docs:api` з реєстру маршрутів backend.
-> Інтерактивна документація (OpenAPI 3.1 / Swagger UI): **http://localhost:4000/api/docs**, JSON: `/api/openapi.json`.
+> Файл згенеровано автоматично командою `npm run docs:api` з реєстрів маршрутів обох сервісів.
+> Система складається з **двох окремих API на одній базі даних PostgreSQL**:
+>
+> | Сервіс | Порт | Swagger UI | Для кого |
+> |---|---|---|---|
+> | **Restaurant API** | 4000 | http://localhost:4000/api/docs | Web (гість, зал, кухня, адмін), мобільний: меню, бронювання, QR, замовлення за столиком, вхід |
+> | **Delivery API** | 4100 | http://localhost:4100/api/docs | мобільний: доставка, адреси, курʼєр, диспетчерська, зони |
+>
+> Вхід — один для обох систем: `POST :4000/api/auth/login` видає JWT, який приймає і Delivery API.
 
 **Базовий URL:** `/api` · **Формат:** JSON · **Автентифікація:** `Authorization: Bearer <accessToken>` (JWT, 30 хв) + refresh-токен (30 днів, ротація).
 **Гроші:** цілі числа в копійках. **Час:** ISO 8601 (UTC), часовий пояс ресторану — Europe/Kyiv.
@@ -22,7 +29,7 @@
 | 409 | Конфлікт бізнес-правил (`INVALID_TRANSITION`, `TABLE_ALREADY_BOOKED`, `NOT_CHECKED_IN`, `ALREADY_PAID`…) |
 | 422 | Дані коректні синтаксично, але порушують правило (`OUTSIDE_OPENING_HOURS`, `CARD_INVALID`…) |
 
-## Endpoints (59)
+## Restaurant API — endpoints (59), порт 4000
 
 ### Auth
 
@@ -116,7 +123,7 @@
 
 | Метод | URL | Доступ | Опис |
 |---|---|---|---|
-| `POST` | `/api/orders/:id/review` | CLIENT | Залишити відгук про візит і оцінити страви (лише після оплати) → **201** |
+| `POST` | `/api/orders/:id/review` | CLIENT | Залишити відгук про візит / доставку і оцінити страви (після оплати або доставки) → **201** |
 | `GET` | `/api/reviews` | публічний | Останні відгуки гостей (публічно — загальні відгуки про візит) |
 
 ### Payments (sandbox)
@@ -148,6 +155,72 @@
 |---|---|---|---|
 | `POST` | `/api/uploads` | ADMIN | Завантажити зображення страви (multipart/form-data, поле file, до 5 МБ) → **201** |
 
+## Delivery API — endpoints (26), порт 4100
+
+Окремий сервіс служби доставки. Типові коди помилок: `DELIVERY_CLOSED`, `ZONE_INACTIVE`, `BELOW_MIN_ORDER`, `PHONE_INVALID`,
+`TOO_MANY_ACTIVE_DELIVERIES`, `ALREADY_TAKEN`, `COURIER_BUSY`, `NOT_READY`, `TOO_LATE_TO_CANCEL`, `ORDER_NOT_AWAITING_PAYMENT`.
+
+### Auth
+
+| Метод | URL | Доступ | Опис |
+|---|---|---|---|
+| `GET` | `/api/me` | будь-який автентифікований | Поточний користувач (той самий JWT, що видає Restaurant API) |
+
+### Delivery
+
+| Метод | URL | Доступ | Опис |
+|---|---|---|---|
+| `GET` | `/api/delivery/info` | публічний | Чи працює доставка зараз, години, зони і прогноз часу |
+| `POST` | `/api/delivery/quote` | публічний | Розрахунок: сума, вартість доставки, мінімальне замовлення і прогноз часу |
+
+### Delivery zones
+
+| Метод | URL | Доступ | Опис |
+|---|---|---|---|
+| `GET` | `/api/delivery/zones` | публічний (JWT опц.) | Зони доставки (адміністратор бачить і неактивні) |
+| `POST` | `/api/delivery/zones` | ADMIN | Створити зону доставки → **201** |
+| `PATCH` | `/api/delivery/zones/:id` | ADMIN | Змінити зону: вартість, мінімальна сума, час у дорозі, увімкнути/вимкнути |
+
+### Addresses
+
+| Метод | URL | Доступ | Опис |
+|---|---|---|---|
+| `GET` | `/api/addresses` | CLIENT | Мої збережені адреси |
+| `POST` | `/api/addresses` | CLIENT | Зберегти адресу → **201** |
+| `PATCH` | `/api/addresses/:id` | CLIENT | Змінити адресу або зробити її основною |
+| `DELETE` | `/api/addresses/:id` | CLIENT | Видалити адресу |
+
+### Delivery orders
+
+| Метод | URL | Доступ | Опис |
+|---|---|---|---|
+| `POST` | `/api/delivery/orders` | CLIENT | Оформити доставку → **201** |
+| `GET` | `/api/delivery/orders/my` | CLIENT | Мої доставки (історія та активні) |
+| `GET` | `/api/delivery/orders` | STAFF, ADMIN | Диспетчерська: доставки за день (зал / адміністратор) |
+| `GET` | `/api/delivery/orders/:id` | будь-який автентифікований | Деталі доставки з історією статусів |
+| `POST` | `/api/delivery/orders/:id/cancel` | CLIENT, STAFF, ADMIN | Скасувати доставку (клієнт — до початку приготування; оплачене — з поверненням коштів) |
+| `POST` | `/api/delivery/orders/:id/assign` | STAFF, ADMIN | Призначити або зняти курʼєра (диспетчер) |
+
+### Delivery payments
+
+| Метод | URL | Доступ | Опис |
+|---|---|---|---|
+| `GET` | `/api/delivery/test-cards` | публічний | Тестові картки sandbox-шлюзу |
+| `POST` | `/api/delivery/orders/:id/pay` | CLIENT | Оплатити доставку карткою (sandbox, 3-D Secure, Idempotency-Key) |
+| `POST` | `/api/delivery/payments/:id/confirm` | CLIENT | Підтвердження 3-D Secure (код sandbox: 123456) |
+
+### Courier
+
+| Метод | URL | Доступ | Опис |
+|---|---|---|---|
+| `GET` | `/api/courier/orders` | COURIER | Замовлення курʼєра: available — шукають курʼєра; mine — мої активні; history — доставлені за 7 днів |
+| `GET` | `/api/courier/summary` | COURIER | Підсумок зміни курʼєра: доставлено, готівка на руках, чайові, середній час у дорозі |
+| `POST` | `/api/courier/orders/:id/accept` | COURIER | Прийняти замовлення (поки готується або вже готове) |
+| `POST` | `/api/courier/orders/:id/release` | COURIER | Відмовитися від замовлення (до того, як забрали) |
+| `POST` | `/api/courier/orders/:id/pickup` | COURIER, ADMIN | Забрав з кухні → «В дорозі» (лише коли кухня позначила «Готово») |
+| `POST` | `/api/courier/orders/:id/delivered` | COURIER, ADMIN | Вручено клієнту (готівка — фіксується оплата курʼєру) |
+| `GET` | `/api/courier/couriers` | STAFF, ADMIN | Курʼєри та їх поточне навантаження (для диспетчера) |
+
 ## Real-time події (Socket.IO)
 
 Підключення: `io(<host>, { auth: { token: accessToken } })`. Кімнати призначаються сервером за роллю.
@@ -161,3 +234,14 @@
 | `payment:succeeded` | персонал, власник | успішна оплата |
 | `tables:changed` | персонал | змінився стан залу |
 | `menu:changed` | усі | зміна меню / стоп-листа |
+
+**Delivery API** має власний Socket.IO-сервер (порт 4100, той самий JWT):
+
+| Подія | Отримувачі | Коли |
+|---|---|---|
+| `delivery:updated` | клієнт, призначений курʼєр, диспетчерська (зал / адмін) | будь-яка зміна доставки: оплата, кухня, курʼєр, скасування |
+| `courier:queue` | усі курʼєри | змінилась черга замовлень, що шукають курʼєра |
+
+**Звʼязок між системами.** Коли Delivery API створює чи змінює доставку, він робить `pg_notify('sr_orders', …)` у спільній БД;
+Restaurant API слухає канал (`LISTEN`) і надсилає `order:created` / `order:updated` кухні й залу у Web. І навпаки: коли кухня
+в Web позначає «Готово», Delivery API отримує подію і сповіщає клієнта та курʼєрів. NOTIFY у транзакції доставляється лише після COMMIT.

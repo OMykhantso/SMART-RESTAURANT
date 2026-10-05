@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import type { Dish, LiveTable, Order, OrderItemStatus, OrderStatus, Reservation, ReservationStatus, Role, User } from '../api/types';
 import { useToast } from './toast';
 import { haptic } from './notify';
+import { placeOf } from './status';
 
 /** Дані та дії робочих ролей (офіціант, кухар, адміністратор) — ті самі endpoints, що й у Web-панелі. */
 
@@ -18,6 +19,7 @@ export interface TodayStats {
   avgPrepMin: number | null;
   tables: { total: number; occupied: number };
   guestsInHouse: number;
+  delivery?: { total: number; inKitchen: number; waitingCourier: number; onTheWay: number; delivered: number };
 }
 
 export interface Overview {
@@ -42,6 +44,16 @@ export interface Overview {
   ordersByHour: { hour: number; orders: number }[];
   topDishes: { dishId: number; name: string; imageUrl: string | null; quantity: number; revenue: number }[];
   categories: { category: string; emoji: string | null; revenue: number; quantity: number }[];
+  delivery?: {
+    orders: number;
+    delivered: number;
+    cancelled: number;
+    revenue: number;
+    share: number;
+    fees: number;
+    avgDeliveryMin: number;
+    byZone: { zone: string; orders: number; revenue: number }[];
+  };
 }
 
 export const useToday = () => useQuery({ queryKey: ['today'], queryFn: () => api.get<TodayStats>('/analytics/today'), refetchInterval: 60_000 });
@@ -104,7 +116,7 @@ export function useOrderAction() {
     mutationFn: ({ id, status, reason }: { id: number; status: OrderStatus; reason?: string }) => api.patch<Order>(`/orders/${id}/status`, { status, reason }),
     onSuccess: (o) => {
       haptic.success();
-      toast({ title: ORDER_SUCCESS[o.status] ?? 'Статус оновлено', body: `#${o.id} · столик №${o.table.number}`, tone: 'success' });
+      toast({ title: ORDER_SUCCESS[o.status] ?? 'Статус оновлено', body: `#${o.id} · ${placeOf(o)}`, tone: 'success' });
       invalidate();
     },
     onError: (e) => {
@@ -139,7 +151,7 @@ export function useItemStatus() {
     onSuccess: (o) => {
       if (o.status === 'READY') {
         haptic.success();
-        toast({ title: `Замовлення #${o.id} готове`, body: `Столик №${o.table.number} — офіціант отримав сигнал`, tone: 'success' });
+        toast({ title: `Замовлення #${o.id} готове`, body: o.table ? `Столик №${o.table.number} — офіціант отримав сигнал` : 'Доставка — курʼєр отримав сигнал', tone: 'success' });
       } else haptic.light();
       invalidate();
     },
@@ -181,7 +193,7 @@ export function useUpdateUser() {
   });
 }
 
-export const ROLE_LABEL: Record<Role, string> = { CLIENT: 'Гість', STAFF: 'Офіціант', KITCHEN: 'Кухар', ADMIN: 'Адміністратор' };
+export const ROLE_LABEL: Record<Role, string> = { CLIENT: 'Гість', STAFF: 'Офіціант', KITCHEN: 'Кухар', ADMIN: 'Адміністратор', COURIER: 'Курʼєр' };
 
 /** Перемальовує компонент кожні `ms` мілісекунд (таймери на кухні, «хв тому»). */
 export function useTick(ms = 15_000) {

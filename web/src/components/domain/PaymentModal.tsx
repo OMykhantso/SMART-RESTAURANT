@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/primitives';
 import { api, errorMessage } from '@/lib/api';
 import { cn, money, uid } from '@/lib/format';
-import { TEST_CARDS } from '@/lib/constants';
+import { orderPlace, TEST_CARDS } from '@/lib/constants';
 import type { Order, PayResult } from '@/lib/types';
 
 const TIPS = [0, 5, 10, 15];
@@ -90,7 +90,7 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
   const valid = number.replace(/\s/g, '').length >= 15 && /^\d{2}\/\d{2}$/.test(exp) && /^\d{3,4}$/.test(cvc);
 
   return (
-    <Modal open={open} onClose={close} size="md" title={result ? undefined : 'Оплата замовлення'} subtitle={result ? undefined : `#${order.id} · столик №${order.table.number}`} hideClose={Boolean(result)}>
+    <Modal open={open} onClose={close} size="md" title={result ? undefined : 'Оплата замовлення'} subtitle={result ? undefined : `#${order.id} · ${orderPlace(order)}`} hideClose={Boolean(result)}>
       <AnimatePresence mode="wait">
         {result ? (
           <motion.div key="ok" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-4 text-center">

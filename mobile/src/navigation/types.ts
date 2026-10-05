@@ -5,7 +5,7 @@ export type TabParamList = {
   Home: undefined;
   Menu: undefined;
   ScanTab: undefined;
-  Visits: { tab?: 'reservations' | 'orders' } | undefined;
+  Visits: { tab?: 'reservations' | 'orders' | 'deliveries' } | undefined;
   Profile: undefined;
 };
 
@@ -23,6 +23,13 @@ export type KitchenTabParamList = {
   KitchenProfile: undefined;
 };
 
+export type CourierTabParamList = {
+  CourierQueue: undefined;
+  CourierActive: undefined;
+  CourierShift: undefined;
+  CourierProfile: undefined;
+};
+
 export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
@@ -32,10 +39,15 @@ export type RootStackParamList = {
   Reservation: { id: number; justCreated?: boolean };
   Order: { id: number };
   Cart: undefined;
-  Payment: { orderId: number };
+  Payment: { orderId: number; delivery?: boolean };
   Review: { orderId: number };
   Dish: { id: number };
   Scan: undefined;
+  // доставка (Delivery API)
+  Checkout: undefined;
+  DeliveryOrder: { id: number; justCreated?: boolean };
+  Addresses: undefined;
+  AddressForm: { id?: number };
   // робочі ролі
   StaffTabs: NavigatorScreenParams<StaffTabParamList> | undefined;
   KitchenTabs: NavigatorScreenParams<KitchenTabParamList> | undefined;
@@ -45,6 +57,9 @@ export type RootStackParamList = {
   StopList: undefined;
   Analytics: undefined;
   Users: undefined;
+  Dispatch: undefined;
+  Zones: undefined;
+  CourierTabs: NavigatorScreenParams<CourierTabParamList> | undefined;
 };
 
 export type ScreenProps<K extends keyof RootStackParamList> = NativeStackScreenProps<RootStackParamList, K>;

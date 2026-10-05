@@ -13,7 +13,7 @@ import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useCurrentVisit, useMyOrders } from '@/lib/queries';
 import { fmtDateShort, fmtDayNum, fmtFullDate, fmtMonthShort, guestsLabel, money } from '@/lib/format';
-import { ZONES } from '@/lib/constants';
+import { orderPlace, ZONES } from '@/lib/constants';
 import type { Reservation } from '@/lib/types';
 
 type Tab = 'visits' | 'orders' | 'profile';
@@ -127,7 +127,7 @@ export default function Account() {
                       #{o.id} · {o.items.map((i) => i.name).join(', ')}
                     </div>
                     <div className="text-xs text-ink-400">
-                      {fmtDateShort(o.createdAt)} · столик №{o.table.number} · {o.itemsCount} поз.
+                      {fmtDateShort(o.createdAt)} · {orderPlace(o)} · {o.itemsCount} поз.
                     </div>
                   </div>
                   <div className="hidden text-right sm:block">

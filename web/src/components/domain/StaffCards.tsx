@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Banknote, Bell, Check, CircleX, Clock, DoorOpen, HandPlatter, LogIn, Phone, StickyNote, UserX } from 'lucide-react';
+import { Banknote, Bell, Bike, Check, CircleX, Clock, DoorOpen, HandPlatter, LogIn, Phone, StickyNote, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { OrderBadge, ReservationBadge } from './StatusBadge';
 import { ReasonModal } from './StaffModals';
@@ -115,10 +115,19 @@ export function OrderCard({ o, now }: { o: Order; now: number }) {
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="flex items-baseline gap-2 whitespace-nowrap">
-            <span className="font-display text-lg text-cream">№{o.table.number}</span>
+            {o.table ? (
+              <span className="font-display text-lg text-cream">№{o.table.number}</span>
+            ) : (
+              <span className="flex items-center gap-1 rounded-full bg-sky-400/12 px-2 py-0.5 text-xs font-medium text-sky-200">
+                <Bike className="size-3.5" /> Доставка
+              </span>
+            )}
             <span className="text-xs text-ink-500">#{o.id}</span>
           </div>
-          <div className="text-xs text-ink-400">{o.user?.name ?? o.createdBy.name}</div>
+          <div className="text-xs text-ink-400">
+            {o.user?.name ?? o.createdBy.name}
+            {o.delivery && ` · ${o.delivery.zone.name}`}
+          </div>
         </div>
         <span className={cn('flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] tabular-nums', late ? 'bg-rose-500/15 text-rose-200' : 'bg-white/5 text-ink-300')}>
           <Clock className="size-3" /> {age} хв
@@ -160,9 +169,14 @@ export function OrderCard({ o, now }: { o: Order; now: number }) {
             Скасувати
           </Button>
         )}
-        {o.status === 'READY' && (
+        {o.status === 'READY' && !o.delivery && (
           <span className="flex items-center gap-1 text-xs text-emerald-300">
             <Bell className="size-3.5 animate-bounce" /> Забрати з кухні
+          </span>
+        )}
+        {o.status === 'READY' && o.delivery && (
+          <span className="flex items-center gap-1 text-xs text-sky-200">
+            <Bike className="size-3.5" /> {o.delivery.courier ? `Курʼєр ${o.delivery.courier.name.split(' ')[0]} забере` : 'Чекає курʼєра'}
           </span>
         )}
       </div>

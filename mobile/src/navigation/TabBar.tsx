@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
-import { CalendarDays, ChefHat, ClipboardList, House, LayoutGrid, Receipt, ScanLine, Soup, UserRound, UtensilsCrossed } from 'lucide-react-native';
+import { Bike, CalendarDays, ChefHat, ClipboardList, House, LayoutGrid, PackageSearch, Receipt, ScanLine, Soup, UserRound, UtensilsCrossed, Wallet } from 'lucide-react-native';
 import { colors, fonts, goldGradient } from '../theme';
 import { haptic } from '../lib/notify';
 
@@ -20,11 +20,15 @@ const ICONS = {
   KitchenBoard: ChefHat,
   StopListTab: Soup,
   KitchenProfile: UserRound,
+  CourierQueue: PackageSearch,
+  CourierActive: Bike,
+  CourierShift: Wallet,
+  CourierProfile: UserRound,
 } as const;
 const LABELS: Record<keyof typeof ICONS, string> = {
   Home: 'Головна',
   Menu: 'Меню',
-  Visits: 'Візити',
+  Visits: 'Історія',
   Profile: 'Профіль',
   Shift: 'Зміна',
   Floor: 'Зал',
@@ -33,6 +37,10 @@ const LABELS: Record<keyof typeof ICONS, string> = {
   KitchenBoard: 'Кухня',
   StopListTab: 'Стоп-лист',
   KitchenProfile: 'Профіль',
+  CourierQueue: 'Замовлення',
+  CourierActive: 'Мої',
+  CourierShift: 'Зміна',
+  CourierProfile: 'Профіль',
 };
 /** Центральна кнопка сканера: гість сканує QR столика, офіціант — QR бронювання гостя. */
 const SCAN_TARGET = { ScanTab: 'Scan', StaffScanTab: 'StaffScan' } as const;

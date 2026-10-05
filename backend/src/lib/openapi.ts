@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { routeRegistry } from './router';
+import { routeRegistry, type RegisteredRoute } from './router';
 
 /**
  * Генерує OpenAPI 3.1 специфікацію з реєстру маршрутів.
@@ -16,11 +16,24 @@ function toJsonSchema(schema: unknown, io: 'input' | 'output' = 'input') {
   }
 }
 
-export function buildOpenApi() {
+const RESTAURANT_INFO = {
+  title: 'SMART RESTAURANT API',
+  version: '1.0.0',
+  description:
+    'REST API системи «Smart Restaurant»: меню, столики, booking engine, бронювання, замовлення, kitchen display, ' +
+    'sandbox-оплата, QR check-in, рекомендації, аналітика.\n\n' +
+    'Real-time події — Socket.IO (той самий хост): order:created, order:updated, reservation:created, ' +
+    'reservation:updated, tables:changed, menu:changed, payment:succeeded.\n\n' +
+    'Замовлення доставки створює окремий сервіс — Delivery API (порт 4100) — у тій самій базі даних; ' +
+    'кухня бачить їх тут разом із замовленнями в залі.\n\n' +
+    'Усі грошові суми — у копійках (integer).',
+};
+
+export function buildOpenApi(registry: RegisteredRoute[] = routeRegistry, info: typeof RESTAURANT_INFO = RESTAURANT_INFO) {
   const paths: Record<string, Record<string, unknown>> = {};
   const tagSet = new Set<string>();
 
-  for (const r of routeRegistry) {
+  for (const r of registry) {
     const path = r.fullPath.replace(/:(\w+)/g, '{$1}');
     paths[path] ??= {};
     r.tags.forEach((t) => tagSet.add(t));
@@ -77,16 +90,7 @@ export function buildOpenApi() {
 
   return {
     openapi: '3.1.0',
-    info: {
-      title: 'SMART RESTAURANT API',
-      version: '1.0.0',
-      description:
-        'REST API системи «Smart Restaurant»: меню, столики, booking engine, бронювання, замовлення, kitchen display, ' +
-        'sandbox-оплата, QR check-in, рекомендації, аналітика.\n\n' +
-        'Real-time події — Socket.IO (той самий хост): order:created, order:updated, reservation:created, ' +
-        'reservation:updated, tables:changed, menu:changed, payment:succeeded.\n\n' +
-        'Усі грошові суми — у копійках (integer).',
-    },
+    info,
     servers: [{ url: '/' }],
     tags: [...tagSet].map((name) => ({ name })),
     components: {

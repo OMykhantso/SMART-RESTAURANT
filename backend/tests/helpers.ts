@@ -33,7 +33,7 @@ export const today = (offset = 0) => DateTime.now().setZone(TZ).plus({ days: off
 
 export async function resetDb() {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE status_changes, reviews, payments, order_items, orders, reservations, refresh_tokens, dishes, categories, tables, users RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE status_changes, reviews, payments, deliveries, order_items, orders, reservations, addresses, delivery_zones, refresh_tokens, dishes, categories, tables, users RESTART IDENTITY CASCADE',
   );
 }
 

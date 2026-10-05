@@ -26,10 +26,19 @@ export const ORDER_STATUS: Record<OrderStatus, { label: string; tone: Tone; hint
   READY: { label: 'Готово', tone: 'emerald', hint: 'Страви готові — офіціант уже несе' },
   SERVED: { label: 'Подано', tone: 'violet', hint: 'Смачного! Оплата доступна в один дотик' },
   PAID: { label: 'Оплачено', tone: 'gold', hint: 'Дякуємо! Чекаємо на вас знову' },
+  DELIVERING: { label: 'В дорозі', tone: 'sky', hint: 'Курʼєр уже везе ваше замовлення' },
+  DELIVERED: { label: 'Доставлено', tone: 'gold', hint: 'Смачного! Дякуємо, що замовили доставку' },
   CANCELLED: { label: 'Скасовано', tone: 'rose', hint: 'Замовлення скасовано' },
 };
 
+/** Де виконується замовлення: столик у залі або доставка (замовлення доставки створює мобільний застосунок). */
+export function orderPlace(o: { table: { number: number } | null; delivery?: { zone: { name: string } } | null }): string {
+  if (o.table) return `столик №${o.table.number}`;
+  return o.delivery ? `доставка · ${o.delivery.zone.name}` : 'доставка';
+}
+
 export const ORDER_FLOW: OrderStatus[] = ['NEW', 'CONFIRMED', 'PREPARING', 'READY', 'SERVED', 'PAID'];
+export const DELIVERY_FLOW: OrderStatus[] = ['NEW', 'CONFIRMED', 'PREPARING', 'READY', 'DELIVERING', 'DELIVERED'];
 export const RESERVATION_FLOW: ReservationStatus[] = ['PENDING', 'CONFIRMED', 'CHECKED_IN', 'COMPLETED'];
 
 export const ROLE_LABEL: Record<Role, string> = {
@@ -37,6 +46,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   STAFF: 'Працівник залу',
   KITCHEN: 'Кухня',
   ADMIN: 'Адміністратор',
+  COURIER: 'Курʼєр',
 };
 
 export const SOURCE_LABEL = { APP: 'Застосунок', WEB: 'Сайт', STAFF: 'Телефон / хостес', WALK_IN: 'Без бронювання' } as const;

@@ -14,7 +14,7 @@ import { DishImage } from '@/components/domain/DishImage';
 import { Timeline } from '@/components/domain/Timeline';
 import { api, errorMessage } from '@/lib/api';
 import { fmtDateTime, fmtTime, money } from '@/lib/format';
-import { ORDER_STATUS } from '@/lib/constants';
+import { ORDER_STATUS, orderPlace } from '@/lib/constants';
 import type { Order } from '@/lib/types';
 
 export default function OrderDetails() {
@@ -58,7 +58,7 @@ export default function OrderDetails() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="text-sm text-ink-400">
-              Замовлення #{o.id} · столик №{o.table.number} · {fmtDateTime(o.createdAt)}
+              Замовлення #{o.id} · {orderPlace(o)} · {fmtDateTime(o.createdAt)}
             </div>
             <motion.h1 key={o.status} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-2 font-display text-4xl text-cream">
               {meta.label}

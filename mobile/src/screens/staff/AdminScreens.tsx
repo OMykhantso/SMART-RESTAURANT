@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { CalendarClock, ChefHat, Clock, Receipt, Search, ShieldCheck, Star, TrendingDown, TrendingUp, Users, Wallet } from 'lucide-react-native';
+import { Bike, CalendarClock, ChefHat, Clock, Receipt, Search, ShieldCheck, Star, TrendingDown, TrendingUp, Users, Wallet } from 'lucide-react-native';
 import { Badge, Caption, Chip, EmptyState, Header, Screen, Skeleton } from '../../components/ui';
 import { SectionTitle } from '../../components/domain';
 import { StatTile } from '../../components/staff';
@@ -38,6 +38,33 @@ export function AnalyticsScreen() {
             <StatTile label="Середня оцінка" value={data.kpis.avgRating ? data.kpis.avgRating.toFixed(1) : '—'} hint={`${data.kpis.reviewsCount} відгуків`} icon={<Star size={18} color={colors.warning} />} tone="warning" />
             <StatTile label="Час на кухні" value={`${data.kpis.avgPrepMin} хв`} hint={`візит ≈ ${data.kpis.avgVisitMin} хв`} icon={<Clock size={18} color={colors.violet} />} tone="violet" />
           </View>
+
+          {data.delivery && (
+            <>
+              <SectionTitle title="Доставка" />
+              <View style={styles.grid}>
+                <StatTile label="Доставлено" value={String(data.delivery.delivered)} hint={`${data.delivery.cancelled} скасовано`} icon={<Bike size={18} color={colors.info} />} tone="info" />
+                <StatTile label="Виручка доставки" value={money(data.delivery.revenue)} hint={`${data.delivery.share}% від усієї`} icon={<Wallet size={18} color={colors.goldLight} />} />
+                <StatTile label="Від замовлення до дверей" value={data.delivery.avgDeliveryMin ? `${data.delivery.avgDeliveryMin} хв` : '—'} hint={`плата за доставку ${money(data.delivery.fees)}`} icon={<Clock size={18} color={colors.violet} />} tone="violet" />
+              </View>
+              {data.delivery.byZone.slice(0, 6).map((z) => (
+                <View key={z.zone} style={styles.row}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rowTitle} numberOfLines={1}>
+                      {z.zone}
+                    </Text>
+                    <View style={styles.track}>
+                      <View style={[styles.fill, { width: `${(z.orders / Math.max(1, data.delivery!.byZone[0].orders)) * 100}%`, backgroundColor: colors.info }]} />
+                    </View>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={styles.rowValue}>{z.orders} дост.</Text>
+                    <Caption>{money(z.revenue)}</Caption>
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
 
           <SectionTitle title="Виручка по днях" />
           <BarChart data={data.revenueByDay.map((d) => ({ label: d.date.slice(8), value: d.revenue, title: `${d.date}: ${money(d.revenue)} · ${d.orders} опл.` }))} format={money} />
@@ -115,7 +142,7 @@ function BarChart({ data, format }: { data: { label: string; value: number; titl
 // ─────────────────────────────── Користувачі ───────────────────────────────
 
 const ROLES: Role[] = ['CLIENT', 'STAFF', 'KITCHEN', 'ADMIN'];
-const ROLE_TONE = { CLIENT: 'muted', STAFF: 'info', KITCHEN: 'orange', ADMIN: 'gold' } as const;
+const ROLE_TONE = { CLIENT: 'muted', STAFF: 'info', KITCHEN: 'orange', ADMIN: 'gold', COURIER: 'violet' } as const;
 
 export function UsersScreen() {
   const [role, setRole] = useState<Role | 'ALL'>('ALL');

@@ -2,10 +2,10 @@ import { useMemo, useRef, useState } from 'react';
 import { Animated, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Lock, ShieldCheck, Star } from 'lucide-react-native';
+import { Bike, Check, Lock, ShieldCheck, Star } from 'lucide-react-native';
 import { Body, Button, Caption, DishImage, Eyebrow, Field, Header, Screen, Skeleton, Title } from '../components/ui';
 import { colors, fonts, goldGradient, radius } from '../theme';
-import { api } from '../api/client';
+import { api, dapi } from '../api/client';
 import { haptic } from '../lib/notify';
 import { useToast } from '../lib/toast';
 import { money } from '../lib/format';
@@ -27,11 +27,16 @@ const fmtCard = (v: string) =>
 export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
   const qc = useQueryClient();
   const toast = useToast();
-  const { data: order } = useQuery({ queryKey: ['order', route.params.orderId], queryFn: () => api.get<Order>(`/orders/${route.params.orderId}`) });
+  const isDelivery = Boolean(route.params.delivery);
+  // доставку оплачуємо через Delivery API, замовлення в залі — через Restaurant API
+  const { data: order } = useQuery({
+    queryKey: isDelivery ? ['delivery', 'order', route.params.orderId] : ['order', route.params.orderId],
+    queryFn: () => (isDelivery ? dapi.get<Order>(`/delivery/orders/${route.params.orderId}`) : api.get<Order>(`/orders/${route.params.orderId}`)),
+  });
   const [number, setNumber] = useState('');
   const [exp, setExp] = useState('');
   const [cvc, setCvc] = useState('');
-  const [tipPct, setTipPct] = useState(10);
+  const [tipPct, setTipPct] = useState(isDelivery ? 0 : 10);
   const [otp, setOtp] = useState('');
   const [challenge, setChallenge] = useState<number | null>(null);
   const [result, setResult] = useState<PayResult | null>(null);
@@ -53,7 +58,11 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
   const pay = useMutation({
     mutationFn: () => {
       const [mm, yy] = exp.split('/');
-      return api.post<PayResult>('/payments/card', { orderId: route.params.orderId, tip, card: { number, expMonth: Number(mm), expYear: Number(yy), cvc } }, { 'Idempotency-Key': `${idem}-${number.slice(-4)}` });
+      const card = { number, expMonth: Number(mm), expYear: Number(yy), cvc };
+      const headers = { 'Idempotency-Key': `${idem}-${number.slice(-4)}` };
+      return isDelivery
+        ? dapi.post<PayResult>(`/delivery/orders/${route.params.orderId}/pay`, { tip, card }, headers)
+        : api.post<PayResult>('/payments/card', { orderId: route.params.orderId, tip, card }, headers);
     },
     onSuccess: (r) => {
       if (r.requiresAction) {
@@ -67,7 +76,7 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
     },
   });
   const confirm = useMutation({
-    mutationFn: () => api.post<PayResult>(`/payments/${challenge}/confirm`, { otp }),
+    mutationFn: () => (isDelivery ? dapi.post<PayResult>(`/delivery/payments/${challenge}/confirm`, { otp }) : api.post<PayResult>(`/payments/${challenge}/confirm`, { otp })),
     onSuccess: success,
     onError: (e) => {
       haptic.error();
@@ -86,7 +95,7 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
           </LinearGradient>
         </Animated.View>
         <Title style={{ textAlign: 'center', marginTop: 24, fontSize: 34 }}>Оплачено!</Title>
-        <Body style={{ textAlign: 'center', marginTop: 6 }}>Дякуємо, що обрали Smart Restaurant</Body>
+        <Body style={{ textAlign: 'center', marginTop: 6 }}>{isDelivery ? 'Замовлення вже на кухні — стежте за доставкою' : 'Дякуємо, що обрали Smart Restaurant'}</Body>
         <View style={styles.receipt}>
           <Row k="Замовлення" v={`#${result.order.id}`} />
           <Row k="Сума" v={money(result.payment.amount)} />
@@ -96,8 +105,14 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
           <Row k="Картка" v={`${result.payment.cardBrand} •• ${result.payment.cardLast4}`} />
           <Row k="Транзакція" v={result.payment.providerRef.slice(0, 16)} />
         </View>
-        <Button title="Оцінити візит" variant="outline" style={{ marginTop: 20 }} onPress={() => navigation.replace('Review', { orderId: result.order.id })} />
-        <Button title="Готово" style={{ marginTop: 10 }} onPress={() => navigation.goBack()} />
+        {isDelivery ? (
+          <Button title="Стежити за доставкою" style={{ marginTop: 20 }} icon={<Bike size={18} color="#141008" />} onPress={() => navigation.replace('DeliveryOrder', { id: result.order.id, justCreated: true })} />
+        ) : (
+          <>
+            <Button title="Оцінити візит" variant="outline" style={{ marginTop: 20 }} onPress={() => navigation.replace('Review', { orderId: result.order.id })} />
+            <Button title="Готово" style={{ marginTop: 10 }} onPress={() => navigation.goBack()} />
+          </>
+        )}
       </Screen>
     );
   }
@@ -105,7 +120,7 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen edges={['top']} contentStyle={{ paddingBottom: 60 }}>
-        <Header title="Оплата" subtitle={order ? `Замовлення #${order.id} · столик №${order.table.number}` : undefined} />
+        <Header title="Оплата" subtitle={order ? `Замовлення #${order.id} · ${order.table ? `столик №${order.table.number}` : `доставка · ${order.delivery?.zone.name ?? ''}`}` : undefined} />
         {!order ? (
           <Skeleton height={400} />
         ) : challenge ? (
@@ -167,7 +182,7 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
               ))}
             </View>
 
-            <Eyebrow style={{ marginBottom: 10 }}>Чайові для команди</Eyebrow>
+            <Eyebrow style={{ marginBottom: 10 }}>{isDelivery ? 'Чайові курʼєру' : 'Чайові для команди'}</Eyebrow>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {[0, 5, 10, 15].map((p) => (
                 <Pressable
@@ -192,7 +207,7 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
               </View>
             </View>
             <Button title={`Сплатити ${money(order.total + tip)}`} icon={<Lock size={18} color="#141008" />} disabled={!valid} loading={pay.isPending} onPress={() => pay.mutate()} />
-            <Caption style={{ textAlign: 'center', marginTop: 12 }}>Sandbox-платіж · номер картки не зберігається</Caption>
+            <Caption style={{ textAlign: 'center', marginTop: 12 }}>Sandbox-платіж · номер картки й CVC не зберігаються</Caption>
           </>
         )}
       </Screen>
@@ -253,13 +268,13 @@ export function ReviewScreen({ route, navigation }: ScreenProps<'Review'>) {
     <Screen edges={['top']}>
       <Header title="Ваш відгук" subtitle={order ? `Замовлення #${order.id}` : undefined} />
       <View style={{ alignItems: 'center', marginTop: 10 }}>
-        <Title style={{ fontSize: 26 }}>Як вам візит?</Title>
+        <Title style={{ fontSize: 26 }}>{order?.type === 'DELIVERY' ? 'Як вам доставка?' : 'Як вам візит?'}</Title>
         <View style={{ marginTop: 18 }}>
           <Stars value={rating} onChange={setRating} size={42} />
         </View>
         <Text style={{ fontFamily: fonts.display, fontSize: 18, color: colors.goldLight, marginTop: 10 }}>{LABELS[rating]}</Text>
       </View>
-      <Field label="Коментар" value={comment} onChangeText={setComment} placeholder="Що сподобалось найбільше?" multiline style={{ height: 96, paddingTop: 14, textAlignVertical: 'top' }} />
+      <Field label="Коментар" value={comment} onChangeText={setComment} placeholder={order?.type === 'DELIVERY' ? 'Гаряча? Вчасно? Курʼєр ввічливий?' : 'Що сподобалось найбільше?'} multiline style={{ height: 96, paddingTop: 14, textAlignVertical: 'top' }} />
       <Eyebrow style={{ marginBottom: 10 }}>Оцініть страви</Eyebrow>
       {unique.map((i) => (
         <View key={i.dishId} style={styles.dishRate}>

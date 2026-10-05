@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowLeft, Ban, Check, ChefHat, Flame, Maximize2, Play, StickyNote, Volume2 } from 'lucide-react';
+import { ArrowLeft, Ban, Bike, Check, ChefHat, Flame, Maximize2, Play, StickyNote, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -41,7 +41,7 @@ export default function Kitchen() {
     onSuccess: (o) => {
       if (o.status === 'READY') {
         chime('ready');
-        toast.success(`Замовлення #${o.id} готове — стіл №${o.table.number}`);
+        toast.success(o.table ? `Замовлення #${o.id} готове — стіл №${o.table.number}` : `Доставка #${o.id} готова — передайте курʼєру`);
       }
       invalidate();
     },
@@ -148,11 +148,19 @@ function Ticket({ o, now, canCook, onStart, onReady, onToggle }: { o: Order; now
       <div className="flex items-start justify-between gap-3 p-4 pb-3">
         <div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-4xl leading-none text-cream">№{o.table.number}</span>
+            {o.table ? (
+              <span className="font-display text-4xl leading-none text-cream">№{o.table.number}</span>
+            ) : (
+              <span className="flex items-center gap-1.5 font-display text-3xl leading-none text-sky-200">
+                <Bike className="size-7" /> Доставка
+              </span>
+            )}
             <span className="text-sm text-ink-400">#{o.id}</span>
           </div>
           <div className="mt-1 text-xs text-ink-400">
-            {o.reservation.guests} гост. · {o.createdBy.role === 'CLIENT' ? 'через застосунок' : `офіціант ${o.createdBy.name.split(' ')[0]}`}
+            {o.delivery
+              ? `${o.delivery.zone.name} · ${o.delivery.courier ? `курʼєр ${o.delivery.courier.name.split(' ')[0]}` : 'курʼєра шукаємо'}`
+              : `${o.reservation?.guests ?? '—'} гост. · ${o.createdBy.role === 'CLIENT' ? 'через застосунок' : `офіціант ${o.createdBy.name.split(' ')[0]}`}`}
           </div>
         </div>
         <div className="text-right">

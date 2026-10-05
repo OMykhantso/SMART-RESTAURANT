@@ -32,6 +32,7 @@ const StaffReservations = lazy(() => import('./pages/staff/Reservations'));
 const StaffOrders = lazy(() => import('./pages/staff/Orders'));
 const Scan = lazy(() => import('./pages/staff/Scan'));
 const Kitchen = lazy(() => import('./pages/kitchen/Kitchen'));
+const CourierInfo = lazy(() => import('./pages/courier/CourierInfo'));
 const AdminMenu = lazy(() => import('./pages/admin/MenuAdmin'));
 const AdminTables = lazy(() => import('./pages/admin/TablesAdmin'));
 const AdminUsers = lazy(() => import('./pages/admin/UsersAdmin'));
@@ -79,6 +80,7 @@ export function App() {
           <Route path="account/reservations/:id" element={<RequireRole roles={['CLIENT']}><ReservationDetails /></RequireRole>} />
           <Route path="account/orders/:id" element={<RequireRole roles={['CLIENT']}><OrderDetails /></RequireRole>} />
           <Route path="order" element={<RequireRole roles={['CLIENT']}><TableOrder /></RequireRole>} />
+          <Route path="courier" element={<RequireRole roles={['COURIER']}><CourierInfo /></RequireRole>} />
         </Route>
 
         <Route element={<RequireRole roles={['STAFF', 'ADMIN']}><StaffLayout /></RequireRole>}>

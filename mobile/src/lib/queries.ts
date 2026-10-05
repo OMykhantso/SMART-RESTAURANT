@@ -12,6 +12,7 @@ export const useCurrentVisit = () =>
     refetchInterval: 60_000,
   });
 export const useMyReservations = (enabled = true) => useQuery({ queryKey: ['reservations', 'my'], queryFn: () => api.get<Reservation[]>('/reservations/my'), enabled });
-export const useMyOrders = (enabled = true) => useQuery({ queryKey: ['orders', 'my'], queryFn: () => api.get<Order[]>('/orders/my'), enabled });
+/** Замовлення в залі (доставки — окремо, з Delivery API: useMyDeliveries). */
+export const useMyOrders = (enabled = true) => useQuery({ queryKey: ['orders', 'my'], queryFn: () => api.get<Order[]>('/orders/my', { type: 'DINE_IN' }), enabled });
 export const useRecommendations = (cart: number[], limit = 6) =>
   useQuery({ queryKey: ['recommendations', cart.join(','), limit], queryFn: () => api.get<Recommendation[]>('/recommendations', { cart: cart.join(','), limit }), staleTime: 20_000 });

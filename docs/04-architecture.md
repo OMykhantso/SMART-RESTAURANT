@@ -5,46 +5,60 @@
 ```mermaid
 flowchart LR
     subgraph Clients[Клієнти]
-      W[Web-застосунок<br/>React 19 · Vite · Tailwind<br/>гість · персонал · кухня · адмін]
-      M[Mobile-застосунок<br/>React Native · Expo SDK 57<br/>гість: QR-камера, оплата]
+      W[Web-застосунок<br/>React 19 · Vite · Tailwind<br/>гість · зал · кухня · адмін]
+      M[Mobile-застосунок<br/>React Native · Expo SDK 57<br/>гість · доставка · курʼєр · зал · кухня · адмін]
     end
-    subgraph Server[Backend]
-      API[REST API<br/>Express 5 · zod · JWT · RBAC]
-      BL[Бізнес-логіка<br/>booking engine · автомати станів<br/>платежі · рекомендації · ETA]
-      RT[Real-time<br/>Socket.IO]
-      JOB[Фонові задачі<br/>no-show · автозавершення]
-      DOC[Swagger / OpenAPI 3.1]
+    subgraph R[Restaurant API · порт 4000]
+      RAPI[REST · Express 5 · zod · JWT · RBAC]
+      RBL[booking engine · автомати станів<br/>kitchen display · платежі · рекомендації]
+      RRT[Socket.IO: зал, кухня, гість]
+      RJOB[фонові задачі: no-show, автозавершення]
     end
-    DB[(PostgreSQL 16<br/>Prisma ORM)]
+    subgraph D[Delivery API · порт 4100]
+      DAPI[REST · Express 5 · zod · той самий JWT]
+      DBL[зони й тарифи · адреси · оформлення<br/>оплата · курʼєр · диспетчерська]
+      DRT[Socket.IO: клієнт, курʼєри, диспетчер]
+      DJOB[фонові задачі: неоплачені замовлення]
+    end
+    DB[(PostgreSQL 16<br/>спільна база даних)]
     PAY[[Sandbox<br/>платіжний шлюз]]
-    IMG[[CDN зображень<br/>+ /uploads]]
 
-    W -- HTTPS JSON --> API
-    M -- HTTPS JSON --> API
-    W <-- WebSocket --> RT
-    M <-- WebSocket --> RT
-    API --> BL --> DB
-    BL --> RT
-    JOB --> BL
-    BL --> PAY
-    W --> IMG
-    M --> IMG
-    API --- DOC
+    W -- HTTPS JSON --> RAPI
+    M -- HTTPS JSON --> RAPI
+    M -- HTTPS JSON --> DAPI
+    W <-- WebSocket --> RRT
+    M <-- WebSocket --> RRT
+    M <-- WebSocket --> DRT
+    RAPI --> RBL --> DB
+    DAPI --> DBL --> DB
+    RBL --> PAY
+    DBL --> PAY
+    DB -. LISTEN / NOTIFY sr_orders .-> RRT
+    DB -. LISTEN / NOTIFY sr_orders .-> DRT
 ```
 
-**Принцип:** Web / Mobile → API → Backend → Database. Клієнти **ніколи** не звертаються до БД напряму. Обидва клієнти працюють з одним backend і однією базою, тому будь-яка зміна в одному клієнті одразу видна в іншому.
+**Дві системи — одна база даних.** Restaurant API обслуговує ресторан (Web і роботу в залі), Delivery API — службу доставки (мобільний застосунок клієнта й курʼєра). Це **два окремі процеси й два Docker-контейнери** з власними портами, Socket.IO-серверами, Swagger-специфікаціями та фоновими задачами. Спільні в них:
+
+* **база даних PostgreSQL** — меню, користувачі, замовлення, платежі лежать в одних таблицях, тому доставка одразу потрапляє на kitchen display, а аналітика рахує і зал, і доставку;
+* **обліковий запис** — вхід через `POST :4000/api/auth/login`, JWT приймають обидва сервіси (той самий секрет і issuer);
+* **доменне ядро** (`backend/src/lib`, `modules/orders`, `modules/payments`) — автомати станів, ціни з БД, ETA, sandbox-платежі пишуться один раз і не розходяться між системами.
+
+**Звʼязок між системами — через базу даних.** Кожна система надсилає події лише своїм клієнтам. Коли змінюється замовлення доставки, система виконує `pg_notify('sr_orders', {source, event, orderId})`; інша система слухає канал (`LISTEN`, бібліотека `pg`) і сповіщає своїх: Delivery API → кухня та зал у Web, Restaurant API (кухня позначила «Готово») → клієнт і курʼєри в мобільному. NOTIFY у транзакції доставляється лише після COMMIT, тож подія ніколи не випереджає дані.
+
+**Принцип:** Web / Mobile → API → Database. Клієнти **ніколи** не звертаються до БД напряму.
 
 ## 4.2 Компоненти
 
 | Компонент | Технології | Роль |
 |---|---|---|
 | **Web** | React 19, TypeScript, Vite 7, Tailwind CSS 4, React Router 7, TanStack Query, Motion, Recharts, Socket.IO client, jsQR | Сайт для гостей (меню, бронювання, кабінет, оплата) + робоче місце персоналу (дашборд, план залу, бронювання, kanban, QR-сканер), Kitchen display, адмін-панель |
-| **Mobile** | React Native 0.86, Expo SDK 57, React Navigation 7, expo-camera, expo-secure-store, expo-notifications, expo-haptics | Гостьовий застосунок: бронювання з планом залу, QR check-in камерою, меню й кошик, статус замовлення наживо, оплата, відгуки |
-| **Backend/API** | Node.js 22, Express 5, TypeScript, zod 4, jsonwebtoken, bcryptjs, Luxon, helmet, rate-limit, multer | REST API, валідація, автентифікація й авторизація, бізнес-логіка |
-| **Real-time** | Socket.IO 4 | Push-події статусів у кімнати `user:<id>`, `staff`, `kitchen`, `public` |
-| **БД** | PostgreSQL 16, Prisma 6 (міграції) | 11 таблиць, CHECK/FK/UNIQUE/EXCLUDE-обмеження, індекси |
+| **Mobile** | React Native 0.86, Expo SDK 57, React Navigation 7, expo-camera, expo-secure-store, expo-notifications, expo-haptics | Гість: бронювання з планом залу, QR check-in камерою, меню й кошик, **доставка додому** (адреси, оформлення, оплата, відстеження курʼєра), статус наживо, відгуки. **Курʼєр**: черга, мої доставки, маршрут, готівка. Зал / адмін: **диспетчерська доставок**, зони й тарифи |
+| **Restaurant API** | Node.js 22, Express 5, TypeScript, zod 4, jsonwebtoken, bcryptjs, Luxon, helmet, rate-limit, multer | REST API ресторану, валідація, автентифікація й авторизація, бізнес-логіка залу й кухні (порт 4000) |
+| **Delivery API** | той самий стек, окремий процес `dist/delivery/server.js` | доставка: зони, адреси, розрахунок, оформлення, оплата, курʼєр, диспетчерська (порт 4100) |
+| **Real-time** | Socket.IO 4 (у кожному сервісі свій) + PostgreSQL LISTEN/NOTIFY | Restaurant: `user:<id>`, `staff`, `kitchen`, `public`; Delivery: `user:<id>`, `couriers`, `dispatch` |
+| **БД** | PostgreSQL 16, Prisma 6 (міграції) | 14 таблиць, CHECK/FK/UNIQUE/EXCLUDE-обмеження, тригер, індекси |
 | **Документація API** | OpenAPI 3.1 генерується з тих самих zod-схем, що валідують запити | Swagger UI `/api/docs` |
-| **Інфраструктура** | Docker Compose (db + backend + nginx-web), GitHub Actions CI | Запуск однією командою, автоматичні тести |
+| **Інфраструктура** | Docker Compose (db + backend + delivery + nginx-web), GitHub Actions CI | Запуск однією командою, автоматичні тести |
 
 ## 4.3 Структура backend
 
@@ -66,10 +80,17 @@ backend/src
 │   ├── payments/sandbox.ts     # емуляція платіжного шлюзу
 │   ├── recommendations/engine.ts
 │   ├── menu/ tables/ users/ auth/ analytics/ uploads/
-└── jobs/scheduler.ts           # no-show, автоскасування, автозавершення
+├── jobs/scheduler.ts           # no-show, автоскасування, автозавершення
+├── lib/bus.ts                  # PostgreSQL LISTEN/NOTIFY між системами
+└── delivery/                   # ── Delivery API (окремий процес, порт 4100) ──
+    ├── server.ts, app.ts       # власний HTTP + Socket.IO + Swagger
+    ├── routes.ts               # зони, адреси, quote, доставки, оплата, курʼєр, диспетчерська
+    ├── delivery.service.ts     # тарифи, години, оформлення, курʼєрські дії
+    ├── realtime.ts             # кімнати user / couriers / dispatch
+    └── scheduler.ts            # скасування неоплачених онлайн-замовлень
 ```
 
-## 4.4 Двостороння Web ↔ Mobile інтеграція
+## 4.4 Двостороння Web ↔ Mobile інтеграція (замовлення в залі)
 
 ```mermaid
 sequenceDiagram
@@ -100,7 +121,38 @@ sequenceDiagram
     A->>R: payment:succeeded → staff
 ```
 
-## 4.5 Безпека
+## 4.5 Доставка: Mobile → Delivery API → кухня у Web → курʼєр
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Mobile (клієнт)
+    participant DA as Delivery API :4100
+    participant DB as PostgreSQL
+    participant RA as Restaurant API :4000
+    participant K as Web (кухня)
+    participant CR as Mobile (курʼєр)
+
+    C->>DA: POST /delivery/orders (адреса, CARD)
+    DA->>DB: INSERT order(type DELIVERY, NEW) + delivery
+    C->>DA: POST /delivery/orders/:id/pay → 3-D Secure
+    DA->>DB: payment SUCCEEDED + order CONFIRMED · pg_notify(sr_orders)
+    DB-->>RA: NOTIFY order:created
+    RA-->>K: Socket.IO — новий тікет «Доставка» + звук
+    DA-->>CR: courier:queue — нове замовлення шукає курʼєра
+    CR->>DA: POST /courier/orders/:id/accept
+    K->>RA: PATCH /kitchen/orders/:id/items/:item (READY)
+    RA->>DB: order READY · pg_notify(sr_orders)
+    DB-->>DA: NOTIFY order:updated
+    DA-->>CR: «#id готове — забирайте»
+    DA-->>C: «Чекає курʼєра»
+    CR->>DA: POST /courier/orders/:id/pickup → DELIVERING
+    DA-->>C: «Курʼєр уже в дорозі» + ETA
+    CR->>DA: POST /courier/orders/:id/delivered → DELIVERED
+    DA-->>C: «Доставлено» → відгук
+```
+
+## 4.6 Безпека
 
 * **Паролі** — bcrypt (10 раундів); **access JWT** (30 хв, issuer), **refresh-токени** — випадкові 48 байт, у БД лише SHA-256, одноразові з ротацією та виявленням повторного використання (відкликання всіх сесій).
 * **Деактивація** користувача діє миттєво — стан перевіряється в БД на кожному запиті.

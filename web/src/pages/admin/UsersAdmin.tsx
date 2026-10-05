@@ -60,6 +60,7 @@ export default function UsersAdmin() {
             { value: 'STAFF', label: 'Зал' },
             { value: 'KITCHEN', label: 'Кухня' },
             { value: 'ADMIN', label: 'Адміни' },
+            { value: 'COURIER', label: 'Курʼєри' },
           ]}
         />
         <div className="min-w-52 flex-1">

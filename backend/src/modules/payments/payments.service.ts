@@ -6,7 +6,7 @@ import { emit } from '../../lib/realtime';
 import { sleep } from '../../lib/http';
 import { now } from '../../lib/time';
 import type { AuthUser } from '../../middleware/auth';
-import { loadOrder, serializeOrder, transitionOrder, type OrderFull } from '../orders/orders.service';
+import { broadcast, loadOrder, serializeOrder, transitionOrder, type OrderFull } from '../orders/orders.service';
 import { authorize, detectBrand, newProviderRef, normalizeCardNumber, SANDBOX_OTP, validateCard, type CardInput } from './sandbox';
 
 export function serializePayment(p: Payment) {
@@ -29,8 +29,23 @@ export function serializePayment(p: Payment) {
   };
 }
 
+/**
+ * Коли замовлення можна оплатити:
+ *  - у залі — після подачі страв (SERVED), гість або офіціант;
+ *  - доставка карткою — одразу після оформлення (NEW), лише сам клієнт.
+ */
 function assertPayable(order: OrderFull, actor: AuthUser) {
   const isStaff = actor.role === 'STAFF' || actor.role === 'ADMIN';
+  if (order.type === 'DELIVERY') {
+    if (order.userId !== actor.id) throw forbidden('Оплатити доставку може лише клієнт, який її замовив');
+    if (order.payments.some((p) => p.status === 'SUCCEEDED')) throw conflict('Замовлення вже оплачено', 'ALREADY_PAID');
+    if (order.status === 'CANCELLED') throw conflict('Не можна оплатити скасоване замовлення', 'ORDER_CANCELLED');
+    if (order.delivery?.paymentMethod !== 'CARD') {
+      throw conflict('Це замовлення оплачується готівкою курʼєру', 'PAYMENT_METHOD_CASH');
+    }
+    if (order.status !== 'NEW') throw conflict('Замовлення не очікує оплати', 'ORDER_NOT_AWAITING_PAYMENT');
+    return;
+  }
   if (!isStaff && order.userId !== actor.id) throw forbidden('Оплатити можна лише власне замовлення');
   if (order.status === 'PAID') throw conflict('Замовлення вже оплачено', 'ALREADY_PAID');
   if (order.status === 'CANCELLED') throw conflict('Не можна оплатити скасоване замовлення', 'ORDER_CANCELLED');
@@ -39,15 +54,26 @@ function assertPayable(order: OrderFull, actor: AuthUser) {
   }
 }
 
-/** Фіналізація успішної оплати: атомарно SUCCEEDED + замовлення PAID. */
+/**
+ * Фіналізація успішної оплати — атомарно:
+ *  у залі: платіж SUCCEEDED + замовлення PAID;
+ *  доставка: платіж SUCCEEDED + замовлення CONFIRMED (передається на кухню).
+ */
 async function finalizeSuccess(paymentId: number, actor: AuthUser) {
   const order = await prisma.$transaction(async (tx) => {
     const payment = await tx.payment.findUniqueOrThrow({ where: { id: paymentId } });
     // блокування рядка замовлення: дві паралельні оплати не можуть обидві пройти
     await tx.$queryRaw`SELECT id FROM orders WHERE id = ${payment.orderId} FOR UPDATE`;
     const current = await tx.order.findUniqueOrThrow({ where: { id: payment.orderId } });
+    const t = now();
+    if (current.type === 'DELIVERY') {
+      if (current.status !== 'NEW') return null;
+      await tx.payment.update({ where: { id: paymentId }, data: { status: 'SUCCEEDED', paidAt: t } });
+      await tx.order.update({ where: { id: current.id }, data: { paidAt: t } });
+      return transitionOrder('SYSTEM', payment.orderId, 'CONFIRMED', { db: tx, reason: `Оплата онлайн #${paymentId}` });
+    }
     if (current.status !== 'SERVED') return null;
-    await tx.payment.update({ where: { id: paymentId }, data: { status: 'SUCCEEDED', paidAt: now() } });
+    await tx.payment.update({ where: { id: paymentId }, data: { status: 'SUCCEEDED', paidAt: t } });
     return transitionOrder('SYSTEM', payment.orderId, 'PAID', { db: tx, reason: `Оплата #${paymentId}` });
   });
   if (!order) {
@@ -58,12 +84,18 @@ async function finalizeSuccess(paymentId: number, actor: AuthUser) {
     throw conflict('Замовлення вже оплачено або змінено', 'ALREADY_PAID');
   }
   const payment = await prisma.payment.findUniqueOrThrow({ where: { id: paymentId } });
-  emit('order:updated', { id: order.id, status: order.status, tableId: order.tableId, userId: order.userId }, {
+  if (order.type === 'DELIVERY') {
+    // оплачена доставка — новий тікет для залу й кухні (Restaurant API) і подія для клієнта (Delivery API)
+    broadcast(order, 'order:created');
+    emit('payment:succeeded', { orderId: order.id, amount: payment.amount + payment.tip, method: payment.method, tableNumber: null, type: 'DELIVERY' }, { staff: true });
+    return { payment: serializePayment(payment), order: serializeOrder(order, actor) };
+  }
+  emit('order:updated', { id: order.id, type: order.type, status: order.status, tableId: order.tableId, userId: order.userId }, {
     userId: order.userId,
     staff: true,
     kitchen: false,
   });
-  emit('payment:succeeded', { orderId: order.id, amount: payment.amount + payment.tip, method: payment.method, tableNumber: order.table.number }, {
+  emit('payment:succeeded', { orderId: order.id, amount: payment.amount + payment.tip, method: payment.method, tableNumber: order.table?.number ?? null }, {
     userId: order.userId,
     staff: true,
   });
@@ -136,7 +168,7 @@ export async function payByCard(
 export async function confirm3ds(actor: AuthUser, paymentId: number, otp: string) {
   const payment = await prisma.payment.findUnique({ where: { id: paymentId }, include: { order: true } });
   if (!payment) throw notFound('Платіж не знайдено');
-  const isStaff = actor.role === 'STAFF' || actor.role === 'ADMIN';
+  const isStaff = (actor.role === 'STAFF' || actor.role === 'ADMIN') && payment.order.type === 'DINE_IN';
   if (!isStaff && payment.order.userId !== actor.id) throw forbidden();
   if (payment.status !== 'REQUIRES_ACTION') throw conflict('Платіж не очікує підтвердження', 'PAYMENT_NOT_PENDING');
   if (env.paymentLatencyMs > 0) await sleep(Math.round(env.paymentLatencyMs / 2));
@@ -144,9 +176,10 @@ export async function confirm3ds(actor: AuthUser, paymentId: number, otp: string
   return { ...(await finalizeSuccess(payment.id, actor)), requiresAction: false };
 }
 
-/** Оплата готівкою / терміналом — фіксує офіціант. */
+/** Оплата готівкою / терміналом — фіксує офіціант (лише замовлення в залі; готівку за доставку приймає курʼєр). */
 export async function payCash(actor: AuthUser, orderId: number, tip: number) {
   const order = await loadOrder(orderId);
+  if (order.type === 'DELIVERY') throw conflict('Готівку за доставку приймає курʼєр під час вручення', 'DELIVERY_CASH_BY_COURIER');
   assertPayable(order, actor);
   const payment = await prisma.payment.create({
     data: {

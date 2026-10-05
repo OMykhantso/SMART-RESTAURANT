@@ -2,9 +2,9 @@
 
 # 🍽️ SMART RESTAURANT
 
-**Ресторан, у якому технології непомітні:** бронювання за 30 секунд → check-in за QR-кодом на столі → замовлення зі смартфона → кухня наживо → оплата в один дотик.
+**Ресторан, у якому технології непомітні:** бронювання за 30 секунд → check-in за QR-кодом на столі → замовлення зі смартфона → кухня наживо → оплата в один дотик. А якщо не хочеться виходити з дому — **доставка з курʼєром, яку видно на карті статусів від кухні до дверей**.
 
-Курсова робота «Інтернет-проєкт» · Web + Mobile + Backend/API + PostgreSQL
+Курсова робота «Інтернет-проєкт» · Web + Mobile + **дві системи (Restaurant API і Delivery API) на одній базі PostgreSQL**
 
 `React 19` · `React Native / Expo SDK 57` · `Node.js 22 / Express 5` · `PostgreSQL 16 / Prisma` · `Socket.IO` · `Docker` · `GitHub Actions`
 
@@ -20,6 +20,14 @@
   <img src="docs/screenshots/mobile-qr-checkin.jpg" width="19%" alt="Mobile: QR check-in" />
   <img src="docs/screenshots/mobile-order-status.jpg" width="19%" alt="Mobile: статус замовлення" />
   <img src="docs/screenshots/mobile-payment.jpg" width="19%" alt="Mobile: оплата" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/mobile-delivery-checkout.jpg" width="19%" alt="Mobile: оформлення доставки" />
+  <img src="docs/screenshots/mobile-delivery-tracking.jpg" width="19%" alt="Mobile: доставка в дорозі" />
+  <img src="docs/screenshots/mobile-delivery-history.jpg" width="19%" alt="Mobile: історія доставок" />
+  <img src="docs/screenshots/mobile-courier-active.jpg" width="19%" alt="Mobile: робоче місце курʼєра" />
+  <img src="docs/screenshots/mobile-dispatch.jpg" width="19%" alt="Mobile: диспетчерська доставок" />
 </p>
 
 ---
@@ -40,13 +48,14 @@
 
 | Роль | Web | Mobile |
 |---|---|---|
-| **Клієнт** | меню з пошуком і фільтрами · бронювання з планом залу · кабінет з QR · замовлення за столиком · статус наживо · оплата · відгуки | бронювання з міні-планом залу · **check-in камерою за QR на столі** · walk-in · меню та кошик з рекомендаціями · статус і ETA наживо · **оплата + 3-D Secure** · відгуки · сповіщення та вібрація |
-| **Офіціант / хостес** | дашборд зміни · **живий план залу** · бронювання (підтвердити / відхилити / телефонні) · **QR-сканер check-in** · Kanban замовлень · POS · оплата готівкою · стоп-лист | зміна з KPI і «потребує уваги» · живий план залу · **check-in камерою за QR бронювання гостя** · бронювання · замовлення (прийняти / подати / готівка) · сповіщення про нові та готові замовлення |
-| **Кухар** | **Kitchen display**: черга, таймери, відмітка страв, автоматичне «Готово», звук, стоп-лист | kitchen display з таймерами та відміткою страв · стоп-лист · вібрація на нове замовлення |
-| **Адміністратор** | меню (фото, архів) · **редактор плану залу drag-and-drop** · друк / перевипуск QR · користувачі та ролі · **аналітика** | усе, що має офіціант · аналітика з графіками · користувачі та ролі |
+| **Клієнт** | меню з пошуком і фільтрами · бронювання з планом залу · кабінет з QR · замовлення за столиком · статус наживо · оплата · відгуки | бронювання з міні-планом залу · **check-in камерою за QR на столі** · walk-in · меню та кошик з рекомендаціями · статус і ETA наживо · **оплата + 3-D Secure** · **доставка додому**: збережені адреси, тарифи районів, мінімальна сума й безкоштовна доставка, картка або готівка з рештою, відстеження курʼєра наживо, повтор замовлення · відгуки · сповіщення та вібрація |
+| **Офіціант / хостес** | дашборд зміни · **живий план залу** · бронювання (підтвердити / відхилити / телефонні) · **QR-сканер check-in** · Kanban замовлень (з позначкою «Доставка») · POS · оплата готівкою · стоп-лист | зміна з KPI і «потребує уваги» · живий план залу · **check-in камерою за QR бронювання гостя** · бронювання · замовлення (прийняти / подати / готівка) · **диспетчерська доставок** (курʼєри, призначення) · сповіщення |
+| **Кухар** | **Kitchen display**: черга (зал + доставка), таймери, відмітка страв, автоматичне «Готово», звук, стоп-лист | kitchen display з таймерами та відміткою страв · стоп-лист · вібрація на нове замовлення |
+| **Курʼєр** | — (підказка, що робоче місце в застосунку) | **черга замовлень** (беремо, поки готується) · мої доставки: маршрут у картах, дзвінок клієнту, «забрав» / «вручено», готівка з рештою · зміна: готівка на руках, чайові, час у дорозі, історія |
+| **Адміністратор** | меню (фото, архів) · **редактор плану залу drag-and-drop** · друк / перевипуск QR · користувачі та ролі (у т.ч. курʼєри) · **аналітика** (зал + доставка) | усе, що має офіціант · **зони доставки й тарифи** · аналітика з блоком доставки · користувачі та ролі |
 
 **ADVANCED:** booking engine (слоти, best-fit, анти-фрагментація, альтернативи, EXCLUDE-обмеження PostgreSQL) · QR (бронювання, столики, walk-in) · sandbox-платежі (Luhn, 3-D Secure, ідемпотентність, чайові).
-**BONUS:** kitchen display · пояснювані рекомендації (асоціативні правила + персоналізація + байєсівський рейтинг) · real-time (Socket.IO) · прогноз ETA · аналітика · Swagger · Docker · CI · 77 автотестів + E2E (Playwright).
+**BONUS:** kitchen display · пояснювані рекомендації (асоціативні правила + персоналізація + байєсівський рейтинг) · real-time (Socket.IO) · прогноз ETA · аналітика · **служба доставки — окремий сервіс на спільній БД (PostgreSQL LISTEN/NOTIFY між системами)** · Swagger · Docker · CI · 111 автотестів + E2E (Playwright).
 
 <table>
 <tr>
@@ -75,8 +84,8 @@ docker compose up -d --build
 | Що | Адреса |
 |---|---|
 | 🌐 Web (гість, персонал, кухня, адмін) | **https://localhost:8443** (http://localhost:8080 перенаправляє на HTTPS) |
-| ⚙️ API | http://localhost:4000/api |
-| 📘 Swagger UI | http://localhost:4000/api/docs |
+| ⚙️ Restaurant API | http://localhost:4000/api · Swagger: http://localhost:4000/api/docs |
+| 🛵 Delivery API | http://localhost:4100/api · Swagger: http://localhost:4100/api/docs |
 | 🐘 PostgreSQL | `localhost:5433`, користувач / пароль `smart` / `smart` |
 
 **HTTPS без попереджень браузера (один раз, рекомендовано перед захистом):**
@@ -86,7 +95,11 @@ docker compose up -d --force-recreate web
 ```
 Без цього кроку контейнер сам створює самопідписаний сертифікат: сайт працює по HTTPS, але браузер один раз попросить підтвердити виняток («Додатково → Перейти на localhost»). З довіреним сертифікатом Chrome показує «замочок» і дозволяє автозаповнення картки.
 
-Під час першого запуску контейнер backend застосовує міграції та **заповнює БД демо-даними** (меню з 38 страв, 14 столиків, 45 днів історії для аналітики й рекомендацій, «живий» стан залу на сьогодні). Порти можна змінити: `HTTPS_PORT=8444 WEB_PORT=8081 API_PORT=4001 docker compose up -d`.
+Під час першого запуску контейнер backend застосовує міграції та **заповнює БД демо-даними** (меню з 38 страв, 14 столиків, 8 районів доставки, 2 курʼєри, 45 днів історії залу й доставки для аналітики й рекомендацій, «живий» стан залу та доставок на сьогодні). Контейнер `delivery` стартує після backend і працює з тією самою БД. Порти можна змінити: `HTTPS_PORT=8444 WEB_PORT=8081 API_PORT=4001 DELIVERY_PORT=4101 docker compose up -d`.
+
+> Доставка приймає замовлення з відкриття кухні до закриття мінус 45 хв. Для демонстрації пізно ввечері: `DELIVERY_IGNORE_HOURS=true docker compose up -d delivery`.
+>
+> **Якщо Docker уже запускався раніше** (до появи доставки): `docker compose up -d --build` застосує нову міграцію й автоматично додасть райони доставки та курʼєрів, не чіпаючи наявні дані. Щоб отримати повний демо-набір з історією доставок для аналітики — `docker compose down -v && docker compose up -d --build` (база створюється заново).
 
 ## Запуск для розробки
 
@@ -101,10 +114,10 @@ cp backend/.env.example backend/.env      # за потреби змініть D
 #    (для БД з docker compose: postgresql://smart:smart@localhost:5433/smart_restaurant)
 npm run db:setup                          # міграції + демо-дані
 
-# 3. API + Web одночасно
+# 3. Restaurant API + Delivery API + Web одночасно
 npm run dev
 ```
-Web: http://localhost:5173 (Vite проксіює `/api` і WebSocket на `:4000`), API: http://localhost:4000/api.
+Web: http://localhost:5173 (Vite проксіює `/api` і WebSocket на `:4000`), Restaurant API: http://localhost:4000/api, Delivery API: http://localhost:4100/api.
 
 > Демо-дані можна перегенерувати будь-коли: `npm run db:seed` (очищує таблиці). «Живий» стан залу будується відносно поточного часу.
 
@@ -117,7 +130,7 @@ npx expo start
 ```
 1. Встановіть **Expo Go** на телефон (App Store / Google Play).
 2. Телефон і компʼютер — **в одній Wi-Fi мережі**. Відскануйте QR з терміналу.
-3. Адреса API визначається автоматично (IP компʼютера з Metro, порт 4000). Якщо потрібно — змініть у застосунку: **Профіль → Підключення**, або задайте `EXPO_PUBLIC_API_URL=http://192.168.x.x:4000`.
+3. Адреси обох систем визначаються автоматично (IP компʼютера з Metro: Restaurant API — порт 4000, Delivery API — 4100). Якщо потрібно — змініть у застосунку: **Профіль → Підключення**, або задайте `EXPO_PUBLIC_API_URL=http://192.168.x.x:4000` і `EXPO_PUBLIC_DELIVERY_URL=http://192.168.x.x:4100`.
 4. Для check-in відскануйте QR столика: **Web → Адміністрування → Столики та QR → QR** (можна прямо з екрана монітора) або роздрукуйте настільні картки всіх столиків кнопкою **«Друк усіх QR»**.
 
 > Android-емулятор: API за адресою `http://10.0.2.2:4000` визначається автоматично. Web-превʼю мобільного: `npx expo start --web`.
@@ -132,8 +145,10 @@ npx expo start
 | Офіціант | `waiter@smartrest.ua` | `Staff123!` | Web → `/staff`, Mobile |
 | Кухар | `kitchen@smartrest.ua` | `Kitchen123!` | Web → `/kitchen`, Mobile |
 | Адміністратор | `admin@smartrest.ua` | `Admin123!` | Web → `/staff`, `/admin/*`, Mobile |
+| Курʼєр | `courier@smartrest.ua` | `Courier123!` | Mobile |
+| Курʼєр | `courier2@smartrest.ua` | `Courier123!` | Mobile |
 
-На сторінці входу Web і Mobile є кнопки **демо-доступу** для кожної ролі. Мобільний застосунок сам показує інтерфейс своєї ролі (гість / офіціант / кухар / адмін). У Web кожна вкладка браузера має власну сесію: в одній вкладці можна бути гостем, в іншій — офіціантом.
+На сторінці входу Web і Mobile є кнопки **демо-доступу** для кожної ролі. Мобільний застосунок сам показує інтерфейс своєї ролі (гість / офіціант / кухар / адмін / курʼєр). Обліковий запис один для обох систем: вхід через Restaurant API, той самий токен приймає Delivery API. У Web кожна вкладка браузера має власну сесію: в одній вкладці можна бути гостем, в іншій — офіціантом.
 
 **Тестові картки (sandbox):**
 
@@ -151,16 +166,16 @@ npx expo start
 
 ```mermaid
 flowchart LR
-    W[Web · React] -- REST --> API[Backend · Express<br/>валідація · JWT · RBAC<br/>booking engine · автомати станів<br/>платежі · рекомендації]
-    M[Mobile · Expo] -- REST --> API
-    W <-- WebSocket --> RT[Socket.IO]
-    M <-- WebSocket --> RT
-    API --> DB[(PostgreSQL)]
-    API --> RT
-    API --> PAY[[Sandbox payment]]
+    W[Web · React<br/>гість · зал · кухня · адмін] -- REST + WS --> R[Restaurant API · :4000<br/>бронювання · QR · зал · kitchen display<br/>платежі · рекомендації · аналітика]
+    M[Mobile · Expo<br/>гість · курʼєр · зал · кухня · адмін] -- REST + WS --> R
+    M -- REST + WS --> D[Delivery API · :4100<br/>зони · адреси · оформлення · оплата<br/>курʼєр · диспетчерська]
+    R --> DB[(PostgreSQL<br/>одна база даних)]
+    D --> DB
+    DB -. LISTEN / NOTIFY .-> R
+    DB -. LISTEN / NOTIFY .-> D
 ```
 
-Web і Mobile працюють **лише через API** з єдиним backend і єдиною БД. Будь-яка дія в одному клієнті миттєво видна в іншому (Socket.IO). Детальніше — [docs/04-architecture.md](docs/04-architecture.md).
+**Дві системи — одна база даних.** Restaurant API і Delivery API — окремі процеси й Docker-контейнери з власними портами, Socket.IO і Swagger. Спільні в них лише база даних (замовлення доставки — це ті самі `orders` з `type = DELIVERY`, тому кухня бачить їх на своєму екрані) і обліковий запис. Про зміни спільних замовлень системи повідомляють одна одну через PostgreSQL `LISTEN/NOTIFY` — без окремого брокера повідомлень. Клієнти **ніколи** не звертаються до БД напряму. Детальніше — [docs/04-architecture.md](docs/04-architecture.md).
 
 ## Бізнес-процес
 
@@ -170,20 +185,27 @@ flowchart LR
     C --> D[Замовлення<br/>NEW → CONFIRMED] --> E[Кухня<br/>PREPARING] --> F[Готово<br/>READY] --> G[Подано<br/>SERVED] --> H[Оплата<br/>PAID] --> I[Візит завершено<br/>COMPLETED]
 ```
 
+**Доставка:**
+
+```mermaid
+flowchart LR
+    N[Оформлення<br/>NEW · очікує оплати] --> C[Оплачено / готівка<br/>CONFIRMED] --> P[Кухня<br/>PREPARING] --> R[Готово<br/>READY] --> D[Курʼєр забрав<br/>DELIVERING] --> F[Вручено<br/>DELIVERED]
+```
+
 Правила переходів (хто, коли, за яких умов) — [docs/07-business-logic.md](docs/07-business-logic.md).
 
 ## Тестування
 
 ```bash
-cd backend && npm test        # 77 тестів: модульні + інтеграційні з PostgreSQL + WebSocket
+cd backend && npm test        # 111 тестів: модульні + інтеграційні з PostgreSQL + WebSocket (зал і доставка)
 npm run typecheck             # TypeScript strict для backend, web, mobile
 
 # E2E у браузері (Playwright): сценарій захисту через UI
 npm install && npx playwright install chromium   # один раз
 npm run dev                                       # в окремому терміналі
-npm run e2e                                       # реєстрація → бронювання → check-in → замовлення → кухня → оплата 3-D Secure → відгук → завершення візиту
+npm run e2e                                       # повний цикл у залі + доставка (Delivery API → kitchen display у Web → курʼєр)
 ```
-Тести API використовують окрему БД `smart_restaurant_test` (див. `backend/.env.test`). E2E працює з демо-БД і прибирає за собою (візит завершується); запускайте в робочі години ресторану (10:00–23:00 за Києвом), іншу адресу можна задати `E2E_BASE_URL=https://localhost:8443`. Сценарії та трасування вимог — [docs/09-testing.md](docs/09-testing.md). CI: `.github/workflows/ci.yml`.
+Тести API використовують окрему БД `smart_restaurant_test` (див. `backend/.env.test`). E2E працює з демо-БД і прибирає за собою (візит завершується); запускайте в робочі години ресторану (10:00–23:00 за Києвом), іншу адресу можна задати `E2E_BASE_URL=https://localhost:8443` (Delivery API — `E2E_DELIVERY_URL`, типово `http://localhost:4100`). Сценарії та трасування вимог — [docs/09-testing.md](docs/09-testing.md). CI: `.github/workflows/ci.yml`.
 
 ## Документація курсової
 
@@ -194,7 +216,7 @@ npm run e2e                                       # реєстрація → б�
 | Use Case діаграма та специфікації | [docs/03-use-cases.md](docs/03-use-cases.md) |
 | Архітектура, Web ↔ Mobile інтеграція, безпека | [docs/04-architecture.md](docs/04-architecture.md) |
 | Логічна модель БД, обмеження, індекси | [docs/05-database.md](docs/05-database.md) |
-| Специфікація API (59 endpoints, згенеровано з коду) | [docs/06-api.md](docs/06-api.md) |
+| Специфікація API (59 + 26 endpoints двох сервісів, згенеровано з коду) | [docs/06-api.md](docs/06-api.md) |
 | Стани та бізнес-правила | [docs/07-business-logic.md](docs/07-business-logic.md) |
 | ADVANCED / BONUS: алгоритми | [docs/08-advanced.md](docs/08-advanced.md) |
 | Тестування | [docs/09-testing.md](docs/09-testing.md) |
@@ -205,14 +227,16 @@ npm run e2e                                       # реєстрація → б�
 ```
 smart-restaurant/
 ├── backend/            Node.js · Express · Prisma · Socket.IO
-│   ├── prisma/         schema.prisma, міграції (з CHECK/EXCLUDE), seed
-│   ├── src/modules/    auth, menu, tables, booking, reservations, orders, payments, recommendations, analytics…
-│   ├── src/lib/        router (валідація+RBAC+OpenAPI), stateMachine, realtime, openapi
-│   └── tests/          vitest: модульні та інтеграційні тести
+│   ├── prisma/         schema.prisma, міграції (з CHECK/EXCLUDE/тригером), seed
+│   ├── src/modules/    Restaurant API: auth, menu, tables, booking, reservations, orders, payments, recommendations, analytics…
+│   ├── src/delivery/   Delivery API (окремий процес, порт 4100): зони, адреси, доставки, курʼєр, диспетчерська
+│   ├── src/lib/        router (валідація+RBAC+OpenAPI), stateMachine, realtime, bus (LISTEN/NOTIFY), openapi
+│   └── tests/          vitest: модульні та інтеграційні тести обох сервісів
 ├── web/                React · Vite · Tailwind (гість + персонал + кухня + адмін)
-├── mobile/             React Native · Expo (гостьовий застосунок)
+├── mobile/             React Native · Expo (гість + доставка + курʼєр + персонал + кухня + адмін)
+├── e2e/                Playwright: повний цикл у залі та доставка
 ├── docs/               документація курсової + скриншоти
-├── docker-compose.yml  db + backend + web (nginx)
+├── docker-compose.yml  db + backend + delivery + web (nginx)
 └── .github/workflows/  CI
 ```
 

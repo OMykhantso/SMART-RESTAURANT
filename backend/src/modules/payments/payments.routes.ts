@@ -26,7 +26,8 @@ define({
   path: '/card',
   summary: 'Оплата замовлення карткою через sandbox-шлюз',
   description:
-    'Дозволено лише для замовлень у статусі SERVED. Заголовок Idempotency-Key захищає від подвійного списання. ' +
+    'У залі — для замовлень у статусі SERVED; доставка карткою — одразу після оформлення (NEW), після оплати замовлення йде на кухню. ' +
+    'Заголовок Idempotency-Key захищає від подвійного списання. ' +
     'Відповідь 402 — картку відхилено; requiresAction=true — потрібне підтвердження 3-D Secure.',
   tags: ['Payments (sandbox)'],
   roles: ['CLIENT', 'STAFF', 'ADMIN'],
@@ -84,9 +85,9 @@ define({
     const payments = await prisma.payment.findMany({
       where: { createdAt: { gte: day.toJSDate(), lt: day.plus({ days: 1 }).toJSDate() } },
       orderBy: { createdAt: 'desc' },
-      include: { order: { select: { table: { select: { number: true } } } } },
+      include: { order: { select: { type: true, table: { select: { number: true } } } } },
     });
-    return payments.map((p) => ({ ...svc.serializePayment(p), tableNumber: p.order.table.number }));
+    return payments.map((p) => ({ ...svc.serializePayment(p), orderType: p.order.type, tableNumber: p.order.table?.number ?? null }));
   },
 });
 
