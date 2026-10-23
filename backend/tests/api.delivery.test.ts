@@ -146,7 +146,7 @@ describe('TC-D01 Єдиний вхід і довідники доставки', 
   });
 });
 
-describe('TC-D06 Геолокація: район за координатами', () => {
+describe('TC-D09 Геолокація: район за координатами', () => {
   it('точка на Хрещатику → Печерський, з відстанню від ресторану й оцінкою часу в дорозі', async () => {
     const res = await dapi().post('/api/delivery/locate').send({ lat: 50.447, lng: 30.522 }).expect(200);
     expect(res.body).toMatchObject({ covered: true, reason: null, zone: { id: zones.center, name: 'Печерський', fee: 4900 } });
