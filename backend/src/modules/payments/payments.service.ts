@@ -87,18 +87,30 @@ async function finalizeSuccess(paymentId: number, actor: AuthUser) {
   if (order.type === 'DELIVERY') {
     // оплачена доставка — новий тікет для залу й кухні (Restaurant API) і подія для клієнта (Delivery API)
     broadcast(order, 'order:created');
-    emit('payment:succeeded', { orderId: order.id, amount: payment.amount + payment.tip, method: payment.method, tableNumber: null, type: 'DELIVERY' }, { staff: true });
+    emit(
+      'payment:succeeded',
+      { orderId: order.id, amount: payment.amount + payment.tip, method: payment.method, tableNumber: null, type: 'DELIVERY' },
+      { staff: true },
+    );
     return { payment: serializePayment(payment), order: serializeOrder(order, actor) };
   }
-  emit('order:updated', { id: order.id, type: order.type, status: order.status, tableId: order.tableId, userId: order.userId }, {
-    userId: order.userId,
-    staff: true,
-    kitchen: false,
-  });
-  emit('payment:succeeded', { orderId: order.id, amount: payment.amount + payment.tip, method: payment.method, tableNumber: order.table?.number ?? null }, {
-    userId: order.userId,
-    staff: true,
-  });
+  emit(
+    'order:updated',
+    { id: order.id, type: order.type, status: order.status, tableId: order.tableId, userId: order.userId },
+    {
+      userId: order.userId,
+      staff: true,
+      kitchen: false,
+    },
+  );
+  emit(
+    'payment:succeeded',
+    { orderId: order.id, amount: payment.amount + payment.tip, method: payment.method, tableNumber: order.table?.number ?? null },
+    {
+      userId: order.userId,
+      staff: true,
+    },
+  );
   emit('tables:changed', { tableId: order.tableId }, { staff: true });
   return { payment: serializePayment(payment), order: serializeOrder(order, actor) };
 }
@@ -108,10 +120,7 @@ async function markFailed(paymentId: number, code: string, message: string): Pro
   throw new AppError(402, 'PAYMENT_DECLINED', message, { paymentId, reason: code });
 }
 
-export async function payByCard(
-  actor: AuthUser,
-  input: { orderId: number; tip: number; card: CardInput; idempotencyKey?: string },
-) {
+export async function payByCard(actor: AuthUser, input: { orderId: number; tip: number; card: CardInput; idempotencyKey?: string }) {
   // Ідемпотентність: повторний запит з тим самим ключем не створює другий платіж
   if (input.idempotencyKey) {
     const existing = await prisma.payment.findUnique({ where: { idempotencyKey: input.idempotencyKey } });

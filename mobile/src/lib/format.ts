@@ -32,7 +32,11 @@ export function relativeDay(isoDate: string): string {
   const today = isoDay();
   if (isoDate === today) return 'Сьогодні';
   if (isoDate === addDays(today, 1)) return 'Завтра';
-  return cap(new Intl.DateTimeFormat('uk-UA', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${isoDate}T12:00:00Z`)));
+  return cap(
+    new Intl.DateTimeFormat('uk-UA', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(
+      new Date(`${isoDate}T12:00:00Z`),
+    ),
+  );
 }
 
 export function plural(n: number, one: string, few: string, many: string) {

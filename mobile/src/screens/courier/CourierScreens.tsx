@@ -3,7 +3,23 @@ import { Linking, Pressable, RefreshControl, StyleSheet, Text, View } from 'reac
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
-import { Banknote, Bike, ChefHat, Clock, CreditCard, HandCoins, House, MapPin, Navigation, PackageCheck, Phone, Route, Timer, Undo2, Wallet } from 'lucide-react-native';
+import {
+  Banknote,
+  Bike,
+  ChefHat,
+  Clock,
+  CreditCard,
+  HandCoins,
+  House,
+  MapPin,
+  Navigation,
+  PackageCheck,
+  Phone,
+  Route,
+  Timer,
+  Undo2,
+  Wallet,
+} from 'lucide-react-native';
 import { Badge, Button, Caption, EmptyState, Eyebrow, Screen, Skeleton, Title } from '../../components/ui';
 import { StatTile } from '../../components/staff';
 import { formatPhone } from '../../components/delivery';
@@ -40,9 +56,15 @@ function CourierHeader({ title, subtitle }: { title: string; subtitle: string })
       </View>
       <View style={[styles.live, { borderColor: connected ? 'rgba(52,211,153,0.35)' : 'rgba(251,113,133,0.35)' }]}>
         <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: connected ? colors.success : colors.danger }} />
-        <Text style={{ fontFamily: fonts.semibold, fontSize: 11, color: connected ? colors.success : colors.danger }}>{connected ? 'На лінії' : 'Офлайн'}</Text>
+        <Text style={{ fontFamily: fonts.semibold, fontSize: 11, color: connected ? colors.success : colors.danger }}>
+          {connected ? 'На лінії' : 'Офлайн'}
+        </Text>
       </View>
-      <Pressable onPress={() => nav.navigate('CourierTabs', { screen: 'CourierProfile' })} style={styles.avatar} accessibilityLabel="Профіль">
+      <Pressable
+        onPress={() => nav.navigate('CourierTabs', { screen: 'CourierProfile' })}
+        style={styles.avatar}
+        accessibilityLabel="Профіль"
+      >
         <Text style={{ fontFamily: fonts.display, fontSize: 17, color: colors.info }}>
           {user?.name
             .split(' ')
@@ -111,14 +133,18 @@ function KitchenState({ o }: { o: Order }) {
     return (
       <View style={[styles.kitchen, { backgroundColor: colors.successSoft }]}>
         <PackageCheck size={14} color={colors.success} />
-        <Text style={{ fontFamily: fonts.semibold, fontSize: 12.5, color: colors.success }}>Готово · чекає {minutesSince(o.readyAt)} хв</Text>
+        <Text style={{ fontFamily: fonts.semibold, fontSize: 12.5, color: colors.success }}>
+          Готово · чекає {minutesSince(o.readyAt)} хв
+        </Text>
       </View>
     );
   if (o.status === 'DELIVERING')
     return (
       <View style={[styles.kitchen, { backgroundColor: colors.infoSoft }]}>
         <Bike size={14} color={colors.info} />
-        <Text style={{ fontFamily: fonts.semibold, fontSize: 12.5, color: colors.info }}>В дорозі · привезти о {o.delivery?.etaAt ? fmtTime(o.delivery.etaAt) : '—'}</Text>
+        <Text style={{ fontFamily: fonts.semibold, fontSize: 12.5, color: colors.info }}>
+          В дорозі · привезти о {o.delivery?.etaAt ? fmtTime(o.delivery.etaAt) : '—'}
+        </Text>
       </View>
     );
   return (
@@ -148,13 +174,19 @@ export function CourierQueueScreen() {
       {full && (
         <View style={styles.full}>
           <Bike size={16} color={colors.warning} />
-          <Text style={{ flex: 1, fontFamily: fonts.medium, color: colors.text, fontSize: 13 }}>У вас максимум замовлень. Доставте поточні, щоб брати нові.</Text>
+          <Text style={{ flex: 1, fontFamily: fonts.medium, color: colors.text, fontSize: 13 }}>
+            У вас максимум замовлень. Доставте поточні, щоб брати нові.
+          </Text>
         </View>
       )}
       {list.isLoading ? (
         <Skeleton height={220} />
       ) : !sorted.length ? (
-        <EmptyState icon={<Route size={26} color={colors.gold} />} title="Поки тихо" text="Нові замовлення зʼявляться тут миттєво — ми сповістимо вібрацією" />
+        <EmptyState
+          icon={<Route size={26} color={colors.gold} />}
+          title="Поки тихо"
+          text="Нові замовлення зʼявляться тут миттєво — ми сповістимо вібрацією"
+        />
       ) : (
         sorted.map((o) => (
           <View key={o.id} style={[styles.card, o.status === 'READY' && { borderColor: 'rgba(52,211,153,0.4)' }]}>
@@ -270,7 +302,13 @@ export function CourierActiveScreen() {
               </View>
 
               {o.status === 'READY' && (
-                <Button title="Забрав замовлення — їду" style={{ marginTop: 16 }} icon={<PackageCheck size={18} color="#141008" />} loading={busy(o.id)} onPress={() => act.mutate({ id: o.id, action: 'pickup' })} />
+                <Button
+                  title="Забрав замовлення — їду"
+                  style={{ marginTop: 16 }}
+                  icon={<PackageCheck size={18} color="#141008" />}
+                  loading={busy(o.id)}
+                  onPress={() => act.mutate({ id: o.id, action: 'pickup' })}
+                />
               )}
               {o.status === 'DELIVERING' && (
                 <Button
@@ -281,8 +319,11 @@ export function CourierActiveScreen() {
                   loading={busy(o.id)}
                   onPress={() =>
                     d.paymentMethod === 'CASH'
-                      ? confirmAction('Готівку отримано?', `Сума ${money(o.total)}${d.changeFrom ? `, решта ${money(d.changeFrom - o.total)}` : ''}`, 'Так, доставлено', () =>
-                          act.mutate({ id: o.id, action: 'delivered' }),
+                      ? confirmAction(
+                          'Готівку отримано?',
+                          `Сума ${money(o.total)}${d.changeFrom ? `, решта ${money(d.changeFrom - o.total)}` : ''}`,
+                          'Так, доставлено',
+                          () => act.mutate({ id: o.id, action: 'delivered' }),
                         )
                       : act.mutate({ id: o.id, action: 'delivered' })
                   }
@@ -291,12 +332,18 @@ export function CourierActiveScreen() {
               {['CONFIRMED', 'PREPARING'].includes(o.status) && (
                 <View style={styles.waiting}>
                   <Timer size={16} color={colors.muted} />
-                  <Text style={{ flex: 1, fontFamily: fonts.medium, color: colors.muted, fontSize: 13 }}>Кухня ще готує — ми сповістимо, щойно буде «Готово»</Text>
+                  <Text style={{ flex: 1, fontFamily: fonts.medium, color: colors.muted, fontSize: 13 }}>
+                    Кухня ще готує — ми сповістимо, щойно буде «Готово»
+                  </Text>
                 </View>
               )}
               {o.status !== 'DELIVERING' && (
                 <Pressable
-                  onPress={() => confirmAction('Відмовитися від замовлення?', 'Воно повернеться в загальну чергу', 'Відмовитися', () => act.mutate({ id: o.id, action: 'release' }))}
+                  onPress={() =>
+                    confirmAction('Відмовитися від замовлення?', 'Воно повернеться в загальну чергу', 'Відмовитися', () =>
+                      act.mutate({ id: o.id, action: 'release' }),
+                    )
+                  }
                   style={styles.release}
                 >
                   <Undo2 size={14} color={colors.faint} />
@@ -320,32 +367,65 @@ export function CourierShiftScreen() {
   return (
     <Screen refreshControl={refresh}>
       <CourierHeader title="Моя зміна" subtitle={fmtDateShort(new Date())} />
-      <LinearGradient colors={['rgba(220,171,74,0.2)', 'rgba(20,20,25,0.96)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cashCard}>
+      <LinearGradient
+        colors={['rgba(220,171,74,0.2)', 'rgba(20,20,25,0.96)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.cashCard}
+      >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <LinearGradient colors={goldGradient} style={styles.cashIcon}>
             <HandCoins size={22} color="#141008" />
           </LinearGradient>
           <View style={{ flex: 1 }}>
             <Eyebrow>Готівка на руках</Eyebrow>
-            <Text style={{ fontFamily: fonts.display, fontSize: 32, color: colors.text, marginTop: 2 }}>{s.data ? money(s.data.cashOnHand) : '—'}</Text>
+            <Text style={{ fontFamily: fonts.display, fontSize: 32, color: colors.text, marginTop: 2 }}>
+              {s.data ? money(s.data.cashOnHand) : '—'}
+            </Text>
           </View>
         </View>
-        <Caption style={{ marginTop: 10 }}>Здайте в касу ресторану в кінці зміни · чайові: {s.data ? money(s.data.tipsToday) : '—'}</Caption>
+        <Caption style={{ marginTop: 10 }}>
+          Здайте в касу ресторану в кінці зміни · чайові: {s.data ? money(s.data.tipsToday) : '—'}
+        </Caption>
       </LinearGradient>
       <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-        <StatTile label="Доставлено" value={String(s.data?.deliveredToday ?? '—')} icon={<PackageCheck size={18} color={colors.success} />} tone="success" />
-        <StatTile label="Час у дорозі" value={s.data?.avgRideMin != null ? `${s.data.avgRideMin} хв` : '—'} icon={<Clock size={18} color={colors.info} />} tone="info" />
+        <StatTile
+          label="Доставлено"
+          value={String(s.data?.deliveredToday ?? '—')}
+          icon={<PackageCheck size={18} color={colors.success} />}
+          tone="success"
+        />
+        <StatTile
+          label="Час у дорозі"
+          value={s.data?.avgRideMin != null ? `${s.data.avgRideMin} хв` : '—'}
+          icon={<Clock size={18} color={colors.info} />}
+          tone="info"
+        />
       </View>
       <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-        <StatTile label="Тарифи доставок" value={s.data ? money(s.data.feesToday) : '—'} icon={<Wallet size={18} color={colors.gold} />} tone="gold" />
-        <StatTile label="В роботі" value={s.data ? `${s.data.active}/${s.data.capacity}` : '—'} icon={<Bike size={18} color={colors.orange} />} tone="orange" />
+        <StatTile
+          label="Тарифи доставок"
+          value={s.data ? money(s.data.feesToday) : '—'}
+          icon={<Wallet size={18} color={colors.gold} />}
+          tone="gold"
+        />
+        <StatTile
+          label="В роботі"
+          value={s.data ? `${s.data.active}/${s.data.capacity}` : '—'}
+          icon={<Bike size={18} color={colors.orange} />}
+          tone="orange"
+        />
       </View>
 
       <Eyebrow style={{ marginTop: 24, marginBottom: 10 }}>Доставлено за тиждень</Eyebrow>
       {history.isLoading ? (
         <Skeleton height={160} />
       ) : !history.data?.length ? (
-        <EmptyState icon={<PackageCheck size={26} color={colors.gold} />} title="Ще жодної доставки" text="Тут зʼявиться історія ваших доставок" />
+        <EmptyState
+          icon={<PackageCheck size={26} color={colors.gold} />}
+          title="Ще жодної доставки"
+          text="Тут зʼявиться історія ваших доставок"
+        />
       ) : (
         history.data.map((o) => (
           <View key={o.id} style={styles.histRow}>
@@ -354,7 +434,8 @@ export function CourierShiftScreen() {
                 {o.delivery?.street}, {o.delivery?.house}
               </Text>
               <Caption>
-                #{o.id} · {fmtDateShort(o.delivery?.deliveredAt ?? o.createdAt)}, {fmtTime(o.delivery?.deliveredAt ?? o.createdAt)} · {o.delivery?.zone.name}
+                #{o.id} · {fmtDateShort(o.delivery?.deliveredAt ?? o.createdAt)}, {fmtTime(o.delivery?.deliveredAt ?? o.createdAt)} ·{' '}
+                {o.delivery?.zone.name}
               </Caption>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
@@ -370,24 +451,93 @@ export function CourierShiftScreen() {
 
 const styles = StyleSheet.create({
   live: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 99, borderWidth: 1 },
-  avatar: { width: 44, height: 44, borderRadius: 15, backgroundColor: colors.infoSoft, borderWidth: 1, borderColor: 'rgba(125,211,252,0.3)', alignItems: 'center', justifyContent: 'center' },
-  strip: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 16 },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: colors.infoSoft,
+    borderWidth: 1,
+    borderColor: 'rgba(125,211,252,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  strip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 16,
+  },
   stripDiv: { width: 1, height: 28, backgroundColor: colors.border },
-  full: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 16, backgroundColor: colors.warningSoft, marginBottom: 14 },
-  card: { padding: 16, borderRadius: radius.xl, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 12 },
+  full: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: colors.warningSoft,
+    marginBottom: 14,
+  },
+  card: {
+    padding: 16,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12,
+  },
   cardTitle: { fontFamily: fonts.semibold, color: colors.text, fontSize: 16 },
   zoneIcon: { width: 40, height: 40, borderRadius: 13, backgroundColor: colors.goldSoft, alignItems: 'center', justifyContent: 'center' },
   total: { fontFamily: fonts.bold, color: colors.goldLight, fontSize: 16 },
   cash: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 99 },
   cashText: { fontFamily: fonts.semibold, fontSize: 12.5 },
   kitchen: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 99 },
-  addressBlock: { marginTop: 12, padding: 14, borderRadius: 18, backgroundColor: 'rgba(8,8,11,0.55)', borderWidth: 1, borderColor: colors.border },
+  addressBlock: {
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: 'rgba(8,8,11,0.55)',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   comment: { fontFamily: fonts.medium, color: colors.textSoft, fontSize: 13, marginTop: 6 },
-  action: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 42, borderRadius: 14, backgroundColor: colors.infoSoft, borderWidth: 1, borderColor: 'rgba(125,211,252,0.25)' },
+  action: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: colors.infoSoft,
+    borderWidth: 1,
+    borderColor: 'rgba(125,211,252,0.25)',
+  },
   actionText: { fontFamily: fonts.semibold, color: colors.info, fontSize: 13.5 },
-  waiting: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16, padding: 12, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.04)' },
+  waiting: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
   release: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, paddingVertical: 6 },
   cashCard: { padding: 18, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.goldBorder },
   cashIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  histRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 8 },
+  histRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 8,
+  },
 });

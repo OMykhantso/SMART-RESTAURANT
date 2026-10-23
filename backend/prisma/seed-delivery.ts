@@ -20,7 +20,10 @@ async function main() {
     if (exists) {
       // база з попередньої версії: дописуємо центр і радіус для геолокації, решту не чіпаємо
       if (exists.centerLat == null) {
-        await prisma.deliveryZone.update({ where: { id: exists.id }, data: { centerLat: z.center[0], centerLng: z.center[1], radiusKm: z.radiusKm } });
+        await prisma.deliveryZone.update({
+          where: { id: exists.id },
+          data: { centerLat: z.center[0], centerLng: z.center[1], radiusKm: z.radiusKm },
+        });
         geo++;
       }
       continue;
@@ -47,20 +50,56 @@ async function main() {
   for (const u of USERS.filter((x) => x.role === 'COURIER')) {
     const exists = await prisma.user.findUnique({ where: { email: u.email } });
     if (exists) continue;
-    await prisma.user.create({ data: { email: u.email, name: u.name, phone: u.phone, role: 'COURIER', passwordHash: await bcrypt.hash(u.password, 10) } });
+    await prisma.user.create({
+      data: { email: u.email, name: u.name, phone: u.phone, role: 'COURIER', passwordHash: await bcrypt.hash(u.password, 10) },
+    });
     couriers++;
   }
 
   const zone = (name: string) => prisma.deliveryZone.findUniqueOrThrow({ where: { name } });
-  const demo: { email: string; addresses: { zone: string; label: string; street: string; house: string; apartment?: string; entrance?: string; floor?: string; comment?: string; isDefault?: boolean }[] }[] = [
+  const demo: {
+    email: string;
+    addresses: {
+      zone: string;
+      label: string;
+      street: string;
+      house: string;
+      apartment?: string;
+      entrance?: string;
+      floor?: string;
+      comment?: string;
+      isDefault?: boolean;
+    }[];
+  }[] = [
     {
       email: 'client@smartrest.ua',
       addresses: [
-        { zone: 'Печерський', label: 'Дім', street: 'вул. Мечникова', house: '12', apartment: '5', entrance: '1', floor: '2', comment: 'Домофон 5, двері зліва', isDefault: true },
-        { zone: 'Шевченківський', label: 'Робота', street: 'вул. Січових Стрільців', house: '7А', apartment: '304', floor: '3', comment: 'Офіс IT-компанії, рецепція на 1 поверсі' },
+        {
+          zone: 'Печерський',
+          label: 'Дім',
+          street: 'вул. Мечникова',
+          house: '12',
+          apartment: '5',
+          entrance: '1',
+          floor: '2',
+          comment: 'Домофон 5, двері зліва',
+          isDefault: true,
+        },
+        {
+          zone: 'Шевченківський',
+          label: 'Робота',
+          street: 'вул. Січових Стрільців',
+          house: '7А',
+          apartment: '304',
+          floor: '3',
+          comment: 'Офіс IT-компанії, рецепція на 1 поверсі',
+        },
       ],
     },
-    { email: 'maria@smartrest.ua', addresses: [{ zone: 'Подільський', label: 'Дім', street: 'вул. Покровська', house: '24', apartment: '8', isDefault: true }] },
+    {
+      email: 'maria@smartrest.ua',
+      addresses: [{ zone: 'Подільський', label: 'Дім', street: 'вул. Покровська', house: '24', apartment: '8', isDefault: true }],
+    },
   ];
   let addresses = 0;
   for (const d of demo) {

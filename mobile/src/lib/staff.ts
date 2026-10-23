@@ -56,17 +56,24 @@ export interface Overview {
   };
 }
 
-export const useToday = () => useQuery({ queryKey: ['today'], queryFn: () => api.get<TodayStats>('/analytics/today'), refetchInterval: 60_000 });
-export const useLiveTables = () => useQuery({ queryKey: ['tables-live'], queryFn: () => api.get<LiveTable[]>('/tables/live'), refetchInterval: 60_000 });
+export const useToday = () =>
+  useQuery({ queryKey: ['today'], queryFn: () => api.get<TodayStats>('/analytics/today'), refetchInterval: 60_000 });
+export const useLiveTables = () =>
+  useQuery({ queryKey: ['tables-live'], queryFn: () => api.get<LiveTable[]>('/tables/live'), refetchInterval: 60_000 });
 export const useStaffOrders = (params: Record<string, unknown> = {}, enabled = true) =>
   useQuery({ queryKey: ['orders', 'staff', params], queryFn: () => api.get<Order[]>('/orders', params), refetchInterval: 45_000, enabled });
 export const useStaffReservations = (params: Record<string, unknown>) =>
   useQuery({ queryKey: ['reservations', 'staff', params], queryFn: () => api.get<Reservation[]>('/reservations', params) });
-export const useKitchenOrders = () => useQuery({ queryKey: ['kitchen'], queryFn: () => api.get<Order[]>('/kitchen/orders'), refetchInterval: 30_000 });
-export const useOverview = (days: number) => useQuery({ queryKey: ['analytics', days], queryFn: () => api.get<Overview>('/analytics/overview', { days }) });
+export const useKitchenOrders = () =>
+  useQuery({ queryKey: ['kitchen'], queryFn: () => api.get<Order[]>('/kitchen/orders'), refetchInterval: 30_000 });
+export const useOverview = (days: number) =>
+  useQuery({ queryKey: ['analytics', days], queryFn: () => api.get<Overview>('/analytics/overview', { days }) });
 export const useAllDishes = () => useQuery({ queryKey: ['dishes', 'all'], queryFn: () => api.get<Dish[]>('/dishes') });
 export const useUsers = (params: Record<string, unknown>) =>
-  useQuery({ queryKey: ['users', params], queryFn: () => api.get<{ total: number; items: User[] }>('/users', { pageSize: 50, ...params }) });
+  useQuery({
+    queryKey: ['users', params],
+    queryFn: () => api.get<{ total: number; items: User[] }>('/users', { pageSize: 50, ...params }),
+  });
 
 const STAFF_KEYS = ['orders', 'order', 'reservations', 'reservation', 'tables-live', 'today', 'kitchen', 'current-visit'];
 
@@ -88,7 +95,8 @@ export function useReservationAction() {
   const invalidate = useInvalidate();
   const toast = useToast();
   return useMutation({
-    mutationFn: ({ id, status, reason }: { id: number; status: ReservationStatus; reason?: string }) => api.patch<Reservation>(`/reservations/${id}/status`, { status, reason }),
+    mutationFn: ({ id, status, reason }: { id: number; status: ReservationStatus; reason?: string }) =>
+      api.patch<Reservation>(`/reservations/${id}/status`, { status, reason }),
     onSuccess: (r) => {
       haptic.success();
       toast({ title: RES_SUCCESS[r.status] ?? 'Статус оновлено', body: `${r.code} · столик №${r.table.number}`, tone: 'success' });
@@ -113,7 +121,8 @@ export function useOrderAction() {
   const invalidate = useInvalidate();
   const toast = useToast();
   return useMutation({
-    mutationFn: ({ id, status, reason }: { id: number; status: OrderStatus; reason?: string }) => api.patch<Order>(`/orders/${id}/status`, { status, reason }),
+    mutationFn: ({ id, status, reason }: { id: number; status: OrderStatus; reason?: string }) =>
+      api.patch<Order>(`/orders/${id}/status`, { status, reason }),
     onSuccess: (o) => {
       haptic.success();
       toast({ title: ORDER_SUCCESS[o.status] ?? 'Статус оновлено', body: `#${o.id} · ${placeOf(o)}`, tone: 'success' });
@@ -147,11 +156,16 @@ export function useItemStatus() {
   const invalidate = useInvalidate();
   const toast = useToast();
   return useMutation({
-    mutationFn: ({ orderId, itemId, status }: { orderId: number; itemId: number; status: OrderItemStatus }) => api.patch<Order>(`/kitchen/orders/${orderId}/items/${itemId}`, { status }),
+    mutationFn: ({ orderId, itemId, status }: { orderId: number; itemId: number; status: OrderItemStatus }) =>
+      api.patch<Order>(`/kitchen/orders/${orderId}/items/${itemId}`, { status }),
     onSuccess: (o) => {
       if (o.status === 'READY') {
         haptic.success();
-        toast({ title: `Замовлення #${o.id} готове`, body: o.table ? `Столик №${o.table.number} — офіціант отримав сигнал` : 'Доставка — курʼєр отримав сигнал', tone: 'success' });
+        toast({
+          title: `Замовлення #${o.id} готове`,
+          body: o.table ? `Столик №${o.table.number} — офіціант отримав сигнал` : 'Доставка — курʼєр отримав сигнал',
+          tone: 'success',
+        });
       } else haptic.light();
       invalidate();
     },
@@ -166,10 +180,14 @@ export function useAvailability() {
   const qc = useQueryClient();
   const toast = useToast();
   return useMutation({
-    mutationFn: ({ id, isAvailable }: { id: number; isAvailable: boolean }) => api.patch<Dish>(`/dishes/${id}/availability`, { isAvailable }),
+    mutationFn: ({ id, isAvailable }: { id: number; isAvailable: boolean }) =>
+      api.patch<Dish>(`/dishes/${id}/availability`, { isAvailable }),
     onSuccess: (d) => {
       haptic.light();
-      toast({ title: d.isAvailable ? `«${d.name}» знову в меню` : `«${d.name}» у стоп-листі`, tone: d.isAvailable ? 'success' : 'warning' });
+      toast({
+        title: d.isAvailable ? `«${d.name}» знову в меню` : `«${d.name}» у стоп-листі`,
+        tone: d.isAvailable ? 'success' : 'warning',
+      });
       ['dishes', 'dish', 'recommendations'].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
     },
     onError: (e) => toast({ title: (e as Error).message, tone: 'danger' }),
@@ -183,7 +201,11 @@ export function useUpdateUser() {
     mutationFn: ({ id, ...data }: { id: number; role?: Role; isActive?: boolean }) => api.patch<User>(`/users/${id}`, data),
     onSuccess: (u) => {
       haptic.success();
-      toast({ title: 'Користувача оновлено', body: `${u.name} · ${ROLE_LABEL[u.role]}${u.isActive === false ? ' · деактивовано' : ''}`, tone: 'success' });
+      toast({
+        title: 'Користувача оновлено',
+        body: `${u.name} · ${ROLE_LABEL[u.role]}${u.isActive === false ? ' · деактивовано' : ''}`,
+        tone: 'success',
+      });
       qc.invalidateQueries({ queryKey: ['users'] });
     },
     onError: (e) => {
@@ -193,7 +215,13 @@ export function useUpdateUser() {
   });
 }
 
-export const ROLE_LABEL: Record<Role, string> = { CLIENT: 'Гість', STAFF: 'Офіціант', KITCHEN: 'Кухар', ADMIN: 'Адміністратор', COURIER: 'Курʼєр' };
+export const ROLE_LABEL: Record<Role, string> = {
+  CLIENT: 'Гість',
+  STAFF: 'Офіціант',
+  KITCHEN: 'Кухар',
+  ADMIN: 'Адміністратор',
+  COURIER: 'Курʼєр',
+};
 
 /** Перемальовує компонент кожні `ms` мілісекунд (таймери на кухні, «хв тому»). */
 export function useTick(ms = 15_000) {

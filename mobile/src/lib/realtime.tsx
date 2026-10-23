@@ -101,6 +101,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       s.close();
       setConnected(false);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- сокет перепідключаємо лише при зміні користувача чи ролі, а не при оновленні профілю
   }, [user?.id, user?.role, qc, toast]);
 
   // ─────────── Delivery API ───────────
@@ -149,6 +150,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       s.close();
       setDeliveryConnected(false);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- сокет перепідключаємо лише при зміні користувача чи ролі, а не при оновленні профілю
   }, [user?.id, user?.role, qc, toast]);
 
   const live = user?.role === 'COURIER' ? deliveryConnected : connected;

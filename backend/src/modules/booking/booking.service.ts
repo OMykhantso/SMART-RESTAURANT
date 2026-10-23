@@ -135,11 +135,7 @@ export async function getAvailability(params: {
  * Перевіряє коректність часу бронювання відносно годин роботи та правил.
  * Повертає межі робочого дня для подальшого підбору столика.
  */
-export function validateReservationWindow(
-  startAt: Date,
-  durationMin: number,
-  opts: { enforceLeadTime: boolean; alignmentMin: number },
-) {
+export function validateReservationWindow(startAt: Date, durationMin: number, opts: { enforceLeadTime: boolean; alignmentMin: number }) {
   const local = toLocal(startAt);
   if (local.second !== 0 || local.millisecond !== 0 || local.minute % opts.alignmentMin !== 0) {
     throw unprocessable(`Час має бути кратним ${opts.alignmentMin} хв`, 'INVALID_SLOT');

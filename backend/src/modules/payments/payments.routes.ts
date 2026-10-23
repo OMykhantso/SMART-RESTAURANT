@@ -42,7 +42,12 @@ define({
       holder: z.string().trim().max(100).optional(),
     }),
   }),
-  responses: { 200: 'Оплачено або потрібна 3DS-дія', 402: 'Картку відхилено', 409: 'Замовлення не можна оплатити', 422: 'Некоректні дані картки' },
+  responses: {
+    200: 'Оплачено або потрібна 3DS-дія',
+    402: 'Картку відхилено',
+    409: 'Замовлення не можна оплатити',
+    422: 'Некоректні дані картки',
+  },
   handler: ({ user, body, req }) =>
     svc.payByCard(user!, {
       ...body,
@@ -57,7 +62,12 @@ define({
   tags: ['Payments (sandbox)'],
   roles: ['CLIENT', 'STAFF', 'ADMIN'],
   params: idParam,
-  body: z.object({ otp: z.string().trim().regex(/^\d{4,8}$/, 'Код складається з цифр') }),
+  body: z.object({
+    otp: z
+      .string()
+      .trim()
+      .regex(/^\d{4,8}$/, 'Код складається з цифр'),
+  }),
   handler: ({ user, params, body }) => svc.confirm3ds(user!, params.id, body.otp),
 });
 

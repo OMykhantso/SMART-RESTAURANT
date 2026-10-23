@@ -19,7 +19,8 @@ const ALLOWED = new Map([
 const upload = multer({
   storage: multer.diskStorage({
     destination: env.uploadsDir,
-    filename: (_req, file, cb) => cb(null, `${Date.now()}-${randomToken(6)}${ALLOWED.get(file.mimetype) ?? path.extname(file.originalname)}`),
+    filename: (_req, file, cb) =>
+      cb(null, `${Date.now()}-${randomToken(6)}${ALLOWED.get(file.mimetype) ?? path.extname(file.originalname)}`),
   }),
   limits: { fileSize: 5 * 1024 * 1024, files: 1 },
   fileFilter: (_req, file, cb) => {

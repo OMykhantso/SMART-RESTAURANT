@@ -9,10 +9,7 @@
  */
 import { randomToken } from '../../lib/http';
 
-export type GatewayOutcome =
-  | { kind: 'success' }
-  | { kind: 'declined'; code: string; message: string }
-  | { kind: 'requires_action' };
+export type GatewayOutcome = { kind: 'success' } | { kind: 'declined'; code: string; message: string } | { kind: 'requires_action' };
 
 export interface CardInput {
   number: string;

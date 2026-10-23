@@ -1,10 +1,36 @@
 import { useMemo, useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import {
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bike, Clock, Flame, Leaf, QrCode, Scale, Search, ShoppingBag, Sparkles, Star, Trash, UtensilsCrossed, X, Zap } from 'lucide-react-native';
+import {
+  Bike,
+  Clock,
+  Flame,
+  Leaf,
+  QrCode,
+  Scale,
+  Search,
+  ShoppingBag,
+  Sparkles,
+  Star,
+  Trash,
+  UtensilsCrossed,
+  X,
+  Zap,
+} from 'lucide-react-native';
 import { Body, Button, Caption, Chip, DishImage, EmptyState, Eyebrow, Header, IconButton, Screen, Skeleton, Title } from '../components/ui';
 import { AddButton, DishTile, QtyStepper, SectionTitle } from '../components/domain';
 import { colors, fonts, goldGradient, radius } from '../theme';
@@ -51,7 +77,12 @@ export function MenuScreen() {
   const categories = useCategories();
   const visit = useCurrentVisit();
   const delivery = useDeliveryInfo();
-  const dishes = useDishes({ category: cat ?? undefined, search: search || undefined, vegetarian: veg || undefined, sort: cat ? 'menu' : 'popular' });
+  const dishes = useDishes({
+    category: cat ?? undefined,
+    search: search || undefined,
+    vegetarian: veg || undefined,
+    sort: cat ? 'menu' : 'popular',
+  });
   const tileW = (Math.min(width, 560) - 20 * 2 - 12) / 2;
 
   return (
@@ -72,17 +103,23 @@ export function MenuScreen() {
               {visit.data?.active ? (
                 <View style={styles.seated}>
                   <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success }} />
-                  <Text style={{ fontFamily: fonts.semibold, color: colors.success, fontSize: 13 }}>Столик №{visit.data.active.table.number} — замовлення йде прямо на кухню</Text>
+                  <Text style={{ fontFamily: fonts.semibold, color: colors.success, fontSize: 13 }}>
+                    Столик №{visit.data.active.table.number} — замовлення йде прямо на кухню
+                  </Text>
                 </View>
               ) : (
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
                   <View style={[styles.hint, { flex: 1.25, marginTop: 0 }]}>
                     <Bike size={16} color={colors.gold} />
                     <Text style={{ flex: 1, fontFamily: fonts.medium, color: colors.textSoft, fontSize: 12.5 }} numberOfLines={2}>
-                      Доставка додому{delivery.data?.fromPrice != null ? ` від ${money(delivery.data.fromPrice)}` : ''} · ~{delivery.data ? delivery.data.kitchenEtaMin + 15 : 45} хв
+                      Доставка додому{delivery.data?.fromPrice != null ? ` від ${money(delivery.data.fromPrice)}` : ''} · ~
+                      {delivery.data ? delivery.data.kitchenEtaMin + 15 : 45} хв
                     </Text>
                   </View>
-                  <Pressable onPress={() => nav.navigate('Scan')} style={[styles.hint, { flex: 1, marginTop: 0, backgroundColor: 'rgba(255,255,255,0.04)' }]}>
+                  <Pressable
+                    onPress={() => nav.navigate('Scan')}
+                    style={[styles.hint, { flex: 1, marginTop: 0, backgroundColor: 'rgba(255,255,255,0.04)' }]}
+                  >
                     <QrCode size={16} color={colors.gold} />
                     <Text style={{ flex: 1, fontFamily: fonts.medium, color: colors.textSoft, fontSize: 12.5 }} numberOfLines={2}>
                       Я в ресторані
@@ -92,17 +129,30 @@ export function MenuScreen() {
               )}
               <View style={styles.search}>
                 <Search size={18} color={colors.faint} />
-                <TextInput value={search} onChangeText={setSearch} placeholder="Пошук страви" placeholderTextColor={colors.faint} style={styles.searchInput} />
+                <TextInput
+                  value={search}
+                  onChangeText={setSearch}
+                  placeholder="Пошук страви"
+                  placeholderTextColor={colors.faint}
+                  style={styles.searchInput}
+                />
                 {search ? (
                   <Pressable onPress={() => setSearch('')} accessibilityLabel="Очистити">
                     <X size={18} color={colors.muted} />
                   </Pressable>
                 ) : null}
               </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20, marginTop: 14 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginHorizontal: -20, marginTop: 14 }}
+                contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+              >
                 <Chip label="⭐ Популярне" active={cat === null} onPress={() => setCat(null)} />
                 <Chip label="🌱 Veg" active={veg} onPress={() => setVeg((v) => !v)} />
-                {categories.data?.map((c) => <Chip key={c.id} label={`${c.emoji ?? ''} ${c.name}`} active={cat === c.slug} onPress={() => setCat(c.slug)} />)}
+                {categories.data?.map((c) => (
+                  <Chip key={c.id} label={`${c.emoji ?? ''} ${c.name}`} active={cat === c.slug} onPress={() => setCat(c.slug)} />
+                ))}
               </ScrollView>
               <View style={{ height: 16 }} />
               {dishes.isLoading && (
@@ -111,7 +161,9 @@ export function MenuScreen() {
                   <Skeleton height={260} style={{ flex: 1 }} />
                 </View>
               )}
-              {!dishes.isLoading && dishes.data?.length === 0 && <EmptyState icon={<Search size={26} color={colors.gold} />} title="Нічого не знайдено" text="Спробуйте інший запит" />}
+              {!dishes.isLoading && dishes.data?.length === 0 && (
+                <EmptyState icon={<Search size={26} color={colors.gold} />} title="Нічого не знайдено" text="Спробуйте інший запит" />
+              )}
             </View>
           }
           renderItem={({ item }) => <DishTile dish={item} width={tileW} onPress={() => nav.navigate('Dish', { id: item.id })} />}
@@ -136,8 +188,15 @@ export function DishScreen({ route, navigation }: ScreenProps<'Dish'>) {
           <>
             <View>
               <DishImage uri={dish.imageUrl} category={dish.category?.slug} style={{ width: '100%', aspectRatio: 1.05 }} radius={0} />
-              <LinearGradient colors={['transparent', colors.bg]} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 120 }} />
-              <IconButton label="Закрити" onPress={() => navigation.goBack()} style={{ position: 'absolute', top: insets.top + 8, right: 16, backgroundColor: 'rgba(8,8,11,0.6)' }}>
+              <LinearGradient
+                colors={['transparent', colors.bg]}
+                style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 120 }}
+              />
+              <IconButton
+                label="Закрити"
+                onPress={() => navigation.goBack()}
+                style={{ position: 'absolute', top: insets.top + 8, right: 16, backgroundColor: 'rgba(8,8,11,0.6)' }}
+              >
                 <X size={20} color={colors.text} />
               </IconButton>
             </View>
@@ -158,10 +217,16 @@ export function DishScreen({ route, navigation }: ScreenProps<'Dish'>) {
               </View>
               <Body style={{ marginTop: 14 }}>{dish.description}</Body>
               <View style={styles.facts}>
-                {dish.weightGrams ? <Fact icon={<Scale size={16} color={colors.gold} />} label="Вага" value={`${dish.weightGrams} г`} /> : null}
+                {dish.weightGrams ? (
+                  <Fact icon={<Scale size={16} color={colors.gold} />} label="Вага" value={`${dish.weightGrams} г`} />
+                ) : null}
                 {dish.calories ? <Fact icon={<Zap size={16} color={colors.gold} />} label="Ккал" value={String(dish.calories)} /> : null}
                 <Fact icon={<Clock size={16} color={colors.gold} />} label="Готується" value={`${dish.prepTimeMin} хв`} />
-                {dish.isVegetarian ? <Fact icon={<Leaf size={16} color={colors.success} />} label="Меню" value="Veg" /> : dish.isSpicy ? <Fact icon={<Flame size={16} color={colors.danger} />} label="Смак" value="Гостре" /> : null}
+                {dish.isVegetarian ? (
+                  <Fact icon={<Leaf size={16} color={colors.success} />} label="Меню" value="Veg" />
+                ) : dish.isSpicy ? (
+                  <Fact icon={<Flame size={16} color={colors.danger} />} label="Смак" value="Гостре" />
+                ) : null}
               </View>
               {dish.allergens.length > 0 && <Caption style={{ marginTop: 14 }}>Алергени: {dish.allergens.join(', ')}</Caption>}
 
@@ -173,7 +238,9 @@ export function DishScreen({ route, navigation }: ScreenProps<'Dish'>) {
                       <DishImage uri={r.dish.imageUrl} category={r.dish.category?.slug} size={56} radius={16} />
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontFamily: fonts.semibold, color: colors.text }}>{r.dish.name}</Text>
-                        <Text style={{ fontFamily: fonts.semibold, fontSize: 11.5, color: colors.gold, marginTop: 2 }}>✦ {r.reasons[0] ?? 'Рекомендуємо'}</Text>
+                        <Text style={{ fontFamily: fonts.semibold, fontSize: 11.5, color: colors.gold, marginTop: 2 }}>
+                          ✦ {r.reasons[0] ?? 'Рекомендуємо'}
+                        </Text>
                       </View>
                       <AddButton disabled={!r.dish.isAvailable} onPress={() => cart.add(r.dish)} />
                     </Pressable>
@@ -277,9 +344,17 @@ export function CartScreen({ navigation }: ScreenProps<'Cart'>) {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <Screen edges={['top']} contentStyle={{ paddingBottom: 200 }}>
-          <Header title="Кошик" subtitle={active ? `Столик №${active.table.number} · ${active.code}` : 'Доставка додому або замовлення в ресторані'} />
+          <Header
+            title="Кошик"
+            subtitle={active ? `Столик №${active.table.number} · ${active.code}` : 'Доставка додому або замовлення в ресторані'}
+          />
           {cart.lines.length === 0 ? (
-            <EmptyState icon={<UtensilsCrossed size={26} color={colors.gold} />} title="Кошик порожній" text="Додайте страви з меню" action={<Button title="До меню" variant="glass" onPress={() => navigation.navigate('Tabs', { screen: 'Menu' })} />} />
+            <EmptyState
+              icon={<UtensilsCrossed size={26} color={colors.gold} />}
+              title="Кошик порожній"
+              text="Додайте страви з меню"
+              action={<Button title="До меню" variant="glass" onPress={() => navigation.navigate('Tabs', { screen: 'Menu' })} />}
+            />
           ) : (
             <>
               {cart.lines.map((l) => (
@@ -294,7 +369,14 @@ export function CartScreen({ navigation }: ScreenProps<'Cart'>) {
                         <Trash size={18} color={colors.faint} />
                       </Pressable>
                     </View>
-                    <TextInput value={l.notes ?? ''} onChangeText={(t) => cart.setNotes(l.dishId, t)} placeholder="Побажання (без цибулі…)" placeholderTextColor={colors.faint} style={styles.lineNote} maxLength={255} />
+                    <TextInput
+                      value={l.notes ?? ''}
+                      onChangeText={(t) => cart.setNotes(l.dishId, t)}
+                      placeholder="Побажання (без цибулі…)"
+                      placeholderTextColor={colors.faint}
+                      style={styles.lineNote}
+                      maxLength={255}
+                    />
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                       <QtyStepper compact value={l.quantity} onChange={(v) => cart.setQty(l.dishId, v)} />
                       <Text style={{ fontFamily: fonts.bold, color: colors.goldLight }}>{money(l.price * l.quantity)}</Text>
@@ -309,24 +391,44 @@ export function CartScreen({ navigation }: ScreenProps<'Cart'>) {
                     <Sparkles size={15} color={colors.gold} />
                     <Eyebrow>Пасує до замовлення</Eyebrow>
                   </View>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={{ marginHorizontal: -20 }}
+                    contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}
+                  >
                     {recs.data.map((r) => (
                       <Pressable key={r.dish.id} onPress={() => cart.add(r.dish)} disabled={!r.dish.isAvailable} style={styles.upsell}>
-                        <DishImage uri={r.dish.imageUrl} category={r.dish.category?.slug} style={{ width: '100%', height: 84 }} radius={14} />
+                        <DishImage
+                          uri={r.dish.imageUrl}
+                          category={r.dish.category?.slug}
+                          style={{ width: '100%', height: 84 }}
+                          radius={14}
+                        />
                         <Text numberOfLines={1} style={{ fontFamily: fonts.semibold, color: colors.text, fontSize: 13, marginTop: 8 }}>
                           {r.dish.name}
                         </Text>
                         <Text numberOfLines={1} style={{ fontFamily: fonts.medium, color: colors.gold, fontSize: 10.5, marginTop: 2 }}>
                           {r.reasons[0] ?? 'Рекомендуємо'}
                         </Text>
-                        <Text style={{ fontFamily: fonts.bold, color: colors.goldLight, fontSize: 13, marginTop: 6 }}>+ {money(r.dish.price)}</Text>
+                        <Text style={{ fontFamily: fonts.bold, color: colors.goldLight, fontSize: 13, marginTop: 6 }}>
+                          + {money(r.dish.price)}
+                        </Text>
                       </Pressable>
                     ))}
                   </ScrollView>
                 </>
               )}
 
-              <TextInput value={notes} onChangeText={setNotes} placeholder="Коментар до замовлення (алергії, подача…)" placeholderTextColor={colors.faint} style={styles.notes} multiline maxLength={500} />
+              <TextInput
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Коментар до замовлення (алергії, подача…)"
+                placeholderTextColor={colors.faint}
+                style={styles.notes}
+                multiline
+                maxLength={500}
+              />
             </>
           )}
         </Screen>
@@ -362,21 +464,111 @@ export function CartScreen({ navigation }: ScreenProps<'Cart'>) {
 
 const styles = StyleSheet.create({
   cartBarWrap: { position: 'absolute', left: 16, right: 16, bottom: 112 },
-  cartBar: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 56, borderRadius: 18, paddingHorizontal: 16, shadowColor: colors.gold, shadowOpacity: 0.5, shadowRadius: 20, elevation: 10 },
+  cartBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    height: 56,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    shadowColor: colors.gold,
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
+  },
   cartCount: { width: 30, height: 30, borderRadius: 10, backgroundColor: '#141008', alignItems: 'center', justifyContent: 'center' },
-  seated: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, padding: 12, borderRadius: 14, backgroundColor: colors.successSoft },
-  hint: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12, padding: 12, borderRadius: 14, backgroundColor: colors.goldSoft },
-  search: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16, height: 50, borderRadius: 16, paddingHorizontal: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  seated: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: colors.successSoft,
+  },
+  hint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: colors.goldSoft,
+  },
+  search: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 16,
+    height: 50,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   searchInput: { flex: 1, color: colors.text, fontFamily: fonts.medium, fontSize: 15, height: '100%' },
   facts: { flexDirection: 'row', gap: 8, marginTop: 18 },
   fact: { flex: 1, padding: 12, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  recRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 8, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 8 },
+  recRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 8,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 8,
+  },
   review: { width: 140, padding: 12, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  dishBar: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 20, paddingTop: 14, backgroundColor: 'rgba(8,8,11,0.96)', borderTopWidth: 1, borderTopColor: colors.border },
-  line: { flexDirection: 'row', gap: 12, padding: 10, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 10 },
+  dishBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    backgroundColor: 'rgba(8,8,11,0.96)',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  line: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 10,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 10,
+  },
   lineNote: { color: colors.muted, fontFamily: fonts.body, fontSize: 12.5, paddingVertical: 6 },
   upsell: { width: 140, padding: 8, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  notes: { marginTop: 18, minHeight: 80, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(255,255,255,0.03)', padding: 14, color: colors.text, fontFamily: fonts.medium, textAlignVertical: 'top' },
+  notes: {
+    marginTop: 18,
+    minHeight: 80,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    padding: 14,
+    color: colors.text,
+    fontFamily: fonts.medium,
+    textAlignVertical: 'top',
+  },
   altCta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 12, paddingBottom: 2 },
-  checkout: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 20, paddingTop: 16, backgroundColor: 'rgba(12,12,16,0.98)', borderTopWidth: 1, borderTopColor: colors.border, borderTopLeftRadius: 26, borderTopRightRadius: 26 },
+  checkout: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    backgroundColor: 'rgba(12,12,16,0.98)',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+  },
 });

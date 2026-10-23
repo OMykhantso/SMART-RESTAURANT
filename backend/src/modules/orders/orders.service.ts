@@ -11,7 +11,11 @@ import { logStatus } from '../reservations/reservations.service';
 
 export const orderInclude = {
   items: {
-    include: { dish: { select: { id: true, name: true, imageUrl: true, prepTimeMin: true, category: { select: { name: true, emoji: true, slug: true } } } } },
+    include: {
+      dish: {
+        select: { id: true, name: true, imageUrl: true, prepTimeMin: true, category: { select: { name: true, emoji: true, slug: true } } },
+      },
+    },
     orderBy: { id: 'asc' },
   },
   table: { select: { id: true, number: true, zone: true } },
@@ -42,7 +46,12 @@ export function serializeDelivery(d: NonNullable<OrderFull['delivery']>) {
     entrance: d.entrance,
     floor: d.floor,
     comment: d.comment,
-    addressLine: [`${d.street}, ${d.house}`, d.apartment && `кв. ${d.apartment}`, d.entrance && `підʼїзд ${d.entrance}`, d.floor && `поверх ${d.floor}`]
+    addressLine: [
+      `${d.street}, ${d.house}`,
+      d.apartment && `кв. ${d.apartment}`,
+      d.entrance && `підʼїзд ${d.entrance}`,
+      d.floor && `поверх ${d.floor}`,
+    ]
       .filter(Boolean)
       .join(', '),
     fee: d.fee,
@@ -129,9 +138,7 @@ export function serializeOrder(o: OrderFull, viewer?: AuthUser | 'SYSTEM') {
       canReady: canTransition(flow, o.status, 'READY', actors),
       canServe: canTransition(flow, o.status, 'SERVED', actors),
       canCancel: canTransition(flow, o.status, 'CANCELLED', actors),
-      canPay: isDelivery
-        ? canPayDelivery
-        : o.status === 'SERVED' && (isOwner || actors.includes('STAFF') || actors.includes('ADMIN')),
+      canPay: isDelivery ? canPayDelivery : o.status === 'SERVED' && (isOwner || actors.includes('STAFF') || actors.includes('ADMIN')),
       canReview: (o.status === 'PAID' || o.status === 'DELIVERED') && isOwner && o.reviews.length === 0,
       canTake: isDelivery && o.status === 'READY' && !o.delivery?.courierId && canTransition(flow, 'READY', 'DELIVERING', actors),
       canDeliver: isDelivery && o.status === 'DELIVERING' && (isAssignedCourier || actors.includes('ADMIN')),
@@ -240,11 +247,9 @@ export async function resolveLines(tx: Tx, items: LineInput[]) {
   if (missing.length) throw unprocessable('Деяких страв не існує', 'DISH_NOT_FOUND', { dishIds: missing.map((m) => m.dishId) });
   const unavailable = lines.map((l) => byId.get(l.dishId)!).filter((d) => !d.isAvailable || d.isArchived);
   if (unavailable.length) {
-    throw conflict(
-      `Зараз недоступно: ${unavailable.map((d) => d.name).join(', ')}`,
-      'DISH_UNAVAILABLE',
-      { dishIds: unavailable.map((d) => d.id) },
-    );
+    throw conflict(`Зараз недоступно: ${unavailable.map((d) => d.name).join(', ')}`, 'DISH_UNAVAILABLE', {
+      dishIds: unavailable.map((d) => d.id),
+    });
   }
   // клієнт не може підмінити вартість — ціни лише з БД
   const subtotal = lines.reduce((s, l) => s + byId.get(l.dishId)!.price * l.quantity, 0);
@@ -275,10 +280,7 @@ export async function createOrder(actor: AuthUser, input: CreateOrderInput) {
         },
       });
       if (!reservation) {
-        throw conflict(
-          'Щоб зробити замовлення, спершу виконайте check-in — відскануйте QR-код на вашому столику',
-          'NOT_CHECKED_IN',
-        );
+        throw conflict('Щоб зробити замовлення, спершу виконайте check-in — відскануйте QR-код на вашому столику', 'NOT_CHECKED_IN');
       }
     } else {
       reservation = input.reservationId
@@ -331,12 +333,7 @@ export async function createOrder(actor: AuthUser, input: CreateOrderInput) {
   return serializeOrder(order, actor);
 }
 
-export async function transitionOrder(
-  actor: AuthUser | 'SYSTEM',
-  id: number,
-  to: OrderStatus,
-  opts: { reason?: string; db?: Tx } = {},
-) {
+export async function transitionOrder(actor: AuthUser | 'SYSTEM', id: number, to: OrderStatus, opts: { reason?: string; db?: Tx } = {}) {
   const run = async (tx: Tx) => {
     // блокуємо рядок замовлення, щоб паралельні зміни статусу не перетиралися
     await tx.$queryRaw`SELECT id FROM orders WHERE id = ${id} FOR UPDATE`;

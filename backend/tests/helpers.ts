@@ -60,8 +60,7 @@ export interface Fixtures {
 export async function seedFixtures(): Promise<Fixtures> {
   await resetDb();
   const hash = await bcrypt.hash('Passw0rd!', 4);
-  const mk = (email: string, role: Role, name: string) =>
-    prisma.user.create({ data: { email, role, name, passwordHash: hash } });
+  const mk = (email: string, role: Role, name: string) => prisma.user.create({ data: { email, role, name, passwordHash: hash } });
   const [admin, staff, kitchen, client, client2] = await Promise.all([
     mk('admin@test.ua', 'ADMIN', 'Адмін'),
     mk('staff@test.ua', 'STAFF', 'Офіціант'),
@@ -89,9 +88,7 @@ export async function seedFixtures(): Promise<Fixtures> {
     [2, 4],
     [3, 6],
   ] as const) {
-    tables.push(
-      await prisma.diningTable.create({ data: { number, seats, qrToken: `qr-table-${number}`, zone: 'HALL' } }),
-    );
+    tables.push(await prisma.diningTable.create({ data: { number, seats, qrToken: `qr-table-${number}`, zone: 'HALL' } }));
   }
   const u = (x: { id: number; email: string }) => ({ id: x.id, email: x.email, password: 'Passw0rd!' });
   const d = (x: { id: number; price: number }) => ({ id: x.id, price: x.price });

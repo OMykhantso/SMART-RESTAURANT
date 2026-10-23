@@ -79,7 +79,16 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       }
     });
     s.on('reservation:updated', (p: { code: string; status: ReservationStatus }) => {
-      invalidate('reservations', 'reservation', 'tables-live', 'today', 'availability', 'booking-tables', 'my-reservations', 'current-visit');
+      invalidate(
+        'reservations',
+        'reservation',
+        'tables-live',
+        'today',
+        'availability',
+        'booking-tables',
+        'my-reservations',
+        'current-visit',
+      );
       if (roleRef.current === 'CLIENT') {
         const meta = RESERVATION_STATUS[p.status];
         if (p.status === 'CONFIRMED') toast.success(`Бронювання ${p.code} підтверджено! 🎉`);

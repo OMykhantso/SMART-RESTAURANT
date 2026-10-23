@@ -82,7 +82,14 @@ async function tryRefresh(): Promise<boolean> {
 type Target = 'restaurant' | 'delivery';
 const baseFor = (target: Target) => (target === 'delivery' ? apiConfig.deliveryUrl : apiConfig.baseUrl);
 
-async function request<T>(target: Target, method: string, path: string, body?: unknown, headers: Record<string, string> = {}, retried = false): Promise<T> {
+async function request<T>(
+  target: Target,
+  method: string,
+  path: string,
+  body?: unknown,
+  headers: Record<string, string> = {},
+  retried = false,
+): Promise<T> {
   let res: Response;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20000);
@@ -117,7 +124,8 @@ async function request<T>(target: Target, method: string, path: string, body?: u
       return request<T>(target, method, path, body, headers, true);
     }
     let message = err?.message ?? `Помилка ${res.status}`;
-    if (err?.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details[0]) message = (err.details[0] as { message: string }).message;
+    if (err?.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details[0])
+      message = (err.details[0] as { message: string }).message;
     throw new ApiError(message, err?.code ?? 'HTTP', res.status, err?.details);
   }
   return data as T;
@@ -132,10 +140,10 @@ function qs(params?: Record<string, unknown>) {
 
 function client(target: Target) {
   return {
-    get: <T,>(path: string, params?: Record<string, unknown>) => request<T>(target, 'GET', path + qs(params)),
-    post: <T,>(path: string, body?: unknown, headers?: Record<string, string>) => request<T>(target, 'POST', path, body ?? {}, headers),
-    patch: <T,>(path: string, body?: unknown) => request<T>(target, 'PATCH', path, body ?? {}),
-    delete: <T,>(path: string) => request<T>(target, 'DELETE', path),
+    get: <T>(path: string, params?: Record<string, unknown>) => request<T>(target, 'GET', path + qs(params)),
+    post: <T>(path: string, body?: unknown, headers?: Record<string, string>) => request<T>(target, 'POST', path, body ?? {}, headers),
+    patch: <T>(path: string, body?: unknown) => request<T>(target, 'PATCH', path, body ?? {}),
+    delete: <T>(path: string) => request<T>(target, 'DELETE', path),
   };
 }
 

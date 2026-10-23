@@ -17,12 +17,24 @@
     "docs:api": "npm --prefix backend run docs:api",
     "docker:up": "docker compose up -d --build",
     "docker:down": "docker compose down",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "lint": "eslint .",
+    "format": "prettier --write \"backend/{src,tests,prisma,scripts}/**/*.{ts,mjs}\" \"web/src/**/*.{ts,tsx,css}\" \"mobile/src/**/*.{ts,tsx}\" \"mobile/*.{ts,tsx}\" \"e2e/**/*.ts\" \"*.{ts,mjs}\"",
+    "format:check": "prettier --check \"backend/{src,tests,prisma,scripts}/**/*.{ts,mjs}\" \"web/src/**/*.{ts,tsx,css}\" \"mobile/src/**/*.{ts,tsx}\" \"mobile/*.{ts,tsx}\" \"e2e/**/*.ts\" \"*.{ts,mjs}\"",
+    "test:weekdays": "npm --prefix backend run test:weekdays",
+    "check": "npm run lint && npm run format:check && npm run typecheck && npm test"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.63.0",
     "@types/node": "^22.20.4",
     "concurrently": "^9.2.1",
-    "typescript": "^5.9.3"
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.0"
   }
 }

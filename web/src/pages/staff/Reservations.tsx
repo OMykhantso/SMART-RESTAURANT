@@ -43,7 +43,12 @@ export default function StaffReservations() {
           <Button size="icon" variant="ghost" onClick={() => setDate((d) => addDays(d, -1))} aria-label="Попередній день">
             <ChevronLeft className="size-4" />
           </Button>
-          <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="h-10 rounded-xl border border-white/8 bg-white/[0.03] px-3 text-sm text-cream outline-none" />
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => e.target.value && setDate(e.target.value)}
+            className="h-10 rounded-xl border border-white/8 bg-white/[0.03] px-3 text-sm text-cream outline-none"
+          />
           <Button size="icon" variant="ghost" onClick={() => setDate((d) => addDays(d, 1))} aria-label="Наступний день">
             <ChevronRight className="size-4" />
           </Button>
@@ -66,7 +71,12 @@ export default function StaffReservations() {
           ]}
         />
         <div className="min-w-52 flex-1">
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Імʼя, телефон або код R-…" icon={<Search className="size-4" />} />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Імʼя, телефон або код R-…"
+            icon={<Search className="size-4" />}
+          />
         </div>
       </Card>
       {isLoading ? (

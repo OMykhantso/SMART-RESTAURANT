@@ -20,7 +20,8 @@ export interface TodayStats {
   guestsInHouse: number;
 }
 
-export const useToday = () => useQuery({ queryKey: ['today'], queryFn: () => api.get<TodayStats>('/analytics/today'), refetchInterval: 60_000 });
+export const useToday = () =>
+  useQuery({ queryKey: ['today'], queryFn: () => api.get<TodayStats>('/analytics/today'), refetchInterval: 60_000 });
 
 export const useStaffOrders = (params: Record<string, unknown> = {}, enabled = true) =>
   useQuery({ queryKey: ['orders', params], queryFn: () => api.get<Order[]>('/orders', params), refetchInterval: 45_000, enabled });
@@ -30,7 +31,10 @@ export const useStaffReservations = (params: Record<string, unknown>) =>
 
 function useInvalidate() {
   const qc = useQueryClient();
-  return () => ['orders', 'reservations', 'tables-live', 'today', 'kitchen', 'reservation', 'order'].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+  return () =>
+    ['orders', 'reservations', 'tables-live', 'today', 'kitchen', 'reservation', 'order'].forEach((k) =>
+      qc.invalidateQueries({ queryKey: [k] }),
+    );
 }
 
 const RES_SUCCESS: Partial<Record<ReservationStatus, string>> = {
@@ -45,7 +49,8 @@ const RES_SUCCESS: Partial<Record<ReservationStatus, string>> = {
 export function useReservationAction() {
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: ({ id, status, reason }: { id: number; status: ReservationStatus; reason?: string }) => api.patch<Reservation>(`/reservations/${id}/status`, { status, reason }),
+    mutationFn: ({ id, status, reason }: { id: number; status: ReservationStatus; reason?: string }) =>
+      api.patch<Reservation>(`/reservations/${id}/status`, { status, reason }),
     onSuccess: (r) => {
       toast.success(RES_SUCCESS[r.status] ?? 'Статус оновлено', { description: `${r.code} · столик №${r.table.number}` });
       invalidate();
@@ -65,7 +70,8 @@ const ORDER_SUCCESS: Partial<Record<OrderStatus, string>> = {
 export function useOrderAction() {
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: ({ id, status, reason }: { id: number; status: OrderStatus; reason?: string }) => api.patch<Order>(`/orders/${id}/status`, { status, reason }),
+    mutationFn: ({ id, status, reason }: { id: number; status: OrderStatus; reason?: string }) =>
+      api.patch<Order>(`/orders/${id}/status`, { status, reason }),
     onSuccess: (o) => {
       toast.success(ORDER_SUCCESS[o.status] ?? 'Статус оновлено', { description: `#${o.id} · ${orderPlace(o)}` });
       invalidate();

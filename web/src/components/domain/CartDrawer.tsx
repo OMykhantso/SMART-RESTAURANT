@@ -47,20 +47,48 @@ export function CartDrawer() {
   });
 
   return (
-    <Modal open={cart.open} onClose={() => cart.setOpen(false)} side title="Ваше замовлення" subtitle={active ? `Столик №${active.table.number} · ${active.code}` : 'Кошик'}>
+    <Modal
+      open={cart.open}
+      onClose={() => cart.setOpen(false)}
+      side
+      title="Ваше замовлення"
+      subtitle={active ? `Столик №${active.table.number} · ${active.code}` : 'Кошик'}
+    >
       {cart.lines.length === 0 ? (
-        <EmptyState icon={<UtensilsCrossed className="size-7" />} title="Кошик порожній" text="Додайте страви з меню — ми підкажемо, що до них пасує." />
+        <EmptyState
+          icon={<UtensilsCrossed className="size-7" />}
+          title="Кошик порожній"
+          text="Додайте страви з меню — ми підкажемо, що до них пасує."
+        />
       ) : (
         <div className="space-y-5">
           <ul className="space-y-3">
             <AnimatePresence initial={false}>
               {cart.lines.map((l) => (
-                <motion.li key={l.dishId} layout initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20, height: 0 }} className="flex gap-3 rounded-2xl border border-white/6 bg-white/[0.02] p-2.5">
-                  <DishImage src={l.imageUrl} alt={l.name} category={l.category} className="size-16 shrink-0" rounded="rounded-xl" zoom={false} />
+                <motion.li
+                  key={l.dishId}
+                  layout
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20, height: 0 }}
+                  className="flex gap-3 rounded-2xl border border-white/6 bg-white/[0.02] p-2.5"
+                >
+                  <DishImage
+                    src={l.imageUrl}
+                    alt={l.name}
+                    category={l.category}
+                    className="size-16 shrink-0"
+                    rounded="rounded-xl"
+                    zoom={false}
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="truncate text-sm font-medium text-cream">{l.name}</div>
-                      <button onClick={() => cart.remove(l.dishId)} className="text-ink-500 transition hover:text-rose-300" aria-label="Видалити">
+                      <button
+                        onClick={() => cart.remove(l.dishId)}
+                        className="text-ink-500 transition hover:text-rose-300"
+                        aria-label="Видалити"
+                      >
                         <Trash2 className="size-4" />
                       </button>
                     </div>
@@ -73,11 +101,19 @@ export function CartDrawer() {
                     />
                     <div className="mt-2 flex items-center justify-between">
                       <div className="flex items-center gap-1 rounded-full bg-white/5 p-0.5">
-                        <button onClick={() => cart.setQty(l.dishId, l.quantity - 1)} className="grid size-7 place-items-center rounded-full text-ink-200 hover:bg-white/10" aria-label="Менше">
+                        <button
+                          onClick={() => cart.setQty(l.dishId, l.quantity - 1)}
+                          className="grid size-7 place-items-center rounded-full text-ink-200 hover:bg-white/10"
+                          aria-label="Менше"
+                        >
                           <Minus className="size-3.5" />
                         </button>
                         <span className="w-6 text-center text-sm tabular-nums">{l.quantity}</span>
-                        <button onClick={() => cart.setQty(l.dishId, l.quantity + 1)} className="grid size-7 place-items-center rounded-full text-ink-200 hover:bg-white/10" aria-label="Більше">
+                        <button
+                          onClick={() => cart.setQty(l.dishId, l.quantity + 1)}
+                          className="grid size-7 place-items-center rounded-full text-ink-200 hover:bg-white/10"
+                          aria-label="Більше"
+                        >
                           <Plus className="size-3.5" />
                         </button>
                       </div>
@@ -96,8 +132,19 @@ export function CartDrawer() {
               </div>
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-none">
                 {recs.data.map((r) => (
-                  <button key={r.dish.id} disabled={!r.dish.isAvailable} onClick={() => cart.add(r.dish)} className="group w-36 shrink-0 rounded-2xl border border-white/6 bg-white/[0.02] p-2 text-left transition hover:border-gold-400/30">
-                    <DishImage src={r.dish.imageUrl} alt={r.dish.name} category={r.dish.category?.slug} className="h-20 w-full" rounded="rounded-xl" />
+                  <button
+                    key={r.dish.id}
+                    disabled={!r.dish.isAvailable}
+                    onClick={() => cart.add(r.dish)}
+                    className="group w-36 shrink-0 rounded-2xl border border-white/6 bg-white/[0.02] p-2 text-left transition hover:border-gold-400/30"
+                  >
+                    <DishImage
+                      src={r.dish.imageUrl}
+                      alt={r.dish.name}
+                      category={r.dish.category?.slug}
+                      className="h-20 w-full"
+                      rounded="rounded-xl"
+                    />
                     <div className="mt-2 line-clamp-1 text-xs font-medium text-cream">{r.dish.name}</div>
                     <div className="line-clamp-1 text-[10px] text-gold-300/80">{r.reasons[0] ?? 'Рекомендуємо'}</div>
                     <div className="mt-1 flex items-center justify-between text-xs">
@@ -110,7 +157,13 @@ export function CartDrawer() {
             </div>
           )}
 
-          <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Коментар до замовлення (алергії, подача…)" maxLength={500} className="min-h-20" />
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Коментар до замовлення (алергії, подача…)"
+            maxLength={500}
+            className="min-h-20"
+          />
 
           <div className="rounded-2xl border border-gold-400/15 bg-gold-400/[0.04] p-4">
             <div className="flex items-center justify-between text-sm text-ink-300">
@@ -133,7 +186,10 @@ export function CartDrawer() {
                 <QrCode className="size-4 text-gold-300" /> Замовлення — за столиком
               </div>
               {user ? (
-                <>Відскануйте QR-код на столику в мобільному застосунку або попросіть офіціанта зробити check-in — і кошик одразу можна буде надіслати на кухню.</>
+                <>
+                  Відскануйте QR-код на столику в мобільному застосунку або попросіть офіціанта зробити check-in — і кошик одразу можна буде
+                  надіслати на кухню.
+                </>
               ) : (
                 <>Увійдіть, забронюйте столик і після check-in замовляйте прямо зі смартфона.</>
               )}

@@ -21,12 +21,19 @@ export default function ReservationDetails() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [confirmCancel, setConfirmCancel] = useState(false);
-  const { data: r, isLoading } = useQuery({ queryKey: ['reservation', Number(id)], queryFn: () => api.get<Reservation>(`/reservations/${id}`) });
+  const { data: r, isLoading } = useQuery({
+    queryKey: ['reservation', Number(id)],
+    queryFn: () => api.get<Reservation>(`/reservations/${id}`),
+  });
   const orders = useMyOrders();
   const visitOrders = (orders.data ?? []).filter((o) => o.reservationId === Number(id));
 
   const transition = useMutation({
-    mutationFn: (status: string) => api.patch<Reservation>(`/reservations/${id}/status`, { status, reason: status === 'CANCELLED' ? 'Скасовано гостем онлайн' : undefined }),
+    mutationFn: (status: string) =>
+      api.patch<Reservation>(`/reservations/${id}/status`, {
+        status,
+        reason: status === 'CANCELLED' ? 'Скасовано гостем онлайн' : undefined,
+      }),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['reservation'] });
       qc.invalidateQueries({ queryKey: ['my-reservations'] });
@@ -87,7 +94,12 @@ export default function ReservationDetails() {
                 </Button>
               )}
               {r.actions.canComplete && (
-                <Button variant="success" icon={<DoorOpen className="size-4" />} loading={transition.isPending} onClick={() => transition.mutate('COMPLETED')}>
+                <Button
+                  variant="success"
+                  icon={<DoorOpen className="size-4" />}
+                  loading={transition.isPending}
+                  onClick={() => transition.mutate('COMPLETED')}
+                >
                   Завершити візит
                 </Button>
               )}
@@ -100,7 +112,9 @@ export default function ReservationDetails() {
                     Скасувати бронювання
                   </Button>
                 ) : (
-                  <span className="self-center text-xs text-ink-400">Онлайн-скасування недоступне менш ніж за годину до візиту — зателефонуйте нам.</span>
+                  <span className="self-center text-xs text-ink-400">
+                    Онлайн-скасування недоступне менш ніж за годину до візиту — зателефонуйте нам.
+                  </span>
                 ))}
             </div>
           </Card>

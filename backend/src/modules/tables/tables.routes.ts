@@ -56,10 +56,7 @@ define({
       prisma.diningTable.findMany({ where: { isActive: true }, orderBy: { number: 'asc' } }),
       prisma.reservation.findMany({
         where: {
-          OR: [
-            { status: 'CHECKED_IN' },
-            { status: { in: ['PENDING', 'CONFIRMED'] }, startAt: { lt: horizon }, endAt: { gt: t } },
-          ],
+          OR: [{ status: 'CHECKED_IN' }, { status: { in: ['PENDING', 'CONFIRMED'] }, startAt: { lt: horizon }, endAt: { gt: t } }],
         },
         include: {
           user: { select: { name: true, phone: true } },

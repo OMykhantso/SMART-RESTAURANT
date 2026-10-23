@@ -12,11 +12,21 @@ for (let shift = 0; shift < 7; shift++) {
     shell: process.platform === 'win32',
   });
   const out = `${run.stdout}\n${run.stderr}`;
-  const summary = out.split('\n').find((l) => /^\s+Tests\s/.test(l))?.trim() ?? 'немає підсумку';
+  const summary =
+    out
+      .split('\n')
+      .find((l) => /^\s+Tests\s/.test(l))
+      ?.trim() ?? 'немає підсумку';
   console.log(`${days[shift].padEnd(9)} ${run.status === 0 ? '✓' : '✗'} ${summary}`);
   if (run.status !== 0) {
     failed++;
-    console.log(out.split('\n').filter((l) => /FAIL|Error/.test(l)).slice(0, 20).join('\n'));
+    console.log(
+      out
+        .split('\n')
+        .filter((l) => /FAIL|Error/.test(l))
+        .slice(0, 20)
+        .join('\n'),
+    );
   }
 }
 process.exit(failed ? 1 : 0);

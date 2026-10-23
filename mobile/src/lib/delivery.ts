@@ -1,6 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { dapi } from '../api/client';
-import type { Address, AddressInput, CourierLite, CourierSummary, DeliveryOverview, DeliveryZone, Order, PayMethod, Quote } from '../api/types';
+import type {
+  Address,
+  AddressInput,
+  CourierLite,
+  CourierSummary,
+  DeliveryOverview,
+  DeliveryZone,
+  Order,
+  PayMethod,
+  Quote,
+} from '../api/types';
 import { useToast } from './toast';
 import { haptic } from './notify';
 
@@ -11,11 +21,21 @@ import { haptic } from './notify';
  */
 
 export const useDeliveryInfo = () =>
-  useQuery({ queryKey: ['delivery', 'info'], queryFn: () => dapi.get<DeliveryOverview>('/delivery/info'), staleTime: 30_000, refetchInterval: 120_000 });
+  useQuery({
+    queryKey: ['delivery', 'info'],
+    queryFn: () => dapi.get<DeliveryOverview>('/delivery/info'),
+    staleTime: 30_000,
+    refetchInterval: 120_000,
+  });
 
-export const useZones = (all = false) => useQuery({ queryKey: ['delivery', 'zones', all], queryFn: () => dapi.get<DeliveryZone[]>('/delivery/zones', all ? { all: true } : undefined) });
+export const useZones = (all = false) =>
+  useQuery({
+    queryKey: ['delivery', 'zones', all],
+    queryFn: () => dapi.get<DeliveryZone[]>('/delivery/zones', all ? { all: true } : undefined),
+  });
 
-export const useAddresses = (enabled = true) => useQuery({ queryKey: ['delivery', 'addresses'], queryFn: () => dapi.get<Address[]>('/addresses'), enabled });
+export const useAddresses = (enabled = true) =>
+  useQuery({ queryKey: ['delivery', 'addresses'], queryFn: () => dapi.get<Address[]>('/addresses'), enabled });
 
 export const useMyDeliveries = (enabled = true) =>
   useQuery({ queryKey: ['delivery', 'my'], queryFn: () => dapi.get<Order[]>('/delivery/orders/my'), enabled, refetchInterval: 60_000 });
@@ -94,7 +114,8 @@ export function useAddressMutations() {
       onError: fail,
     }),
     update: useMutation({
-      mutationFn: ({ id, ...a }: Partial<AddressInput> & { id: number; label?: string; isDefault?: boolean }) => dapi.patch<Address>(`/addresses/${id}`, a),
+      mutationFn: ({ id, ...a }: Partial<AddressInput> & { id: number; label?: string; isDefault?: boolean }) =>
+        dapi.patch<Address>(`/addresses/${id}`, a),
       onSuccess: () => {
         haptic.tap();
         done();
@@ -115,9 +136,14 @@ export function useAddressMutations() {
 // ─────────────────────────────── Курʼєр ───────────────────────────────
 
 export const useCourierOrders = (scope: 'available' | 'mine' | 'history') =>
-  useQuery({ queryKey: ['courier', scope], queryFn: () => dapi.get<Order[]>('/courier/orders', { scope }), refetchInterval: scope === 'history' ? undefined : 30_000 });
+  useQuery({
+    queryKey: ['courier', scope],
+    queryFn: () => dapi.get<Order[]>('/courier/orders', { scope }),
+    refetchInterval: scope === 'history' ? undefined : 30_000,
+  });
 
-export const useCourierSummary = () => useQuery({ queryKey: ['courier', 'summary'], queryFn: () => dapi.get<CourierSummary>('/courier/summary'), refetchInterval: 60_000 });
+export const useCourierSummary = () =>
+  useQuery({ queryKey: ['courier', 'summary'], queryFn: () => dapi.get<CourierSummary>('/courier/summary'), refetchInterval: 60_000 });
 
 const COURIER_SUCCESS = {
   accept: 'Замовлення ваше 🛵',
@@ -136,7 +162,11 @@ export function useCourierAction() {
       if (v.action === 'release') haptic.light();
       else haptic.success();
       qc.invalidateQueries({ queryKey: ['courier'] });
-      toast({ title: COURIER_SUCCESS[v.action], body: `#${o.id} · ${o.delivery?.addressLine ?? ''}`, tone: v.action === 'release' ? 'muted' : 'success' });
+      toast({
+        title: COURIER_SUCCESS[v.action],
+        body: `#${o.id} · ${o.delivery?.addressLine ?? ''}`,
+        tone: v.action === 'release' ? 'muted' : 'success',
+      });
     },
     onError: (e) => {
       haptic.error();
@@ -149,19 +179,29 @@ export function useCourierAction() {
 // ─────────────────────────────── Диспетчерська (зал / адміністратор) ───────────────────────────────
 
 export const useDispatch = (date?: string) =>
-  useQuery({ queryKey: ['dispatch', date ?? 'today'], queryFn: () => dapi.get<Order[]>('/delivery/orders', date ? { date } : undefined), refetchInterval: 30_000 });
+  useQuery({
+    queryKey: ['dispatch', date ?? 'today'],
+    queryFn: () => dapi.get<Order[]>('/delivery/orders', date ? { date } : undefined),
+    refetchInterval: 30_000,
+  });
 
-export const useCouriers = () => useQuery({ queryKey: ['dispatch', 'couriers'], queryFn: () => dapi.get<CourierLite[]>('/courier/couriers') });
+export const useCouriers = () =>
+  useQuery({ queryKey: ['dispatch', 'couriers'], queryFn: () => dapi.get<CourierLite[]>('/courier/couriers') });
 
 export function useAssignCourier() {
   const qc = useQueryClient();
   const toast = useToast();
   return useMutation({
-    mutationFn: ({ id, courierId }: { id: number; courierId: number | null }) => dapi.post<Order>(`/delivery/orders/${id}/assign`, { courierId }),
+    mutationFn: ({ id, courierId }: { id: number; courierId: number | null }) =>
+      dapi.post<Order>(`/delivery/orders/${id}/assign`, { courierId }),
     onSuccess: (o) => {
       haptic.success();
       qc.invalidateQueries({ queryKey: ['dispatch'] });
-      toast({ title: o.delivery?.courier ? `Курʼєр: ${o.delivery.courier.name}` : 'Курʼєра знято', body: `Замовлення #${o.id}`, tone: 'success' });
+      toast({
+        title: o.delivery?.courier ? `Курʼєр: ${o.delivery.courier.name}` : 'Курʼєра знято',
+        body: `Замовлення #${o.id}`,
+        tone: 'success',
+      });
     },
     onError: (e) => {
       haptic.error();
@@ -178,7 +218,11 @@ export function useZoneUpdate() {
     onSuccess: (z) => {
       haptic.success();
       qc.invalidateQueries({ queryKey: ['delivery'] });
-      toast({ title: `Зона «${z.name}» оновлена`, body: z.isActive ? 'Доставка працює' : 'Доставку вимкнено', tone: z.isActive ? 'success' : 'muted' });
+      toast({
+        title: `Зона «${z.name}» оновлена`,
+        body: z.isActive ? 'Доставка працює' : 'Доставку вимкнено',
+        tone: z.isActive ? 'success' : 'muted',
+      });
     },
     onError: (e) => toast({ title: (e as Error).message, tone: 'danger' }),
   });

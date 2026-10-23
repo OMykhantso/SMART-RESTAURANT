@@ -1,7 +1,21 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ban, Banknote, BellRing, Bike, Check, CheckCheck, Clock, DoorOpen, HandPlatter, LogIn, UserX, Users, X } from 'lucide-react-native';
+import {
+  Ban,
+  Banknote,
+  BellRing,
+  Bike,
+  Check,
+  CheckCheck,
+  Clock,
+  DoorOpen,
+  HandPlatter,
+  LogIn,
+  UserX,
+  Users,
+  X,
+} from 'lucide-react-native';
 import { Badge, Button } from './ui';
 import { colors, fonts, goldGradient, radius, tones, type Tone } from '../theme';
 import { ORDER_META, RESERVATION_META, ZONE_LABEL, placeOf } from '../lib/status';
@@ -13,7 +27,19 @@ import { haptic } from '../lib/notify';
 
 // ─────────────────────────────── Плитки та перемикачі ───────────────────────────────
 
-export function StatTile({ label, value, hint, icon, tone = 'gold' }: { label: string; value: string; hint?: ReactNode; icon: ReactNode; tone?: Tone }) {
+export function StatTile({
+  label,
+  value,
+  hint,
+  icon,
+  tone = 'gold',
+}: {
+  label: string;
+  value: string;
+  hint?: ReactNode;
+  icon: ReactNode;
+  tone?: Tone;
+}) {
   return (
     <View style={styles.stat}>
       <View style={[styles.statIcon, { backgroundColor: tones[tone].bg }]}>{icon}</View>
@@ -32,7 +58,15 @@ export function StatTile({ label, value, hint, icon, tone = 'gold' }: { label: s
   );
 }
 
-export function Segmented<K extends string>({ value, onChange, items }: { value: K; onChange: (k: K) => void; items: { key: K; label: string; count?: number }[] }) {
+export function Segmented<K extends string>({
+  value,
+  onChange,
+  items,
+}: {
+  value: K;
+  onChange: (k: K) => void;
+  items: { key: K; label: string; count?: number }[];
+}) {
   return (
     <View style={styles.segment}>
       {items.map((it) => {
@@ -72,7 +106,13 @@ export function OrderTicket({ order, compact }: { order: Order; compact?: boolea
   const busy = action.isPending || cash.isPending;
   const a = order.actions;
   return (
-    <View style={[styles.ticket, order.status === 'READY' && { borderColor: 'rgba(52,211,153,0.45)' }, order.status === 'NEW' && { borderColor: 'rgba(251,191,36,0.4)' }]}>
+    <View
+      style={[
+        styles.ticket,
+        order.status === 'READY' && { borderColor: 'rgba(52,211,153,0.45)' },
+        order.status === 'NEW' && { borderColor: 'rgba(251,191,36,0.4)' },
+      ]}
+    >
       <View style={styles.ticketHead}>
         {order.table ? (
           <View style={styles.tableBadge}>
@@ -106,7 +146,11 @@ export function OrderTicket({ order, compact }: { order: Order; compact?: boolea
               <Text style={styles.itemName} numberOfLines={1}>
                 {i.category.emoji ?? ''} {i.name}
               </Text>
-              {i.status === 'READY' ? <Check size={14} color={colors.success} /> : i.status === 'COOKING' ? <Clock size={14} color={colors.orange} /> : null}
+              {i.status === 'READY' ? (
+                <Check size={14} color={colors.success} />
+              ) : i.status === 'COOKING' ? (
+                <Clock size={14} color={colors.orange} />
+              ) : null}
             </View>
           ))}
           {order.notes ? <Text style={styles.note}>💬 {order.notes}</Text> : null}
@@ -123,11 +167,32 @@ export function OrderTicket({ order, compact }: { order: Order; compact?: boolea
               variant="glass"
               icon={<X size={16} color={colors.danger} />}
               disabled={busy}
-              onPress={() => confirmAction('Скасувати замовлення?', `#${order.id} · ${placeOf(order)}`, 'Скасувати', () => action.mutate({ id: order.id, status: 'CANCELLED', reason: 'Скасовано офіціантом' }))}
+              onPress={() =>
+                confirmAction('Скасувати замовлення?', `#${order.id} · ${placeOf(order)}`, 'Скасувати', () =>
+                  action.mutate({ id: order.id, status: 'CANCELLED', reason: 'Скасовано офіціантом' }),
+                )
+              }
             />
           )}
-          {a.canConfirm && <Button title="Прийняти" size="sm" icon={<Check size={16} color="#141008" />} loading={busy} onPress={() => action.mutate({ id: order.id, status: 'CONFIRMED' })} />}
-          {a.canServe && <Button title="Подати" size="sm" variant="success" icon={<HandPlatter size={16} color={colors.success} />} loading={busy} onPress={() => action.mutate({ id: order.id, status: 'SERVED' })} />}
+          {a.canConfirm && (
+            <Button
+              title="Прийняти"
+              size="sm"
+              icon={<Check size={16} color="#141008" />}
+              loading={busy}
+              onPress={() => action.mutate({ id: order.id, status: 'CONFIRMED' })}
+            />
+          )}
+          {a.canServe && (
+            <Button
+              title="Подати"
+              size="sm"
+              variant="success"
+              icon={<HandPlatter size={16} color={colors.success} />}
+              loading={busy}
+              onPress={() => action.mutate({ id: order.id, status: 'SERVED' })}
+            />
+          )}
           {a.canPay && order.status === 'SERVED' && (
             <Button
               title="Готівка"
@@ -135,7 +200,11 @@ export function OrderTicket({ order, compact }: { order: Order; compact?: boolea
               variant="outline"
               icon={<Banknote size={16} color={colors.gold} />}
               loading={busy}
-              onPress={() => confirmAction('Оплата готівкою', `Отримано ${money(order.total)} за замовлення #${order.id}?`, 'Так, оплачено', () => cash.mutate({ orderId: order.id, tip: 0 }))}
+              onPress={() =>
+                confirmAction('Оплата готівкою', `Отримано ${money(order.total)} за замовлення #${order.id}?`, 'Так, оплачено', () =>
+                  cash.mutate({ orderId: order.id, tip: 0 }),
+                )
+              }
             />
           )}
         </View>
@@ -170,7 +239,12 @@ export function ReservationCard({ r }: { r: Reservation }) {
   const a = r.actions;
   const busy = action.isPending;
   const name = r.user?.name ?? r.guestName ?? 'Гість';
-  const SHORT: Partial<Record<Reservation['status'], string>> = { PENDING: 'Нове', CONFIRMED: 'Чекаємо', CHECKED_IN: 'У залі', NO_SHOW: 'Не прийшли' };
+  const SHORT: Partial<Record<Reservation['status'], string>> = {
+    PENDING: 'Нове',
+    CONFIRMED: 'Чекаємо',
+    CHECKED_IN: 'У залі',
+    NO_SHOW: 'Не прийшли',
+  };
   const label = SHORT[r.status] ?? meta.label;
   return (
     <View style={[styles.ticket, r.status === 'PENDING' && { borderColor: 'rgba(251,191,36,0.4)' }]}>
@@ -194,15 +268,65 @@ export function ReservationCard({ r }: { r: Reservation }) {
       {(a.canConfirm || a.canReject || a.canCheckIn || a.canComplete || a.canMarkNoShow) && (
         <View style={styles.actions}>
           {a.canReject && (
-            <Button title="Відхилити" size="sm" variant="glass" icon={<Ban size={15} color={colors.danger} />} disabled={busy} onPress={() => confirmAction('Відхилити бронювання?', `${r.code} · ${name}`, 'Відхилити', () => action.mutate({ id: r.id, status: 'REJECTED', reason: 'Немає можливості прийняти в цей час' }))} />
+            <Button
+              title="Відхилити"
+              size="sm"
+              variant="glass"
+              icon={<Ban size={15} color={colors.danger} />}
+              disabled={busy}
+              onPress={() =>
+                confirmAction('Відхилити бронювання?', `${r.code} · ${name}`, 'Відхилити', () =>
+                  action.mutate({ id: r.id, status: 'REJECTED', reason: 'Немає можливості прийняти в цей час' }),
+                )
+              }
+            />
           )}
-          {a.canMarkNoShow && <Button title="Не прийшов" size="sm" variant="glass" icon={<UserX size={15} color={colors.warning} />} disabled={busy} onPress={() => action.mutate({ id: r.id, status: 'NO_SHOW' })} />}
-          {a.canConfirm && <Button title="Підтвердити" size="sm" icon={<CheckCheck size={16} color="#141008" />} loading={busy} onPress={() => action.mutate({ id: r.id, status: 'CONFIRMED' })} />}
-          {a.canCheckIn && <Button title="Посадити" size="sm" variant="success" icon={<LogIn size={15} color={colors.success} />} loading={busy} onPress={() => action.mutate({ id: r.id, status: 'CHECKED_IN' })} />}
-          {a.canComplete && <Button title="Завершити" size="sm" variant="outline" icon={<DoorOpen size={15} color={colors.gold} />} loading={busy} onPress={() => action.mutate({ id: r.id, status: 'COMPLETED' })} />}
+          {a.canMarkNoShow && (
+            <Button
+              title="Не прийшов"
+              size="sm"
+              variant="glass"
+              icon={<UserX size={15} color={colors.warning} />}
+              disabled={busy}
+              onPress={() => action.mutate({ id: r.id, status: 'NO_SHOW' })}
+            />
+          )}
+          {a.canConfirm && (
+            <Button
+              title="Підтвердити"
+              size="sm"
+              icon={<CheckCheck size={16} color="#141008" />}
+              loading={busy}
+              onPress={() => action.mutate({ id: r.id, status: 'CONFIRMED' })}
+            />
+          )}
+          {a.canCheckIn && (
+            <Button
+              title="Посадити"
+              size="sm"
+              variant="success"
+              icon={<LogIn size={15} color={colors.success} />}
+              loading={busy}
+              onPress={() => action.mutate({ id: r.id, status: 'CHECKED_IN' })}
+            />
+          )}
+          {a.canComplete && (
+            <Button
+              title="Завершити"
+              size="sm"
+              variant="outline"
+              icon={<DoorOpen size={15} color={colors.gold} />}
+              loading={busy}
+              onPress={() => action.mutate({ id: r.id, status: 'COMPLETED' })}
+            />
+          )}
         </View>
       )}
-      {r.status === 'CHECKED_IN' && r.unpaidOrdersCount > 0 && <Text style={[styles.ticketSub, { marginTop: 8 }]}>Неоплачених замовлень: {r.unpaidOrdersCount} · {money(r.ordersTotal)}</Text>}
+      {r.status === 'CHECKED_IN' && r.unpaidOrdersCount > 0 && (
+        <Text style={[styles.ticketSub, { marginTop: 8 }]}>
+          Неоплачених замовлень: {r.unpaidOrdersCount} · {money(r.ordersTotal)}
+        </Text>
+      )}
     </View>
   );
 }
@@ -222,7 +346,15 @@ const SHAPE = (seats: number, shape: TableShape) => {
   return { w: seats >= 8 ? 72 : 60, h: 36, r: 10 };
 };
 
-export function LiveFloorPlan({ tables, selectedId, onSelect }: { tables: LiveTable[]; selectedId: number | null; onSelect: (t: LiveTable) => void }) {
+export function LiveFloorPlan({
+  tables,
+  selectedId,
+  onSelect,
+}: {
+  tables: LiveTable[];
+  selectedId: number | null;
+  onSelect: (t: LiveTable) => void;
+}) {
   const { width } = useWindowDimensions();
   const w = Math.min(width - 40, 560);
   const h = w * 0.7;
@@ -233,17 +365,52 @@ export function LiveFloorPlan({ tables, selectedId, onSelect }: { tables: LiveTa
     ['ТЕРАСА', 35, 63, 64, 35],
   ];
   return (
-    <View style={{ width: w, height: h, borderRadius: 22, backgroundColor: colors.bgElevated, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', alignSelf: 'center' }}>
+    <View
+      style={{
+        width: w,
+        height: h,
+        borderRadius: 22,
+        backgroundColor: colors.bgElevated,
+        borderWidth: 1,
+        borderColor: colors.border,
+        overflow: 'hidden',
+        alignSelf: 'center',
+      }}
+    >
       {zones.map(([label, x, y, zw, zh]) => (
-        <View key={label} style={{ position: 'absolute', left: (x / 100) * w, top: (y / 100) * h, width: (zw / 100) * w, height: (zh / 100) * h, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.07)' }}>
-          <Text style={{ position: 'absolute', left: 8, top: 5, fontSize: 8, letterSpacing: 1.5, color: colors.faint, fontFamily: fonts.bold }}>{label}</Text>
+        <View
+          key={label}
+          style={{
+            position: 'absolute',
+            left: (x / 100) * w,
+            top: (y / 100) * h,
+            width: (zw / 100) * w,
+            height: (zh / 100) * h,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderStyle: 'dashed',
+            borderColor: 'rgba(255,255,255,0.07)',
+          }}
+        >
+          <Text
+            style={{ position: 'absolute', left: 8, top: 5, fontSize: 8, letterSpacing: 1.5, color: colors.faint, fontFamily: fonts.bold }}
+          >
+            {label}
+          </Text>
         </View>
       ))}
       {tables.map((t) => {
         const s = SHAPE(t.seats, t.shape);
         const selected = t.id === selectedId;
         const tone = tones[TABLE_STATE[t.state].tone];
-        const alert = t.signals.readyToServe > 0 ? colors.success : t.signals.newOrders > 0 ? colors.warning : t.signals.awaitingPayment > 0 ? colors.violet : null;
+        const alert =
+          t.signals.readyToServe > 0
+            ? colors.success
+            : t.signals.newOrders > 0
+              ? colors.warning
+              : t.signals.awaitingPayment > 0
+                ? colors.violet
+                : null;
         return (
           <Pressable
             key={t.id}
@@ -310,20 +477,69 @@ export function GuestsPill({ n }: { n: number }) {
 }
 
 const styles = StyleSheet.create({
-  stat: { flexBasis: '47%', flexGrow: 1, padding: 14, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  stat: {
+    flexBasis: '47%',
+    flexGrow: 1,
+    padding: 14,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   statIcon: { width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   statValue: { fontFamily: fonts.bold, fontSize: 22, color: colors.text },
   statLabel: { fontFamily: fonts.medium, fontSize: 12, color: colors.muted, marginTop: 2 },
   statHint: { fontFamily: fonts.medium, fontSize: 11, color: colors.faint, marginTop: 2 },
-  segment: { flexDirection: 'row', padding: 4, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, gap: 4 },
-  segItem: { flex: 1, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, paddingHorizontal: 4 },
+  segment: {
+    flexDirection: 'row',
+    padding: 4,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 4,
+  },
+  segItem: {
+    flex: 1,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 4,
+  },
   segActive: { backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.goldBorder },
   segText: { fontFamily: fonts.semibold, fontSize: 12.5, color: colors.textSoft },
-  segCount: { minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
+  segCount: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 5,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   segCountText: { fontFamily: fonts.bold, fontSize: 10.5, color: colors.text },
-  ticket: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.border, marginBottom: 12 },
+  ticket: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12,
+  },
   ticketHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  tableBadge: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.goldBorder, alignItems: 'center', justifyContent: 'center' },
+  tableBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: colors.goldSoft,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   tableBadgeText: { fontFamily: fonts.display, fontSize: 20, color: colors.goldLight },
   ticketTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.text },
   ticketSub: { fontFamily: fonts.medium, fontSize: 12, color: colors.muted, marginTop: 1 },
@@ -331,12 +547,56 @@ const styles = StyleSheet.create({
   itemQty: { fontFamily: fonts.bold, fontSize: 13, color: colors.gold, width: 26 },
   itemName: { flex: 1, fontFamily: fonts.medium, fontSize: 13.5, color: colors.textSoft },
   note: { fontFamily: fonts.medium, fontSize: 12.5, color: colors.warning, marginTop: 4 },
-  ticketFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border },
+  ticketFoot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
   total: { fontFamily: fonts.bold, fontSize: 16, color: colors.goldLight },
-  readyStrip: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, padding: 10, borderRadius: 12, backgroundColor: colors.successSoft },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, justifyContent: 'flex-end' },
-  timeBox: { width: 56, height: 56, borderRadius: 16, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.goldBorder, alignItems: 'center', justifyContent: 'center' },
+  readyStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 10,
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: colors.successSoft,
+  },
+  actions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    justifyContent: 'flex-end',
+  },
+  timeBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: colors.goldSoft,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   timeText: { fontFamily: fonts.bold, fontSize: 15, color: colors.goldLight },
   timeSub: { fontFamily: fonts.medium, fontSize: 10.5, color: colors.gold, marginTop: 1 },
-  signal: { position: 'absolute', top: -3, right: -3, width: 11, height: 11, borderRadius: 6, borderWidth: 2, borderColor: colors.bgElevated },
+  signal: {
+    position: 'absolute',
+    top: -3,
+    right: -3,
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.bgElevated,
+  },
 });

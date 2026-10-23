@@ -39,6 +39,8 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
   const [challenge, setChallenge] = useState<{ paymentId: number; message: string } | null>(null);
   const [otp, setOtp] = useState('');
   const [result, setResult] = useState<PayResult | null>(null);
+  // новий Idempotency-Key на кожне відкриття вікна оплати; у межах одного відкриття повтор не створить другий платіж
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const idemKey = useMemo(() => `web-${order.id}-${uid()}`, [order.id, open]);
 
   const tip = Math.round((order.total * tipPct) / 100 / 100) * 100;
@@ -90,11 +92,23 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
   const valid = number.replace(/\s/g, '').length >= 15 && /^\d{2}\/\d{2}$/.test(exp) && /^\d{3,4}$/.test(cvc);
 
   return (
-    <Modal open={open} onClose={close} size="md" title={result ? undefined : 'Оплата замовлення'} subtitle={result ? undefined : `#${order.id} · ${orderPlace(order)}`} hideClose={Boolean(result)}>
+    <Modal
+      open={open}
+      onClose={close}
+      size="md"
+      title={result ? undefined : 'Оплата замовлення'}
+      subtitle={result ? undefined : `#${order.id} · ${orderPlace(order)}`}
+      hideClose={Boolean(result)}
+    >
       <AnimatePresence mode="wait">
         {result ? (
           <motion.div key="ok" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="py-4 text-center">
-            <motion.div initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 14 }} className="gold-gradient mx-auto grid size-20 place-items-center rounded-full text-ink-950 shadow-[var(--shadow-glow)]">
+            <motion.div
+              initial={{ scale: 0, rotate: -30 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 14 }}
+              className="gold-gradient mx-auto grid size-20 place-items-center rounded-full text-ink-950 shadow-[var(--shadow-glow)]"
+            >
               <Check className="size-10" strokeWidth={3} />
             </motion.div>
             <h3 className="mt-6 font-display text-3xl text-cream">Оплачено!</h3>
@@ -113,7 +127,13 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
             </Button>
           </motion.div>
         ) : challenge ? (
-          <motion.div key="3ds" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="py-2">
+          <motion.div
+            key="3ds"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }}
+            className="py-2"
+          >
             <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-center">
               <ShieldCheck className="mx-auto size-10 text-gold-300" />
               <h4 className="mt-3 font-display text-2xl text-cream">3-D Secure</h4>
@@ -127,7 +147,14 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
                 className="mx-auto mt-6 block w-48 rounded-2xl border border-white/10 bg-ink-900 py-3 text-center font-mono text-2xl tracking-[0.5em] text-cream outline-none focus:border-gold-400/60"
                 placeholder="••••••"
               />
-              <Button variant="gold" size="lg" className="mt-6 w-full" disabled={otp.length < 4} loading={confirm.isPending} onClick={() => confirm.mutate()}>
+              <Button
+                variant="gold"
+                size="lg"
+                className="mt-6 w-full"
+                disabled={otp.length < 4}
+                loading={confirm.isPending}
+                onClick={() => confirm.mutate()}
+              >
                 Підтвердити
               </Button>
             </div>
@@ -136,12 +163,21 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
           <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -30 }} className="space-y-5">
             {/* Превʼю картки */}
             <div className="mx-auto h-44 w-full max-w-[21rem] [perspective:1200px]">
-              <motion.div animate={{ rotateY: flipped ? 180 : 0 }} transition={{ type: 'spring', stiffness: 200, damping: 22 }} className="relative size-full [transform-style:preserve-3d]">
-                <div className="absolute inset-0 overflow-hidden rounded-3xl p-6 shadow-2xl shadow-black/60 [backface-visibility:hidden]" style={{ background: 'linear-gradient(135deg,#2e2718 0%,#101015 55%,#3a2815 100%)' }}>
+              <motion.div
+                animate={{ rotateY: flipped ? 180 : 0 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 22 }}
+                className="relative size-full [transform-style:preserve-3d]"
+              >
+                <div
+                  className="absolute inset-0 overflow-hidden rounded-3xl p-6 shadow-2xl shadow-black/60 [backface-visibility:hidden]"
+                  style={{ background: 'linear-gradient(135deg,#2e2718 0%,#101015 55%,#3a2815 100%)' }}
+                >
                   <div className="absolute -right-12 -top-12 size-48 rounded-full bg-gold-400/25 blur-3xl" />
                   <div className="flex items-start justify-between">
                     <div className="h-8 w-11 rounded-md bg-gradient-to-br from-gold-100 via-gold-300 to-gold-600" />
-                    <span className="text-sm font-bold italic tracking-wider text-cream/90">{brand ?? <CreditCard className="size-6 text-ink-400" />}</span>
+                    <span className="text-sm font-bold italic tracking-wider text-cream/90">
+                      {brand ?? <CreditCard className="size-6 text-ink-400" />}
+                    </span>
                   </div>
                   <div className="mt-7 font-mono text-xl tracking-[0.15em] text-cream">{number || '•••• •••• •••• ••••'}</div>
                   <div className="mt-4 flex justify-between text-[11px] uppercase tracking-wider text-ink-300">
@@ -151,14 +187,22 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
                 </div>
                 <div className="absolute inset-0 overflow-hidden rounded-3xl bg-ink-800 shadow-2xl [backface-visibility:hidden] [transform:rotateY(180deg)]">
                   <div className="mt-8 h-10 bg-black/80" />
-                  <div className="mx-6 mt-5 flex h-9 items-center justify-end rounded bg-cream/90 px-3 font-mono text-ink-950">{cvc ? '•'.repeat(cvc.length) : '•••'}</div>
+                  <div className="mx-6 mt-5 flex h-9 items-center justify-end rounded bg-cream/90 px-3 font-mono text-ink-950">
+                    {cvc ? '•'.repeat(cvc.length) : '•••'}
+                  </div>
                 </div>
               </motion.div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <Field label="Номер картки" className="col-span-2">
-                <Input inputMode="numeric" value={number} onChange={(e) => setNumber(formatCard(e.target.value))} placeholder="4242 4242 4242 4242" autoComplete="cc-number" />
+                <Input
+                  inputMode="numeric"
+                  value={number}
+                  onChange={(e) => setNumber(formatCard(e.target.value))}
+                  placeholder="4242 4242 4242 4242"
+                  autoComplete="cc-number"
+                />
               </Field>
               <Field label="Термін">
                 <Input
@@ -188,7 +232,12 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
                 />
               </Field>
               <Field label="Власник картки" className="col-span-2">
-                <Input value={holder} onChange={(e) => setHolder(e.target.value.toUpperCase())} placeholder="OLEKSANDR MELNYK" autoComplete="cc-name" />
+                <Input
+                  value={holder}
+                  onChange={(e) => setHolder(e.target.value.toUpperCase())}
+                  placeholder="OLEKSANDR MELNYK"
+                  autoComplete="cc-name"
+                />
               </Field>
             </div>
 
@@ -198,7 +247,16 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
               </div>
               <div className="grid grid-cols-4 gap-2">
                 {TIPS.map((p) => (
-                  <button key={p} onClick={() => setTipPct(p)} className={cn('rounded-xl border py-2.5 text-sm transition', tipPct === p ? 'border-gold-300/60 bg-gold-400/15 text-gold-100' : 'border-white/8 text-ink-300 hover:border-white/20')}>
+                  <button
+                    key={p}
+                    onClick={() => setTipPct(p)}
+                    className={cn(
+                      'rounded-xl border py-2.5 text-sm transition',
+                      tipPct === p
+                        ? 'border-gold-300/60 bg-gold-400/15 text-gold-100'
+                        : 'border-white/8 text-ink-300 hover:border-white/20',
+                    )}
+                  >
                     {p === 0 ? 'Без' : `${p}%`}
                   </button>
                 ))}
@@ -214,12 +272,21 @@ export function PaymentModal({ order, open, onClose }: { order: Order; open: boo
               </div>
             </div>
 
-            <Button variant="gold" size="lg" className="w-full" disabled={!valid} loading={pay.isPending} onClick={() => pay.mutate()} icon={<Lock className="size-4" />}>
+            <Button
+              variant="gold"
+              size="lg"
+              className="w-full"
+              disabled={!valid}
+              loading={pay.isPending}
+              onClick={() => pay.mutate()}
+              icon={<Lock className="size-4" />}
+            >
               Сплатити {money(order.total + tip)}
             </Button>
             <p className="flex items-center justify-center gap-1.5 text-center text-xs text-ink-400">
               <ShieldCheck className={cn('size-3.5', window.location.protocol === 'https:' ? 'text-emerald-300' : 'text-ink-400')} />
-              {window.location.protocol === 'https:' ? 'Захищене зʼєднання HTTPS · ' : ''}номер картки й CVC не зберігаються — лише останні 4 цифри
+              {window.location.protocol === 'https:' ? 'Захищене зʼєднання HTTPS · ' : ''}номер картки й CVC не зберігаються — лише останні
+              4 цифри
             </p>
 
             <details className="rounded-2xl border border-white/6 bg-white/[0.02] p-3 text-xs text-ink-300">

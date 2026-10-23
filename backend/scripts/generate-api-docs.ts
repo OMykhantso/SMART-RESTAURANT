@@ -22,7 +22,13 @@ function grouped(registry: typeof routeRegistry) {
 }
 
 const access = (r: (typeof routeRegistry)[number]) =>
-  r.roles ? r.roles.join(', ') : r.auth === true ? 'будь-який автентифікований' : r.auth === 'optional' ? 'публічний (JWT опц.)' : 'публічний';
+  r.roles
+    ? r.roles.join(', ')
+    : r.auth === true
+      ? 'будь-який автентифікований'
+      : r.auth === 'optional'
+        ? 'публічний (JWT опц.)'
+        : 'публічний';
 
 let md = `# 6. Специфікація REST API
 

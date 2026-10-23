@@ -22,7 +22,13 @@ export default function UsersAdmin() {
   const [creating, setCreating] = useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ['users', role, search, page],
-    queryFn: () => api.get<{ total: number; page: number; pageSize: number; items: User[] }>('/users', { role: role === 'all' ? undefined : role, search: search || undefined, page, pageSize: 12 }),
+    queryFn: () =>
+      api.get<{ total: number; page: number; pageSize: number; items: User[] }>('/users', {
+        role: role === 'all' ? undefined : role,
+        search: search || undefined,
+        page,
+        pageSize: 12,
+      }),
   });
   const update = useMutation({
     mutationFn: ({ id, ...body }: { id: number; role?: Role; isActive?: boolean }) => api.patch<User>(`/users/${id}`, body),
@@ -98,7 +104,12 @@ export default function UsersAdmin() {
                         <Avatar name={u.name} />
                         <div>
                           <div className="text-cream">
-                            {u.name} {u.id === me?.id && <Badge tone="gold" dot={false} className="ml-1">це ви</Badge>}
+                            {u.name}{' '}
+                            {u.id === me?.id && (
+                              <Badge tone="gold" dot={false} className="ml-1">
+                                це ви
+                              </Badge>
+                            )}
                           </div>
                           <div className="text-xs text-ink-400">
                             {u.email}
@@ -108,7 +119,12 @@ export default function UsersAdmin() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <Select value={u.role} disabled={u.id === me?.id} onChange={(e) => update.mutate({ id: u.id, role: e.target.value as Role })} className="h-9 w-44 text-sm">
+                      <Select
+                        value={u.role}
+                        disabled={u.id === me?.id}
+                        onChange={(e) => update.mutate({ id: u.id, role: e.target.value as Role })}
+                        className="h-9 w-44 text-sm"
+                      >
                         {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
                           <option key={r} value={r}>
                             {ROLE_LABEL[r]}
@@ -131,13 +147,27 @@ export default function UsersAdmin() {
           <div className="flex items-center justify-between border-t border-white/5 px-4 py-3 text-sm text-ink-400">
             <span>Усього: {data?.total}</span>
             <div className="flex items-center gap-2">
-              <Button size="icon" variant="ghost" className="size-8" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} aria-label="Назад">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+                aria-label="Назад"
+              >
                 <ChevronLeft className="size-4" />
               </Button>
               <span>
                 {page} / {pages}
               </span>
-              <Button size="icon" variant="ghost" className="size-8" disabled={page >= pages} onClick={() => setPage((p) => p + 1)} aria-label="Далі">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8"
+                disabled={page >= pages}
+                onClick={() => setPage((p) => p + 1)}
+                aria-label="Далі"
+              >
                 <ChevronRight className="size-4" />
               </Button>
             </div>
@@ -162,9 +192,22 @@ function CreateUser({ open, onClose }: { open: boolean; onClose: () => void }) {
     },
     onError: (e) => toast.error(errorMessage(e)),
   });
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setF((x) => ({ ...x, [k]: e.target.value }));
   return (
-    <Modal open={open} onClose={onClose} size="sm" title="Новий користувач" footer={<div className="flex justify-end"><Button variant="gold" loading={create.isPending} onClick={() => create.mutate()}>Створити</Button></div>}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="sm"
+      title="Новий користувач"
+      footer={
+        <div className="flex justify-end">
+          <Button variant="gold" loading={create.isPending} onClick={() => create.mutate()}>
+            Створити
+          </Button>
+        </div>
+      }
+    >
       <div className="space-y-3">
         <Field label="Імʼя">
           <Input value={f.name} onChange={set('name')} />

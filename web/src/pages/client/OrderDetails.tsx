@@ -60,7 +60,12 @@ export default function OrderDetails() {
             <div className="text-sm text-ink-400">
               Замовлення #{o.id} · {orderPlace(o)} · {fmtDateTime(o.createdAt)}
             </div>
-            <motion.h1 key={o.status} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-2 font-display text-4xl text-cream">
+            <motion.h1
+              key={o.status}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-2 font-display text-4xl text-cream"
+            >
               {meta.label}
             </motion.h1>
             <p className="mt-1 text-ink-300">{meta.hint}</p>
@@ -70,7 +75,9 @@ export default function OrderDetails() {
               <Timer className="size-6 text-gold-300" />
               <div>
                 <div className="text-3xl font-semibold tabular-nums text-gold-100">~{o.etaMinutes} хв</div>
-                <div className="text-xs text-ink-400">прогноз готовності{o.estimatedReadyAt ? ` · ${fmtTime(o.estimatedReadyAt)}` : ''}</div>
+                <div className="text-xs text-ink-400">
+                  прогноз готовності{o.estimatedReadyAt ? ` · ${fmtTime(o.estimatedReadyAt)}` : ''}
+                </div>
               </div>
             </div>
           )}
@@ -104,7 +111,14 @@ export default function OrderDetails() {
           <ul className="mt-4 divide-y divide-white/5">
             {o.items.map((i) => (
               <li key={i.id} className="flex items-center gap-4 py-3">
-                <DishImage src={i.imageUrl} alt={i.name} category={i.category.slug} className="size-14 shrink-0" rounded="rounded-2xl" zoom={false} />
+                <DishImage
+                  src={i.imageUrl}
+                  alt={i.name}
+                  category={i.category.slug}
+                  className="size-14 shrink-0"
+                  rounded="rounded-2xl"
+                  zoom={false}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-cream">
                     {i.quantity} × {i.name}
@@ -125,7 +139,9 @@ export default function OrderDetails() {
           {o.payment && (
             <div className="mt-4 rounded-2xl bg-emerald-400/[0.06] p-4 text-sm ring-1 ring-emerald-400/20">
               <div className="flex justify-between text-emerald-100">
-                <span>Оплачено {o.payment.method === 'CARD' ? `карткою ${o.payment.cardBrand} •• ${o.payment.cardLast4}` : 'готівкою'}</span>
+                <span>
+                  Оплачено {o.payment.method === 'CARD' ? `карткою ${o.payment.cardBrand} •• ${o.payment.cardLast4}` : 'готівкою'}
+                </span>
                 <span>{money(o.payment.amount + o.payment.tip)}</span>
               </div>
               {o.payment.tip > 0 && <div className="mt-1 text-xs text-emerald-200/70">у т.ч. чайові {money(o.payment.tip)}</div>}

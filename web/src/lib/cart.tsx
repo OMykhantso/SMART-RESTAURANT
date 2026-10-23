@@ -49,7 +49,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setLines((prev) => {
       const existing = prev.find((l) => l.dishId === dish.id);
       if (existing) return prev.map((l) => (l.dishId === dish.id ? { ...l, quantity: Math.min(50, l.quantity + qty) } : l));
-      return [...prev, { dishId: dish.id, name: dish.name, price: dish.price, imageUrl: dish.imageUrl, category: dish.category?.slug, quantity: qty }];
+      return [
+        ...prev,
+        { dishId: dish.id, name: dish.name, price: dish.price, imageUrl: dish.imageUrl, category: dish.category?.slug, quantity: qty },
+      ];
     });
   }, []);
 
@@ -60,7 +63,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       total: lines.reduce((s, l) => s + l.quantity * l.price, 0),
       add,
       setQty: (dishId, qty) =>
-        setLines((prev) => (qty <= 0 ? prev.filter((l) => l.dishId !== dishId) : prev.map((l) => (l.dishId === dishId ? { ...l, quantity: Math.min(50, qty) } : l)))),
+        setLines((prev) =>
+          qty <= 0
+            ? prev.filter((l) => l.dishId !== dishId)
+            : prev.map((l) => (l.dishId === dishId ? { ...l, quantity: Math.min(50, qty) } : l)),
+        ),
       setNotes: (dishId, notes) => setLines((prev) => prev.map((l) => (l.dishId === dishId ? { ...l, notes } : l))),
       remove: (dishId) => setLines((prev) => prev.filter((l) => l.dishId !== dishId)),
       clear: () => setLines([]),

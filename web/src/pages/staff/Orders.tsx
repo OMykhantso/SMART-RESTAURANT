@@ -57,13 +57,23 @@ export default function StaffOrders() {
                   ) : (
                     <AnimatePresence initial={false}>
                       {list.map((o) => (
-                        <motion.div key={o.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
+                        <motion.div
+                          key={o.id}
+                          layout
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                        >
                           <OrderCard o={o} now={now} />
                         </motion.div>
                       ))}
                     </AnimatePresence>
                   )}
-                  {!isLoading && list.length === 0 && <div className="grid flex-1 place-items-center rounded-2xl border border-dashed border-white/6 py-10 text-xs text-ink-500">порожньо</div>}
+                  {!isLoading && list.length === 0 && (
+                    <div className="grid flex-1 place-items-center rounded-2xl border border-dashed border-white/6 py-10 text-xs text-ink-500">
+                      порожньо
+                    </div>
+                  )}
                 </div>
               </div>
             );

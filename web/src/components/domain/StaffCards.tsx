@@ -22,7 +22,12 @@ export function ReservationRow({ r, compact }: { r: Reservation; compact?: boole
   const [reason, setReason] = useState<'REJECTED' | 'CANCELLED' | null>(null);
   const busy = action.isPending;
   return (
-    <div className={cn('glass flex flex-wrap items-center gap-4 rounded-2xl p-4 transition hover:border-white/12', r.status === 'PENDING' && 'ring-1 ring-amber-400/20')}>
+    <div
+      className={cn(
+        'glass flex flex-wrap items-center gap-4 rounded-2xl p-4 transition hover:border-white/12',
+        r.status === 'PENDING' && 'ring-1 ring-amber-400/20',
+      )}
+    >
       <div className="w-16 text-center">
         <div className="font-display text-2xl tabular-nums text-cream">{r.time}</div>
         <div className="text-[10px] text-ink-500">до {r.endTime}</div>
@@ -53,12 +58,24 @@ export function ReservationRow({ r, compact }: { r: Reservation; compact?: boole
       </div>
       <div className="flex flex-wrap gap-1.5">
         {r.actions.canConfirm && (
-          <Button size="sm" variant="gold" loading={busy} icon={<Check className="size-4" />} onClick={() => action.mutate({ id: r.id, status: 'CONFIRMED' })}>
+          <Button
+            size="sm"
+            variant="gold"
+            loading={busy}
+            icon={<Check className="size-4" />}
+            onClick={() => action.mutate({ id: r.id, status: 'CONFIRMED' })}
+          >
             Підтвердити
           </Button>
         )}
         {r.actions.canCheckIn && (
-          <Button size="sm" variant="success" loading={busy} icon={<LogIn className="size-4" />} onClick={() => action.mutate({ id: r.id, status: 'CHECKED_IN' })}>
+          <Button
+            size="sm"
+            variant="success"
+            loading={busy}
+            icon={<LogIn className="size-4" />}
+            onClick={() => action.mutate({ id: r.id, status: 'CHECKED_IN' })}
+          >
             Check-in
           </Button>
         )}
@@ -76,7 +93,12 @@ export function ReservationRow({ r, compact }: { r: Reservation; compact?: boole
           </Button>
         )}
         {r.actions.canMarkNoShow && (
-          <Button size="sm" variant="ghost" icon={<UserX className="size-4" />} onClick={() => action.mutate({ id: r.id, status: 'NO_SHOW' })}>
+          <Button
+            size="sm"
+            variant="ghost"
+            icon={<UserX className="size-4" />}
+            onClick={() => action.mutate({ id: r.id, status: 'NO_SHOW' })}
+          >
             Не прийшов
           </Button>
         )}
@@ -95,7 +117,11 @@ export function ReservationRow({ r, compact }: { r: Reservation; compact?: boole
         open={reason !== null}
         onClose={() => setReason(null)}
         title={reason === 'REJECTED' ? 'Відхилити бронювання' : 'Скасувати бронювання'}
-        presets={reason === 'REJECTED' ? ['Немає вільних столиків', 'Приватний захід у ресторані', 'Технічні роботи'] : ['Гість зателефонував і скасував', 'Перенесено на інший день']}
+        presets={
+          reason === 'REJECTED'
+            ? ['Немає вільних столиків', 'Приватний захід у ресторані', 'Технічні роботи']
+            : ['Гість зателефонував і скасував', 'Перенесено на інший день']
+        }
         loading={busy}
         onSubmit={(text) => action.mutate({ id: r.id, status: reason!, reason: text }, { onSuccess: () => setReason(null) })}
       />
@@ -111,7 +137,12 @@ export function OrderCard({ o, now }: { o: Order; now: number }) {
   const age = minutesSince(since, now);
   const late = (o.status === 'NEW' && age >= 3) || (o.status === 'READY' && age >= 4);
   return (
-    <div className={cn('rounded-2xl border bg-ink-850/80 p-3.5 transition', late ? 'border-rose-400/40 shadow-[0_0_24px_-8px_rgb(251_113_133/0.6)]' : 'border-white/6')}>
+    <div
+      className={cn(
+        'rounded-2xl border bg-ink-850/80 p-3.5 transition',
+        late ? 'border-rose-400/40 shadow-[0_0_24px_-8px_rgb(251_113_133/0.6)]' : 'border-white/6',
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="flex items-baseline gap-2 whitespace-nowrap">
@@ -129,7 +160,12 @@ export function OrderCard({ o, now }: { o: Order; now: number }) {
             {o.delivery && ` · ${o.delivery.zone.name}`}
           </div>
         </div>
-        <span className={cn('flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] tabular-nums', late ? 'bg-rose-500/15 text-rose-200' : 'bg-white/5 text-ink-300')}>
+        <span
+          className={cn(
+            'flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] tabular-nums',
+            late ? 'bg-rose-500/15 text-rose-200' : 'bg-white/5 text-ink-300',
+          )}
+        >
           <Clock className="size-3" /> {age} хв
         </span>
       </div>
@@ -146,21 +182,41 @@ export function OrderCard({ o, now }: { o: Order; now: number }) {
       {o.notes && <div className="mt-2 rounded-lg bg-amber-400/10 px-2 py-1 text-xs text-amber-100">{o.notes}</div>}
       <div className="mt-3 flex items-center justify-between">
         <span className="text-sm font-semibold text-gold-100">{money(o.total)}</span>
-        {o.status === 'PREPARING' && o.etaMinutes != null && <span className="text-[11px] text-orange-200">готово за ~{o.etaMinutes} хв</span>}
+        {o.status === 'PREPARING' && o.etaMinutes != null && (
+          <span className="text-[11px] text-orange-200">готово за ~{o.etaMinutes} хв</span>
+        )}
       </div>
       <div className="mt-3 flex flex-wrap gap-1.5">
         {o.actions.canConfirm && (
-          <Button size="xs" variant="gold" loading={action.isPending} icon={<Check className="size-3.5" />} onClick={() => action.mutate({ id: o.id, status: 'CONFIRMED' })}>
+          <Button
+            size="xs"
+            variant="gold"
+            loading={action.isPending}
+            icon={<Check className="size-3.5" />}
+            onClick={() => action.mutate({ id: o.id, status: 'CONFIRMED' })}
+          >
             Прийняти
           </Button>
         )}
         {o.actions.canServe && (
-          <Button size="xs" variant="success" loading={action.isPending} icon={<HandPlatter className="size-3.5" />} onClick={() => action.mutate({ id: o.id, status: 'SERVED' })}>
+          <Button
+            size="xs"
+            variant="success"
+            loading={action.isPending}
+            icon={<HandPlatter className="size-3.5" />}
+            onClick={() => action.mutate({ id: o.id, status: 'SERVED' })}
+          >
             Подано
           </Button>
         )}
         {o.status === 'SERVED' && (
-          <Button size="xs" variant="glass" loading={cash.isPending} icon={<Banknote className="size-3.5" />} onClick={() => cash.mutate({ orderId: o.id, tip: 0 })}>
+          <Button
+            size="xs"
+            variant="glass"
+            loading={cash.isPending}
+            icon={<Banknote className="size-3.5" />}
+            onClick={() => cash.mutate({ orderId: o.id, tip: 0 })}
+          >
             Оплата готівкою
           </Button>
         )}

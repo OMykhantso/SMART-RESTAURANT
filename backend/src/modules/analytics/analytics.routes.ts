@@ -11,7 +11,10 @@ const avg = (values: number[]) => (values.length ? values.reduce((a, b) => a + b
 
 async function periodMetrics(from: Date, to: Date) {
   const [payments, orders, reservations, reviews] = await Promise.all([
-    prisma.payment.findMany({ where: { status: 'SUCCEEDED', paidAt: { gte: from, lt: to } }, include: { order: { select: { type: true } } } }),
+    prisma.payment.findMany({
+      where: { status: 'SUCCEEDED', paidAt: { gte: from, lt: to } },
+      include: { order: { select: { type: true } } },
+    }),
     prisma.order.findMany({
       where: { createdAt: { gte: from, lt: to } },
       select: {
@@ -35,9 +38,7 @@ async function periodMetrics(from: Date, to: Date) {
   const revenue = payments.reduce((s, p) => s + p.amount, 0);
   const tips = payments.reduce((s, p) => s + p.tip, 0);
   const validOrders = orders.filter((o) => o.status !== 'CANCELLED');
-  const prepTimes = orders
-    .filter((o) => o.confirmedAt && o.readyAt)
-    .map((o) => (o.readyAt!.getTime() - o.confirmedAt!.getTime()) / 60000);
+  const prepTimes = orders.filter((o) => o.confirmedAt && o.readyAt).map((o) => (o.readyAt!.getTime() - o.confirmedAt!.getTime()) / 60000);
   const visits = reservations
     .filter((r) => r.checkedInAt && r.completedAt)
     .map((r) => (r.completedAt!.getTime() - r.checkedInAt!.getTime()) / 60000);
@@ -114,7 +115,12 @@ define({
       d.quantity += i.quantity;
       d.revenue += i.quantity * i.unitPrice;
       dishAgg.set(i.dishId, d);
-      const c = catAgg.get(i.dish.category.name) ?? { category: i.dish.category.name, emoji: i.dish.category.emoji, revenue: 0, quantity: 0 };
+      const c = catAgg.get(i.dish.category.name) ?? {
+        category: i.dish.category.name,
+        emoji: i.dish.category.emoji,
+        revenue: 0,
+        quantity: 0,
+      };
       c.revenue += i.quantity * i.unitPrice;
       c.quantity += i.quantity;
       catAgg.set(i.dish.category.name, c);
@@ -186,9 +192,18 @@ define({
     const from = day.toJSDate();
     const to = day.plus({ days: 1 }).toJSDate();
     const [reservations, orders, payments, tables, seated, deliveryByStatus] = await Promise.all([
-      prisma.reservation.groupBy({ by: ['status'], where: { startAt: { gte: from, lt: to } }, _count: { _all: true }, _sum: { guests: true } }),
+      prisma.reservation.groupBy({
+        by: ['status'],
+        where: { startAt: { gte: from, lt: to } },
+        _count: { _all: true },
+        _sum: { guests: true },
+      }),
       prisma.order.groupBy({ by: ['status'], where: { createdAt: { gte: from, lt: to } }, _count: { _all: true } }),
-      prisma.payment.aggregate({ where: { status: 'SUCCEEDED', paidAt: { gte: from, lt: to } }, _sum: { amount: true, tip: true }, _count: { _all: true } }),
+      prisma.payment.aggregate({
+        where: { status: 'SUCCEEDED', paidAt: { gte: from, lt: to } },
+        _sum: { amount: true, tip: true },
+        _count: { _all: true },
+      }),
       prisma.diningTable.count({ where: { isActive: true } }),
       prisma.reservation.findMany({ where: { status: 'CHECKED_IN' }, select: { guests: true, tableId: true } }),
       prisma.order.groupBy({ by: ['status'], where: { type: 'DELIVERY', createdAt: { gte: from, lt: to } }, _count: { _all: true } }),
@@ -214,7 +229,12 @@ define({
         total: orders.reduce((s, o) => s + o._count._all, 0),
         byStatus: ordBy,
         active:
-          (ordBy.NEW ?? 0) + (ordBy.CONFIRMED ?? 0) + (ordBy.PREPARING ?? 0) + (ordBy.READY ?? 0) + (ordBy.SERVED ?? 0) + (ordBy.DELIVERING ?? 0),
+          (ordBy.NEW ?? 0) +
+          (ordBy.CONFIRMED ?? 0) +
+          (ordBy.PREPARING ?? 0) +
+          (ordBy.READY ?? 0) +
+          (ordBy.SERVED ?? 0) +
+          (ordBy.DELIVERING ?? 0),
       },
       delivery: {
         total: deliveryByStatus.reduce((s, o) => s + o._count._all, 0),

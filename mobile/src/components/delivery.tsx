@@ -1,7 +1,20 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Animated, Easing, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bike, Check, ChefHat, ClipboardCheck, CreditCard, House, LocateFixed, MapPin, PackageCheck, Phone, Star, Wallet } from 'lucide-react-native';
+import {
+  Bike,
+  Check,
+  ChefHat,
+  ClipboardCheck,
+  CreditCard,
+  House,
+  LocateFixed,
+  MapPin,
+  PackageCheck,
+  Phone,
+  Star,
+  Wallet,
+} from 'lucide-react-native';
 import { colors, fonts, goldGradient, radius } from '../theme';
 import { Badge, Caption, DishImage, PressableScale } from './ui';
 import { haptic } from '../lib/notify';
@@ -29,7 +42,9 @@ const STEP_LABEL: Partial<Record<OrderStatus, string>> = {
 
 function stepTime(o: Order, s: OrderStatus): string | null {
   const d = o.delivery;
-  const t = { CONFIRMED: o.confirmedAt, PREPARING: o.preparingAt, READY: o.readyAt, DELIVERING: d?.pickedUpAt, DELIVERED: d?.deliveredAt }[s as 'CONFIRMED'];
+  const t = { CONFIRMED: o.confirmedAt, PREPARING: o.preparingAt, READY: o.readyAt, DELIVERING: d?.pickedUpAt, DELIVERED: d?.deliveredAt }[
+    s as 'CONFIRMED'
+  ];
   return t ? fmtTime(t) : null;
 }
 
@@ -68,18 +83,41 @@ export function DeliveryStepper({ order }: { order: Order }) {
                 )}
                 {done ? (
                   <LinearGradient colors={goldGradient} style={styles.stepDot}>
-                    {s === 'DELIVERED' && order.status === 'DELIVERED' ? <Check size={16} color="#141008" strokeWidth={3} /> : STEP_ICON[s]?.(iconColor)}
+                    {s === 'DELIVERED' && order.status === 'DELIVERED' ? (
+                      <Check size={16} color="#141008" strokeWidth={3} />
+                    ) : (
+                      STEP_ICON[s]?.(iconColor)
+                    )}
                   </LinearGradient>
                 ) : (
-                  <View style={[styles.stepDot, { backgroundColor: active ? colors.goldSoft : colors.surfaceHigh, borderWidth: 1.5, borderColor: active ? colors.gold : colors.border }]}>
+                  <View
+                    style={[
+                      styles.stepDot,
+                      {
+                        backgroundColor: active ? colors.goldSoft : colors.surfaceHigh,
+                        borderWidth: 1.5,
+                        borderColor: active ? colors.gold : colors.border,
+                      },
+                    ]}
+                  >
                     {STEP_ICON[s]?.(iconColor)}
                   </View>
                 )}
               </View>
-              <Text numberOfLines={1} style={{ marginTop: 6, fontFamily: active ? fonts.bold : fonts.semibold, fontSize: 11, color: active ? colors.goldLight : done ? colors.text : colors.faint }}>
+              <Text
+                numberOfLines={1}
+                style={{
+                  marginTop: 6,
+                  fontFamily: active ? fonts.bold : fonts.semibold,
+                  fontSize: 11,
+                  color: active ? colors.goldLight : done ? colors.text : colors.faint,
+                }}
+              >
                 {STEP_LABEL[s]}
               </Text>
-              <Text style={{ fontFamily: fonts.medium, fontSize: 10.5, color: colors.faint, marginTop: 1 }}>{stepTime(order, s) ?? ' '}</Text>
+              <Text style={{ fontFamily: fonts.medium, fontSize: 10.5, color: colors.faint, marginTop: 1 }}>
+                {stepTime(order, s) ?? ' '}
+              </Text>
             </View>
           );
         })}
@@ -94,7 +132,15 @@ export function DeliveryProgress({ status }: { status: OrderStatus }) {
   return (
     <View style={{ flexDirection: 'row', gap: 4 }}>
       {DELIVERY_FLOW.map((s, k) => (
-        <View key={s} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: k <= i ? (s === 'DELIVERING' || s === 'DELIVERED' ? colors.info : colors.gold) : 'rgba(255,255,255,0.08)' }} />
+        <View
+          key={s}
+          style={{
+            flex: 1,
+            height: 4,
+            borderRadius: 2,
+            backgroundColor: k <= i ? (s === 'DELIVERING' || s === 'DELIVERED' ? colors.info : colors.gold) : 'rgba(255,255,255,0.08)',
+          }}
+        />
       ))}
     </View>
   );
@@ -140,7 +186,9 @@ export function DeliveryHero({ order }: { order: Order }) {
           : '—';
   return (
     <LinearGradient
-      colors={order.status === 'DELIVERING' ? ['rgba(125,211,252,0.18)', 'rgba(20,20,25,0.96)'] : ['rgba(220,171,74,0.18)', 'rgba(20,20,25,0.96)']}
+      colors={
+        order.status === 'DELIVERING' ? ['rgba(125,211,252,0.18)', 'rgba(20,20,25,0.96)'] : ['rgba(220,171,74,0.18)', 'rgba(20,20,25,0.96)']
+      }
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[styles.hero, order.status === 'DELIVERING' && { borderColor: 'rgba(125,211,252,0.35)' }]}
@@ -151,9 +199,13 @@ export function DeliveryHero({ order }: { order: Order }) {
         </LinearGradient>
         <View style={{ flex: 1 }}>
           <Badge tone={meta.tone}>{meta.label}</Badge>
-          <Caption style={{ marginTop: 8 }}>{order.status === 'DELIVERED' ? 'Доставили' : order.status === 'CANCELLED' ? order.cancelReason ?? '' : 'Привеземо'}</Caption>
+          <Caption style={{ marginTop: 8 }}>
+            {order.status === 'DELIVERED' ? 'Доставили' : order.status === 'CANCELLED' ? (order.cancelReason ?? '') : 'Привеземо'}
+          </Caption>
           <Text style={{ fontFamily: fonts.display, fontSize: 30, color: colors.text, marginTop: -2 }}>{big}</Text>
-          {['CONFIRMED', 'PREPARING', 'READY', 'DELIVERING'].includes(order.status) && eta ? <Caption style={{ color: colors.goldLight }}>{etaText(eta)}</Caption> : null}
+          {['CONFIRMED', 'PREPARING', 'READY', 'DELIVERING'].includes(order.status) && eta ? (
+            <Caption style={{ color: colors.goldLight }}>{etaText(eta)}</Caption>
+          ) : null}
         </View>
       </View>
       <Text style={{ fontFamily: fonts.medium, color: colors.textSoft, fontSize: 13.5, marginTop: 14 }}>{meta.hint}</Text>
@@ -174,7 +226,13 @@ export function CourierCard({ courier, status }: { courier: { id: number; name: 
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: fonts.semibold, color: colors.text, fontSize: 15 }}>{courier.name}</Text>
-        <Caption>{status === 'DELIVERING' ? 'Везе ваше замовлення' : status === 'DELIVERED' ? 'Доставив замовлення' : 'Ваш курʼєр · забере, щойно буде готово'}</Caption>
+        <Caption>
+          {status === 'DELIVERING'
+            ? 'Везе ваше замовлення'
+            : status === 'DELIVERED'
+              ? 'Доставив замовлення'
+              : 'Ваш курʼєр · забере, щойно буде готово'}
+        </Caption>
       </View>
       {courier.phone && status !== 'DELIVERED' ? (
         <Pressable
@@ -201,7 +259,14 @@ export function DeliveryRow({ order, onPress }: { order: Order; onPress: () => v
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ flexDirection: 'row' }}>
           {order.items.slice(0, 3).map((it, k) => (
-            <DishImage key={it.id} uri={it.imageUrl} category={it.category.slug} size={38} radius={19} style={{ marginLeft: k ? -12 : 0, borderWidth: 2, borderColor: colors.surface }} />
+            <DishImage
+              key={it.id}
+              uri={it.imageUrl}
+              category={it.category.slug}
+              size={38}
+              radius={19}
+              style={{ marginLeft: k ? -12 : 0, borderWidth: 2, borderColor: colors.surface }}
+            />
           ))}
         </View>
         <View style={{ flex: 1 }}>
@@ -232,7 +297,11 @@ export function DeliveryRow({ order, onPress }: { order: Order; onPress: () => v
       {active && order.status !== 'NEW' && (
         <View style={{ marginTop: 12 }}>
           <DeliveryProgress status={order.status} />
-          {order.delivery?.etaAt ? <Caption style={{ marginTop: 8 }}>Привеземо о {fmtTime(order.delivery.etaAt)} · {etaText(order.delivery.etaAt)}</Caption> : null}
+          {order.delivery?.etaAt ? (
+            <Caption style={{ marginTop: 8 }}>
+              Привеземо о {fmtTime(order.delivery.etaAt)} · {etaText(order.delivery.etaAt)}
+            </Caption>
+          ) : null}
         </View>
       )}
     </PressableScale>
@@ -240,7 +309,17 @@ export function DeliveryRow({ order, onPress }: { order: Order; onPress: () => v
 }
 
 /** Картка збереженої адреси (вибір у кошику, список у профілі). */
-export function AddressCard({ address, selected, onPress, right }: { address: Address; selected?: boolean; onPress?: () => void; right?: ReactNode }) {
+export function AddressCard({
+  address,
+  selected,
+  onPress,
+  right,
+}: {
+  address: Address;
+  selected?: boolean;
+  onPress?: () => void;
+  right?: ReactNode;
+}) {
   const line = [`${address.street}, ${address.house}`, address.apartment && `кв. ${address.apartment}`].filter(Boolean).join(', ');
   return (
     <Pressable
@@ -252,7 +331,11 @@ export function AddressCard({ address, selected, onPress, right }: { address: Ad
       style={[styles.address, selected && { borderColor: colors.goldBorder, backgroundColor: colors.goldSoft }]}
     >
       <View style={[styles.addressIcon, selected && { backgroundColor: colors.gold }]}>
-        {address.label.toLowerCase().includes('дім') ? <House size={18} color={selected ? '#141008' : colors.gold} /> : <MapPin size={18} color={selected ? '#141008' : colors.gold} />}
+        {address.label.toLowerCase().includes('дім') ? (
+          <House size={18} color={selected ? '#141008' : colors.gold} />
+        ) : (
+          <MapPin size={18} color={selected ? '#141008' : colors.gold} />
+        )}
       </View>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -263,10 +346,16 @@ export function AddressCard({ address, selected, onPress, right }: { address: Ad
           {line}
         </Text>
         <Caption style={{ marginTop: 2 }}>
-          {address.zone.name} · доставка {address.zone.fee ? money(address.zone.fee) : 'безкоштовна'} · ~{address.zone.travelMin} хв у дорозі
+          {address.zone.name} · доставка {address.zone.fee ? money(address.zone.fee) : 'безкоштовна'} · ~{address.zone.travelMin} хв у
+          дорозі
         </Caption>
       </View>
-      {right ?? (selected !== undefined ? <View style={[styles.radio, selected && styles.radioOn]}>{selected ? <Check size={13} color="#141008" strokeWidth={3} /> : null}</View> : null)}
+      {right ??
+        (selected !== undefined ? (
+          <View style={[styles.radio, selected && styles.radioOn]}>
+            {selected ? <Check size={13} color="#141008" strokeWidth={3} /> : null}
+          </View>
+        ) : null)}
     </Pressable>
   );
 }
@@ -295,12 +384,22 @@ export function LocateMeButton({ onLocated }: { onLocated: (loc: MyLocation) => 
   };
   return (
     <View style={{ marginBottom: 12 }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Визначити адресу за геолокацією" onPress={run} disabled={busy} style={styles.locate}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Визначити адресу за геолокацією"
+        onPress={run}
+        disabled={busy}
+        style={styles.locate}
+      >
         {busy ? <ActivityIndicator size="small" color={colors.gold} /> : <LocateFixed size={17} color={colors.gold} />}
-        <Text style={{ fontFamily: fonts.semibold, color: colors.goldLight, fontSize: 13.5 }}>{busy ? 'Визначаємо…' : 'Моє місцезнаходження'}</Text>
+        <Text style={{ fontFamily: fonts.semibold, color: colors.goldLight, fontSize: 13.5 }}>
+          {busy ? 'Визначаємо…' : 'Моє місцезнаходження'}
+        </Text>
       </Pressable>
       {result ? (
-        <Text style={{ fontFamily: fonts.medium, fontSize: 12.5, marginTop: 6, color: result.ok ? colors.success : colors.warning }}>{result.text}</Text>
+        <Text style={{ fontFamily: fonts.medium, fontSize: 12.5, marginTop: 6, color: result.ok ? colors.success : colors.warning }}>
+          {result.text}
+        </Text>
       ) : null}
     </View>
   );
@@ -319,7 +418,11 @@ export function ZonePicker({ zones, value, onChange }: { zones: DeliveryZone[]; 
               haptic.tap();
               onChange(z.id);
             }}
-            style={[styles.zone, on && { borderColor: colors.goldBorder, backgroundColor: colors.goldSoft }, !z.isActive && { opacity: 0.4 }]}
+            style={[
+              styles.zone,
+              on && { borderColor: colors.goldBorder, backgroundColor: colors.goldSoft },
+              !z.isActive && { opacity: 0.4 },
+            ]}
           >
             <Text style={{ fontFamily: fonts.semibold, color: on ? colors.goldLight : colors.text, fontSize: 13.5 }}>{z.name}</Text>
             <Text style={{ fontFamily: fonts.medium, color: colors.muted, fontSize: 11, marginTop: 2 }}>
@@ -347,7 +450,11 @@ export function PaymentLine({ order }: { order: Order }) {
   const ok = Boolean(order.payment) || Boolean(order.refunded);
   return (
     <View style={[styles.payLine, { backgroundColor: ok ? colors.successSoft : 'rgba(255,255,255,0.04)' }]}>
-      {d.paymentMethod === 'CASH' ? <Wallet size={17} color={ok ? colors.success : colors.gold} /> : <CreditCard size={17} color={ok ? colors.success : colors.gold} />}
+      {d.paymentMethod === 'CASH' ? (
+        <Wallet size={17} color={ok ? colors.success : colors.gold} />
+      ) : (
+        <CreditCard size={17} color={ok ? colors.success : colors.gold} />
+      )}
       <Text style={{ flex: 1, fontFamily: fonts.medium, color: ok ? colors.success : colors.textSoft, fontSize: 13.5 }}>{text}</Text>
     </View>
   );
@@ -356,23 +463,99 @@ export function PaymentLine({ order }: { order: Order }) {
 export { formatPhone };
 
 const styles = StyleSheet.create({
-  locate: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 14, borderWidth: 1, borderColor: colors.goldBorder, backgroundColor: colors.goldSoft },
-  stepTrack: { height: 3, marginHorizontal: 31, marginTop: 17, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' },
+  locate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 11,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.goldSoft,
+  },
+  stepTrack: {
+    height: 3,
+    marginHorizontal: 31,
+    marginTop: 17,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
+  },
   stepFill: { height: '100%', backgroundColor: colors.gold, borderRadius: 2 },
   stepDot: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   stepPulse: { position: 'absolute', width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: colors.gold },
   hero: { borderRadius: radius.xl, padding: 20, borderWidth: 1, borderColor: colors.goldBorder },
   heroIcon: { width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  courier: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: 'rgba(125,211,252,0.25)' },
-  courierAvatar: { width: 48, height: 48, borderRadius: 16, backgroundColor: colors.infoSoft, alignItems: 'center', justifyContent: 'center' },
-  callBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.infoSoft, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(125,211,252,0.3)' },
+  courier: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: 'rgba(125,211,252,0.25)',
+  },
+  courierAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: colors.infoSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  callBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: colors.infoSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(125,211,252,0.3)',
+  },
   row: { padding: 14, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 10 },
   rowTitle: { fontFamily: fonts.semibold, color: colors.text, fontSize: 15 },
   rowSub: { fontFamily: fonts.medium, color: colors.muted, fontSize: 12.5, marginTop: 2 },
-  address: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 10 },
-  addressIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.goldSoft, alignItems: 'center', justifyContent: 'center' },
-  radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: colors.borderStrong, alignItems: 'center', justifyContent: 'center' },
+  address: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 10,
+  },
+  addressIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: colors.goldSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radio: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: colors.borderStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   radioOn: { backgroundColor: colors.gold, borderColor: colors.gold },
-  zone: { paddingHorizontal: 12, paddingVertical: 10, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(255,255,255,0.03)', minWidth: '47%', flexGrow: 1 },
+  zone: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    minWidth: '47%',
+    flexGrow: 1,
+  },
   payLine: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14, padding: 12, borderRadius: 14 },
 });

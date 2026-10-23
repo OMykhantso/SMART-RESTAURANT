@@ -2,7 +2,18 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
-import { CalendarPlus, ChevronRight, ClipboardList, Clock, History, QrCode, Receipt, Save, Smartphone, UtensilsCrossed } from 'lucide-react';
+import {
+  CalendarPlus,
+  ChevronRight,
+  ClipboardList,
+  Clock,
+  History,
+  QrCode,
+  Receipt,
+  Save,
+  Smartphone,
+  UtensilsCrossed,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/Button';
@@ -23,7 +34,10 @@ export default function Account() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('visits');
   const visit = useCurrentVisit();
-  const reservations = useQuery({ queryKey: ['my-reservations'], queryFn: () => api.get<Reservation[]>('/reservations/my', { scope: 'all' }) });
+  const reservations = useQuery({
+    queryKey: ['my-reservations'],
+    queryFn: () => api.get<Reservation[]>('/reservations/my', { scope: 'all' }),
+  });
   const orders = useMyOrders();
 
   const upcoming = (reservations.data ?? []).filter((r) => ['PENDING', 'CONFIRMED', 'CHECKED_IN'].includes(r.status));
@@ -73,7 +87,16 @@ export default function Account() {
               {reservations.isLoading ? (
                 <Skeleton className="h-32" />
               ) : upcoming.length === 0 ? (
-                <EmptyState icon={<CalendarPlus className="size-7" />} title="Немає активних бронювань" text="Оберіть зручний час — ми підберемо найкращий столик." action={<Link to="/booking"><Button variant="gold">Забронювати</Button></Link>} />
+                <EmptyState
+                  icon={<CalendarPlus className="size-7" />}
+                  title="Немає активних бронювань"
+                  text="Оберіть зручний час — ми підберемо найкращий столик."
+                  action={
+                    <Link to="/booking">
+                      <Button variant="gold">Забронювати</Button>
+                    </Link>
+                  }
+                />
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
                   {upcoming.map((r) => (
@@ -87,7 +110,11 @@ export default function Account() {
                 <h2 className="mb-4 font-display text-2xl text-cream">Історія візитів</h2>
                 <div className="grid gap-3">
                   {past.map((r) => (
-                    <Link key={r.id} to={`/account/reservations/${r.id}`} className="glass flex items-center gap-4 rounded-2xl p-4 transition hover:border-white/15">
+                    <Link
+                      key={r.id}
+                      to={`/account/reservations/${r.id}`}
+                      className="glass flex items-center gap-4 rounded-2xl p-4 transition hover:border-white/15"
+                    >
                       <div className="w-16 text-center">
                         <div className="font-display text-2xl text-cream">{fmtDayNum(r.startAt)}</div>
                         <div className="text-[10px] uppercase text-ink-400">{fmtMonthShort(r.startAt)}</div>
@@ -112,14 +139,30 @@ export default function Account() {
           (orders.isLoading ? (
             <Skeleton className="h-40" />
           ) : !orders.data?.length ? (
-            <EmptyState icon={<UtensilsCrossed className="size-7" />} title="Замовлень ще немає" text="Після check-in за столиком ви зможете замовляти прямо зі смартфона." />
+            <EmptyState
+              icon={<UtensilsCrossed className="size-7" />}
+              title="Замовлень ще немає"
+              text="Після check-in за столиком ви зможете замовляти прямо зі смартфона."
+            />
           ) : (
             <div className="grid gap-3">
               {orders.data.map((o) => (
-                <Link key={o.id} to={`/account/orders/${o.id}`} className="glass flex items-center gap-4 rounded-2xl p-3 pr-4 transition hover:border-white/15">
+                <Link
+                  key={o.id}
+                  to={`/account/orders/${o.id}`}
+                  className="glass flex items-center gap-4 rounded-2xl p-3 pr-4 transition hover:border-white/15"
+                >
                   <div className="flex -space-x-3">
                     {o.items.slice(0, 3).map((i) => (
-                      <DishImage key={i.id} src={i.imageUrl} alt={i.name} category={i.category.slug} className="size-12 ring-2 ring-ink-900" rounded="rounded-full" zoom={false} />
+                      <DishImage
+                        key={i.id}
+                        src={i.imageUrl}
+                        alt={i.name}
+                        category={i.category.slug}
+                        className="size-12 ring-2 ring-ink-900"
+                        rounded="rounded-full"
+                        zoom={false}
+                      />
                     ))}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -191,7 +234,13 @@ function ReservationCard({ r }: { r: Reservation }) {
   return (
     <Link to={`/account/reservations/${r.id}`} className="group">
       <Card className="flex h-full gap-5 p-5 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-gold-400/25">
-        <div className="shrink-0 rounded-2xl bg-cream p-2">{r.qrPayload ? <QRCodeSVG value={r.qrPayload} size={84} bgColor="#f5f0e8" fgColor="#0d0d11" /> : <QrCode className="size-20 text-ink-900" />}</div>
+        <div className="shrink-0 rounded-2xl bg-cream p-2">
+          {r.qrPayload ? (
+            <QRCodeSVG value={r.qrPayload} size={84} bgColor="#f5f0e8" fgColor="#0d0d11" />
+          ) : (
+            <QrCode className="size-20 text-ink-900" />
+          )}
+        </div>
         <div className="min-w-0 flex-1">
           <ReservationBadge status={r.status} />
           <div className="mt-3 font-display text-2xl text-cream">{fmtFullDate(r.startAt)}</div>

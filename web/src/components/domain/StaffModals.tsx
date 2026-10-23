@@ -13,11 +13,24 @@ import type { Availability, LiveTable, Order, Reservation, TablesAvailability } 
 
 function useInvalidateAll() {
   const qc = useQueryClient();
-  return () => ['orders', 'reservations', 'tables-live', 'today', 'kitchen', 'reservation', 'order'].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+  return () =>
+    ['orders', 'reservations', 'tables-live', 'today', 'kitchen', 'reservation', 'order'].forEach((k) =>
+      qc.invalidateQueries({ queryKey: [k] }),
+    );
 }
 
 /** POS: офіціант створює замовлення для столика (одразу потрапляє на кухню). */
-export function NewOrderModal({ open, onClose, tableId, tables }: { open: boolean; onClose: () => void; tableId?: number | null; tables: LiveTable[] }) {
+export function NewOrderModal({
+  open,
+  onClose,
+  tableId,
+  tables,
+}: {
+  open: boolean;
+  onClose: () => void;
+  tableId?: number | null;
+  tables: LiveTable[];
+}) {
   const invalidate = useInvalidateAll();
   const occupied = tables.filter((t) => t.state === 'OCCUPIED');
   const [table, setTable] = useState<number | null>(tableId ?? null);
@@ -34,7 +47,8 @@ export function NewOrderModal({ open, onClose, tableId, tables }: { open: boolea
       setLines({});
       setNotes('');
     }
-  }, [open, tableId]); // occupied навмисно не в залежностях: не скидаємо вибір при оновленні залу
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- occupied навмисно не в залежностях: не скидаємо вибір при оновленні залу
+  }, [open, tableId]);
 
   const all = dishes.data ?? [];
   const catalog = useDishes({});
@@ -106,7 +120,12 @@ export function NewOrderModal({ open, onClose, tableId, tables }: { open: boolea
           </div>
         </div>
         <div>
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Пошук страви" icon={<Search className="size-4" />} />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Пошук страви"
+            icon={<Search className="size-4" />}
+          />
           <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-none">
             <Chip active={cat === null} onClick={() => setCat(null)}>
               Усе
@@ -121,8 +140,22 @@ export function NewOrderModal({ open, onClose, tableId, tables }: { open: boolea
             {all.map((d) => {
               const q = lines[d.id] ?? 0;
               return (
-                <div key={d.id} className={cn('flex items-center gap-3 rounded-2xl border p-2 transition', q ? 'border-gold-400/40 bg-gold-400/[0.06]' : 'border-white/6 bg-white/[0.02]', !d.isAvailable && 'opacity-40')}>
-                  <DishImage src={d.imageUrl} alt={d.name} category={d.category?.slug} className="size-12 shrink-0" rounded="rounded-xl" zoom={false} />
+                <div
+                  key={d.id}
+                  className={cn(
+                    'flex items-center gap-3 rounded-2xl border p-2 transition',
+                    q ? 'border-gold-400/40 bg-gold-400/[0.06]' : 'border-white/6 bg-white/[0.02]',
+                    !d.isAvailable && 'opacity-40',
+                  )}
+                >
+                  <DishImage
+                    src={d.imageUrl}
+                    alt={d.name}
+                    category={d.category?.slug}
+                    className="size-12 shrink-0"
+                    rounded="rounded-xl"
+                    zoom={false}
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm text-cream">{d.name}</div>
                     <div className="text-xs text-gold-200">{money(d.price)}</div>
@@ -131,13 +164,21 @@ export function NewOrderModal({ open, onClose, tableId, tables }: { open: boolea
                     <div className="flex items-center gap-1">
                       {q > 0 && (
                         <>
-                          <button onClick={() => set(d.id, q - 1)} className="grid size-7 place-items-center rounded-full bg-white/5 text-ink-200 hover:bg-white/10" aria-label="Менше">
+                          <button
+                            onClick={() => set(d.id, q - 1)}
+                            className="grid size-7 place-items-center rounded-full bg-white/5 text-ink-200 hover:bg-white/10"
+                            aria-label="Менше"
+                          >
                             <Minus className="size-3.5" />
                           </button>
                           <span className="w-5 text-center text-sm tabular-nums">{q}</span>
                         </>
                       )}
-                      <button onClick={() => set(d.id, q + 1)} className="gold-gradient grid size-7 place-items-center rounded-full text-ink-950" aria-label="Додати">
+                      <button
+                        onClick={() => set(d.id, q + 1)}
+                        className="gold-gradient grid size-7 place-items-center rounded-full text-ink-950"
+                        aria-label="Додати"
+                      >
                         <Plus className="size-3.5" />
                       </button>
                     </div>
@@ -180,7 +221,10 @@ export function WalkInModal({ open, onClose, table }: { open: boolean; onClose: 
               <Minus className="size-4" />
             </button>
             <span className="w-10 text-center font-display text-3xl">{guests}</span>
-            <button onClick={() => setGuests((g) => Math.min(table.seats, g + 1))} className="grid size-10 place-items-center rounded-xl bg-white/5">
+            <button
+              onClick={() => setGuests((g) => Math.min(table.seats, g + 1))}
+              className="grid size-10 place-items-center rounded-xl bg-white/5"
+            >
               <Plus className="size-4" />
             </button>
             <span className="text-xs text-ink-400">макс. {table.seats}</span>
@@ -189,7 +233,11 @@ export function WalkInModal({ open, onClose, table }: { open: boolean; onClose: 
         <Field label="Імʼя гостя (необовʼязково)">
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Гість без бронювання" />
         </Field>
-        {table.next && <div className="rounded-xl bg-sky-400/10 p-3 text-xs text-sky-100">Наступне бронювання на цьому столику о {table.next.time} — візит буде обмежено.</div>}
+        {table.next && (
+          <div className="rounded-xl bg-sky-400/10 p-3 text-xs text-sky-100">
+            Наступне бронювання на цьому столику о {table.next.time} — візит буде обмежено.
+          </div>
+        )}
         <Button variant="gold" className="w-full" loading={seat.isPending} onClick={() => seat.mutate()}>
           Посадити гостей
         </Button>
@@ -273,7 +321,13 @@ export function NewReservationModal({ open, onClose }: { open: boolean; onClose:
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Гостей">
-            <Input type="number" min={1} max={12} value={guests} onChange={(e) => setGuests(Math.max(1, Math.min(12, Number(e.target.value) || 1)))} />
+            <Input
+              type="number"
+              min={1}
+              max={12}
+              value={guests}
+              onChange={(e) => setGuests(Math.max(1, Math.min(12, Number(e.target.value) || 1)))}
+            />
           </Field>
           <Field label="Імʼя гостя" className="sm:col-span-2">
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Пан Петро" />
@@ -293,7 +347,14 @@ export function NewReservationModal({ open, onClose }: { open: boolean; onClose:
                 key={s.startAt}
                 disabled={!s.available}
                 onClick={() => setStartAt(s.startAt)}
-                className={cn('rounded-xl border py-2 text-sm tabular-nums transition', startAt === s.startAt ? 'gold-gradient border-transparent text-ink-950' : s.available ? 'border-white/10 hover:border-gold-300/50' : 'border-white/5 text-ink-600 line-through')}
+                className={cn(
+                  'rounded-xl border py-2 text-sm tabular-nums transition',
+                  startAt === s.startAt
+                    ? 'gold-gradient border-transparent text-ink-950'
+                    : s.available
+                      ? 'border-white/10 hover:border-gold-300/50'
+                      : 'border-white/5 text-ink-600 line-through',
+                )}
               >
                 {s.time}
               </button>
@@ -320,7 +381,21 @@ export function NewReservationModal({ open, onClose }: { open: boolean; onClose:
 }
 
 /** Запит причини (скасування / відхилення). */
-export function ReasonModal({ open, onClose, title, onSubmit, loading, presets }: { open: boolean; onClose: () => void; title: string; onSubmit: (reason: string) => void; loading?: boolean; presets: string[] }) {
+export function ReasonModal({
+  open,
+  onClose,
+  title,
+  onSubmit,
+  loading,
+  presets,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  onSubmit: (reason: string) => void;
+  loading?: boolean;
+  presets: string[];
+}) {
   const [reason, setReason] = useState('');
   useEffect(() => {
     if (open) setReason(presets[0] ?? '');

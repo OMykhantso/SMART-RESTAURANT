@@ -42,7 +42,10 @@ function EmptyScreen() {
 
 function Tabs() {
   return (
-    <Tab.Navigator tabBar={(props) => <TabBar {...props} />} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}>
+    <Tab.Navigator
+      tabBar={(props) => <TabBar {...props} />}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}
+    >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Menu" component={MenuScreen} />
       <Tab.Screen name="ScanTab" component={EmptyScreen} />
@@ -144,7 +147,11 @@ export function RootNavigator() {
         ) : user.role === 'STAFF' || user.role === 'ADMIN' ? (
           <>
             <Stack.Screen name="StaffTabs" component={StaffTabs} options={{ animation: 'fade' }} />
-            <Stack.Screen name="StaffScan" component={StaffScanScreen} options={{ animation: 'fade_from_bottom', presentation: 'fullScreenModal' }} />
+            <Stack.Screen
+              name="StaffScan"
+              component={StaffScanScreen}
+              options={{ animation: 'fade_from_bottom', presentation: 'fullScreenModal' }}
+            />
             <Stack.Screen name="StaffProfile" component={ProfileScreen} />
             <Stack.Screen name="KitchenView" component={KitchenView} />
             <Stack.Screen name="StopList" component={StopList} />

@@ -63,7 +63,12 @@ export function StaffLayout() {
   const work: NavItem[] = [
     { to: '/staff', label: 'Огляд', icon: <LayoutDashboard className="size-[18px]" />, end: true },
     { to: '/staff/floor', label: 'План залу', icon: <LayoutGrid className="size-[18px]" /> },
-    { to: '/staff/reservations', label: 'Бронювання', icon: <CalendarCheck2 className="size-[18px]" />, badge: today.data?.reservations.pending },
+    {
+      to: '/staff/reservations',
+      label: 'Бронювання',
+      icon: <CalendarCheck2 className="size-[18px]" />,
+      badge: today.data?.reservations.pending,
+    },
     { to: '/staff/orders', label: 'Замовлення', icon: <ClipboardList className="size-[18px]" />, badge: today.data?.orders.byStatus.NEW },
     { to: '/staff/scan', label: 'Сканер QR', icon: <ScanLine className="size-[18px]" /> },
     { to: '/kitchen', label: 'Kitchen display', icon: <ChefHat className="size-[18px]" /> },
@@ -111,12 +116,26 @@ export function StaffLayout() {
   return (
     <div className="min-h-dvh">
       <div className="app-backdrop" />
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-68 border-r border-white/5 bg-ink-925/80 backdrop-blur-xl lg:block">{sidebar}</aside>
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-68 border-r border-white/5 bg-ink-925/80 backdrop-blur-xl lg:block">
+        {sidebar}
+      </aside>
       <AnimatePresence>
         {open && (
           <div className="fixed inset-0 z-50 lg:hidden">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/70" onClick={() => setOpen(false)} />
-            <motion.aside initial={{ x: -300 }} animate={{ x: 0 }} exit={{ x: -300 }} transition={{ type: 'spring', stiffness: 400, damping: 40 }} className="absolute inset-y-0 left-0 w-72 border-r border-white/5 bg-ink-925">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/70"
+              onClick={() => setOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: -300 }}
+              animate={{ x: 0 }}
+              exit={{ x: -300 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+              className="absolute inset-y-0 left-0 w-72 border-r border-white/5 bg-ink-925"
+            >
               {sidebar}
             </motion.aside>
           </div>
@@ -126,7 +145,11 @@ export function StaffLayout() {
         <header className="sticky top-0 z-20 border-b border-white/5 bg-ink-950/70 backdrop-blur-xl">
           <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-8">
             <div className="flex items-center gap-3">
-              <button className="grid size-10 place-items-center rounded-xl text-ink-200 hover:bg-white/5 lg:hidden" onClick={() => setOpen(true)} aria-label="Меню">
+              <button
+                className="grid size-10 place-items-center rounded-xl text-ink-200 hover:bg-white/5 lg:hidden"
+                onClick={() => setOpen(true)}
+                aria-label="Меню"
+              >
                 {open ? <X className="size-5" /> : <MenuIcon className="size-5" />}
               </button>
               <div>
@@ -169,16 +192,24 @@ function NavGroup({ title, items }: { title: string; items: NavItem[] }) {
             className={({ isActive }) =>
               cn(
                 'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all',
-                isActive ? 'bg-gradient-to-r from-gold-400/15 to-transparent text-gold-100' : 'text-ink-300 hover:bg-white/[0.04] hover:text-cream',
+                isActive
+                  ? 'bg-gradient-to-r from-gold-400/15 to-transparent text-gold-100'
+                  : 'text-ink-300 hover:bg-white/[0.04] hover:text-cream',
               )
             }
           >
             {({ isActive }) => (
               <>
                 {isActive && <motion.span layoutId="staff-nav" className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-gold-300" />}
-                <span className={cn('transition-colors', isActive ? 'text-gold-300' : 'text-ink-400 group-hover:text-ink-200')}>{item.icon}</span>
+                <span className={cn('transition-colors', isActive ? 'text-gold-300' : 'text-ink-400 group-hover:text-ink-200')}>
+                  {item.icon}
+                </span>
                 <span className="flex-1">{item.label}</span>
-                {!!item.badge && <span className="gold-gradient min-w-5 rounded-full px-1.5 text-center text-[11px] font-bold leading-5 text-ink-950">{item.badge}</span>}
+                {!!item.badge && (
+                  <span className="gold-gradient min-w-5 rounded-full px-1.5 text-center text-[11px] font-bold leading-5 text-ink-950">
+                    {item.badge}
+                  </span>
+                )}
               </>
             )}
           </NavLink>

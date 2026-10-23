@@ -112,7 +112,11 @@ export function recommend(ctx: RecContext, limit = 8): Recommendation[] {
   // Байєсівський рейтинг: m — середній рейтинг по всіх, C — «вага довіри»
   const allRatings = [...ctx.ratings.values()];
   const globalAvg = allRatings.length
-    ? allRatings.reduce((s, r) => s + r.avg * r.count, 0) / Math.max(1, allRatings.reduce((s, r) => s + r.count, 0))
+    ? allRatings.reduce((s, r) => s + r.avg * r.count, 0) /
+      Math.max(
+        1,
+        allRatings.reduce((s, r) => s + r.count, 0),
+      )
     : 4;
   const C = 5;
 
@@ -136,7 +140,10 @@ export function recommend(ctx: RecContext, limit = 8): Recommendation[] {
     assoc = Math.min(1, assoc * 1.5);
     if (assoc > 0.15 && bestPartner != null) {
       const partnerName = ctx.names?.get(bestPartner);
-      reasons.push({ text: partnerName ? `Часто замовляють разом із «${partnerName}»` : 'Часто замовляють разом', weight: assoc * WEIGHTS.assoc });
+      reasons.push({
+        text: partnerName ? `Часто замовляють разом із «${partnerName}»` : 'Часто замовляють разом',
+        weight: assoc * WEIGHTS.assoc,
+      });
     }
 
     // P — персоналізація
@@ -176,7 +183,11 @@ export function recommend(ctx: RecContext, limit = 8): Recommendation[] {
     if (ctx.hour < 12 && d.categorySlug === 'breakfast') time = 1;
     else if (ctx.hour >= 17 && d.categorySlug === 'cocktails') time = 1;
     else if (ctx.hour >= 12 && ctx.hour < 17 && (d.categorySlug === 'soups' || d.tags.includes('lunch'))) time = 0.7;
-    if (time > 0) reasons.push({ text: ctx.hour < 12 ? 'Ідеально на сніданок' : ctx.hour >= 17 ? 'Для вечірнього настрою' : 'Чудовий вибір на обід', weight: time * WEIGHTS.time });
+    if (time > 0)
+      reasons.push({
+        text: ctx.hour < 12 ? 'Ідеально на сніданок' : ctx.hour >= 17 ? 'Для вечірнього настрою' : 'Чудовий вибір на обід',
+        weight: time * WEIGHTS.time,
+      });
 
     let score =
       WEIGHTS.assoc * assoc +
@@ -193,7 +204,10 @@ export function recommend(ctx: RecContext, limit = 8): Recommendation[] {
     results.push({
       dishId: d.id,
       score: Math.round(score * 1000) / 1000,
-      reasons: reasons.sort((a, b) => b.weight - a.weight).map((r) => r.text).slice(0, 2),
+      reasons: reasons
+        .sort((a, b) => b.weight - a.weight)
+        .map((r) => r.text)
+        .slice(0, 2),
       components: {
         assoc: round(assoc),
         personal: round(personal),

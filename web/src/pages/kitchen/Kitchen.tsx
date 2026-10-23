@@ -29,7 +29,8 @@ export default function Kitchen() {
 
   const invalidate = () => ['kitchen', 'orders', 'order', 'tables-live'].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
   const setStatus = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: 'PREPARING' | 'READY' | 'CANCELLED'; reason?: string }) => api.patch<Order>(`/orders/${id}/status`, { status, reason: status === 'CANCELLED' ? 'Страва закінчилась (кухня)' : undefined }),
+    mutationFn: ({ id, status }: { id: number; status: 'PREPARING' | 'READY' | 'CANCELLED'; reason?: string }) =>
+      api.patch<Order>(`/orders/${id}/status`, { status, reason: status === 'CANCELLED' ? 'Страва закінчилась (кухня)' : undefined }),
     onSuccess: (o) => {
       if (o.status === 'READY') chime('ready');
       invalidate();
@@ -37,7 +38,8 @@ export default function Kitchen() {
     onError: (e) => toast.error(errorMessage(e)),
   });
   const setItem = useMutation({
-    mutationFn: ({ orderId, itemId, status }: { orderId: number; itemId: number; status: OrderItemStatus }) => api.patch<Order>(`/kitchen/orders/${orderId}/items/${itemId}`, { status }),
+    mutationFn: ({ orderId, itemId, status }: { orderId: number; itemId: number; status: OrderItemStatus }) =>
+      api.patch<Order>(`/kitchen/orders/${orderId}/items/${itemId}`, { status }),
     onSuccess: (o) => {
       if (o.status === 'READY') {
         chime('ready');
@@ -52,7 +54,12 @@ export default function Kitchen() {
     () => [
       { key: 'CONFIRMED', title: 'Нові', accent: 'text-sky-300', list: (data ?? []).filter((o) => o.status === 'CONFIRMED') },
       { key: 'PREPARING', title: 'Готуються', accent: 'text-orange-300', list: (data ?? []).filter((o) => o.status === 'PREPARING') },
-      { key: 'READY', title: 'Готові до видачі', accent: 'text-emerald-300', list: (data ?? []).filter((o) => o.status === 'READY').reverse() },
+      {
+        key: 'READY',
+        title: 'Готові до видачі',
+        accent: 'text-emerald-300',
+        list: (data ?? []).filter((o) => o.status === 'READY').reverse(),
+      },
     ],
     [data],
   );
@@ -133,18 +140,43 @@ export default function Kitchen() {
   );
 }
 
-function Ticket({ o, now, canCook, onStart, onReady, onToggle }: { o: Order; now: number; canCook: boolean; onStart: () => void; onReady: () => void; onToggle: (itemId: number, status: OrderItemStatus) => void }) {
+function Ticket({
+  o,
+  now,
+  canCook,
+  onStart,
+  onReady,
+  onToggle,
+}: {
+  o: Order;
+  now: number;
+  canCook: boolean;
+  onStart: () => void;
+  onReady: () => void;
+  onToggle: (itemId: number, status: OrderItemStatus) => void;
+}) {
   const maxPrep = Math.max(...o.items.map((i) => i.prepTimeMin), 1);
   const since = o.status === 'READY' ? o.readyAt : o.status === 'PREPARING' ? o.preparingAt : o.confirmedAt;
   const elapsed = minutesSince(since, now);
   const total = minutesSince(o.confirmedAt, now);
   const ratio = o.status === 'PREPARING' ? elapsed / maxPrep : o.status === 'CONFIRMED' ? elapsed / 5 : 0;
   const urgency = o.status === 'READY' ? 'ready' : ratio >= 1 ? 'late' : ratio >= 0.7 ? 'warn' : 'ok';
-  const ring = { ok: 'border-white/8', warn: 'border-amber-400/50', late: 'border-rose-400/70 shadow-[0_0_30px_-8px_rgb(251_113_133/0.7)]', ready: 'border-emerald-400/50' }[urgency];
+  const ring = {
+    ok: 'border-white/8',
+    warn: 'border-amber-400/50',
+    late: 'border-rose-400/70 shadow-[0_0_30px_-8px_rgb(251_113_133/0.7)]',
+    ready: 'border-emerald-400/50',
+  }[urgency];
   const readyCount = o.items.filter((i) => i.status === 'READY').length;
 
   return (
-    <motion.article layout initial={{ opacity: 0, y: -12, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className={cn('overflow-hidden rounded-2xl border bg-ink-850', ring)}>
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: -12, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className={cn('overflow-hidden rounded-2xl border bg-ink-850', ring)}
+    >
       <div className="flex items-start justify-between gap-3 p-4 pb-3">
         <div>
           <div className="flex items-baseline gap-2">
@@ -164,13 +196,34 @@ function Ticket({ o, now, canCook, onStart, onReady, onToggle }: { o: Order; now
           </div>
         </div>
         <div className="text-right">
-          <div className={cn('font-display text-3xl tabular-nums leading-none', urgency === 'late' ? 'text-rose-300' : urgency === 'warn' ? 'text-amber-300' : urgency === 'ready' ? 'text-emerald-300' : 'text-cream')}>{o.status === 'READY' ? `${elapsed}′` : `${total}′`}</div>
-          <div className="mt-1 text-[10px] uppercase tracking-wider text-ink-500">{o.status === 'READY' ? 'чекає видачі' : o.status === 'CONFIRMED' ? 'не розпочато' : `норма ${maxPrep}′`}</div>
+          <div
+            className={cn(
+              'font-display text-3xl tabular-nums leading-none',
+              urgency === 'late'
+                ? 'text-rose-300'
+                : urgency === 'warn'
+                  ? 'text-amber-300'
+                  : urgency === 'ready'
+                    ? 'text-emerald-300'
+                    : 'text-cream',
+            )}
+          >
+            {o.status === 'READY' ? `${elapsed}′` : `${total}′`}
+          </div>
+          <div className="mt-1 text-[10px] uppercase tracking-wider text-ink-500">
+            {o.status === 'READY' ? 'чекає видачі' : o.status === 'CONFIRMED' ? 'не розпочато' : `норма ${maxPrep}′`}
+          </div>
         </div>
       </div>
       {o.status === 'PREPARING' && (
         <div className="mx-4 h-1 overflow-hidden rounded-full bg-white/5">
-          <div className={cn('h-full rounded-full transition-all', urgency === 'late' ? 'bg-rose-400' : urgency === 'warn' ? 'bg-amber-400' : 'bg-emerald-400')} style={{ width: `${Math.min(100, ratio * 100)}%` }} />
+          <div
+            className={cn(
+              'h-full rounded-full transition-all',
+              urgency === 'late' ? 'bg-rose-400' : urgency === 'warn' ? 'bg-amber-400' : 'bg-emerald-400',
+            )}
+            style={{ width: `${Math.min(100, ratio * 100)}%` }}
+          />
         </div>
       )}
       <ul className="space-y-1 p-3">
@@ -181,9 +234,20 @@ function Ticket({ o, now, canCook, onStart, onReady, onToggle }: { o: Order; now
               <button
                 disabled={!canCook || o.status === 'READY'}
                 onClick={() => onToggle(i.id, ready ? 'COOKING' : 'READY')}
-                className={cn('flex w-full items-start gap-3 rounded-xl px-2.5 py-2 text-left transition', ready ? 'bg-emerald-400/10' : 'hover:bg-white/[0.04]', 'disabled:cursor-default')}
+                className={cn(
+                  'flex w-full items-start gap-3 rounded-xl px-2.5 py-2 text-left transition',
+                  ready ? 'bg-emerald-400/10' : 'hover:bg-white/[0.04]',
+                  'disabled:cursor-default',
+                )}
               >
-                <span className={cn('mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg border', ready ? 'border-emerald-400 bg-emerald-400 text-ink-950' : 'border-white/20')}>{ready && <Check className="size-4" strokeWidth={3} />}</span>
+                <span
+                  className={cn(
+                    'mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg border',
+                    ready ? 'border-emerald-400 bg-emerald-400 text-ink-950' : 'border-white/20',
+                  )}
+                >
+                  {ready && <Check className="size-4" strokeWidth={3} />}
+                </span>
                 <span className="min-w-0 flex-1">
                   <span className={cn('block text-lg leading-tight', ready ? 'text-ink-400 line-through' : 'text-cream')}>
                     <span className="font-semibold text-gold-200">{i.quantity}×</span> {i.name}
@@ -228,10 +292,22 @@ function StopListModal({ open, onClose }: { open: boolean; onClose: () => void }
   });
   const off = (dishes.data ?? []).filter((d) => !d.isAvailable).length;
   return (
-    <Modal open={open} onClose={onClose} size="lg" title="Стоп-лист" subtitle={`Вимкнені страви зникають із замовлення в застосунку миттєво · зараз у стоп-листі: ${off}`}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="lg"
+      title="Стоп-лист"
+      subtitle={`Вимкнені страви зникають із замовлення в застосунку миттєво · зараз у стоп-листі: ${off}`}
+    >
       <div className="grid gap-2 sm:grid-cols-2">
         {dishes.data?.map((d) => (
-          <div key={d.id} className={cn('flex items-center justify-between gap-3 rounded-2xl border px-3 py-2.5', d.isAvailable ? 'border-white/6' : 'border-rose-400/30 bg-rose-500/[0.06]')}>
+          <div
+            key={d.id}
+            className={cn(
+              'flex items-center justify-between gap-3 rounded-2xl border px-3 py-2.5',
+              d.isAvailable ? 'border-white/6' : 'border-rose-400/30 bg-rose-500/[0.06]',
+            )}
+          >
             <div className="min-w-0">
               <div className="truncate text-sm text-cream">{d.name}</div>
               <div className="text-[11px] text-ink-400">{d.category?.name}</div>

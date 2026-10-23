@@ -18,7 +18,13 @@ function Stars({ value, onChange, size = 'lg' }: { value: number; onChange: (v: 
     <div className="flex gap-1" onMouseLeave={() => setHover(0)}>
       {[1, 2, 3, 4, 5].map((i) => (
         <button key={i} type="button" onMouseEnter={() => setHover(i)} onClick={() => onChange(i)} aria-label={`${i} зірок`}>
-          <Star className={cn('transition-all', size === 'lg' ? 'size-9' : 'size-5', i <= (hover || value) ? 'scale-110 fill-gold-300 text-gold-300' : 'text-ink-600')} />
+          <Star
+            className={cn(
+              'transition-all',
+              size === 'lg' ? 'size-9' : 'size-5',
+              i <= (hover || value) ? 'scale-110 fill-gold-300 text-gold-300' : 'text-ink-600',
+            )}
+          />
         </button>
       ))}
     </div>
@@ -54,7 +60,13 @@ export function ReviewModal({ order, open, onClose }: { order: Order; open: bool
         <Stars value={rating} onChange={setRating} />
         <div className="mt-2 font-display text-lg text-gold-200">{LABELS[rating]}</div>
       </div>
-      <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Що сподобалось найбільше?" className="mt-4" maxLength={1000} />
+      <Textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Що сподобалось найбільше?"
+        className="mt-4"
+        maxLength={1000}
+      />
       <div className="mt-6 text-xs font-medium uppercase tracking-wider text-ink-300">Оцініть страви</div>
       <ul className="mt-3 space-y-2">
         {uniqueDishes.map((i) => (

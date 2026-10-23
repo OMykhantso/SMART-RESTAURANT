@@ -36,7 +36,10 @@ describe('Booking engine через API', () => {
   });
 
   it('створює бронювання зі статусом PENDING та автоматично підбирає столик (TC-11)', async () => {
-    const res = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(19, 0, 1), guests: 4 });
+    const res = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(19, 0, 1), guests: 4 });
     expect(res.status).toBe(201);
     expect(res.body.status).toBe('PENDING');
     expect(res.body.table.seats).toBe(4);
@@ -46,9 +49,15 @@ describe('Booking engine через API', () => {
 
   it('не дозволяє забронювати зайнятий столик — 409 з альтернативами (TC-12)', async () => {
     const t = fx.tables[0];
-    const first = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(19, 0, 1), guests: 2, tableId: t.id });
+    const first = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(19, 0, 1), guests: 2, tableId: t.id });
     expect(first.status).toBe(201);
-    const clash = await api().post('/api/reservations').set(bearer(client2)).send({ startAt: at(19, 30, 1), guests: 2, tableId: t.id });
+    const clash = await api()
+      .post('/api/reservations')
+      .set(bearer(client2))
+      .send({ startAt: at(19, 30, 1), guests: 2, tableId: t.id });
     expect(clash.status).toBe(409);
     expect(clash.body.error.code).toBe('TABLE_ALREADY_BOOKED');
     expect(clash.body.error.details.alternatives.length).toBeGreaterThan(0);
@@ -56,9 +65,15 @@ describe('Booking engine через API', () => {
 
   it('коли всі столики зайняті — NO_TABLES_AVAILABLE', async () => {
     for (const t of fx.tables) {
-      await api().post('/api/reservations').set(bearer(staff)).send({ startAt: at(19, 0, 1), guests: 2, tableId: t.id, guestName: `Гість ${t.number}` });
+      await api()
+        .post('/api/reservations')
+        .set(bearer(staff))
+        .send({ startAt: at(19, 0, 1), guests: 2, tableId: t.id, guestName: `Гість ${t.number}` });
     }
-    const res = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(19, 0, 1), guests: 2 });
+    const res = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(19, 0, 1), guests: 2 });
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('NO_TABLES_AVAILABLE');
   });
@@ -66,7 +81,9 @@ describe('Booking engine через API', () => {
   it('БД-рівень: EXCLUDE-обмеження не дає вставити перетин навіть в обхід API', async () => {
     const t = fx.tables[1];
     const base = { tableId: t.id, guests: 2, status: 'CONFIRMED' as const, guestName: 'X', checkinToken: 'x' };
-    await prisma.reservation.create({ data: { ...base, code: 'R-DB0001', startAt: new Date(at(18, 0, 2)), endAt: new Date(at(20, 0, 2)) } });
+    await prisma.reservation.create({
+      data: { ...base, code: 'R-DB0001', startAt: new Date(at(18, 0, 2)), endAt: new Date(at(20, 0, 2)) },
+    });
     await expect(
       prisma.reservation.create({ data: { ...base, code: 'R-DB0002', startAt: new Date(at(19, 0, 2)), endAt: new Date(at(21, 0, 2)) } }),
     ).rejects.toThrow(/reservations_no_overlap|23P01|exclusion/i);
@@ -74,27 +91,57 @@ describe('Booking engine через API', () => {
 
   it('перевіряє бізнес-правила часу: години роботи, сітка, минуле, мінімальний lead time (TC-13)', async () => {
     // 08:00 — до відкриття в будь-який день тижня (графік роботи різний для буднів і вихідних)
-    const outside = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(8, 0, 1), guests: 2 });
+    const outside = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(8, 0, 1), guests: 2 });
     expect(outside.status).toBe(422);
     expect(outside.body.error.code).toBe('OUTSIDE_OPENING_HOURS');
-    const misaligned = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(19, 10, 1), guests: 2 });
+    const misaligned = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(19, 10, 1), guests: 2 });
     expect(misaligned.body.error.code).toBe('INVALID_SLOT');
-    const past = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(11, 0), guests: 2 });
+    const past = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(11, 0), guests: 2 });
     expect(past.body.error.code).toBe('TOO_LATE_TO_BOOK');
-    const tooSoon = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(12, 0), guests: 2 });
+    const tooSoon = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(12, 0), guests: 2 });
     expect(tooSoon.body.error.code).toBe('TOO_LATE_TO_BOOK');
-    const tooMany = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(19, 0, 1), guests: 15 });
+    const tooMany = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(19, 0, 1), guests: 15 });
     expect(tooMany.status).toBe(400);
   });
 
   it('обмежує кількість активних бронювань і не дає клієнту подвійне бронювання на той самий час', async () => {
-    const r1 = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(13, 0, 1), guests: 2 });
+    const r1 = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(13, 0, 1), guests: 2 });
     expect(r1.status).toBe(201);
-    const overlap = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(13, 30, 1), guests: 2 });
+    const overlap = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(13, 30, 1), guests: 2 });
     expect(overlap.body.error.code).toBe('OVERLAPPING_OWN_RESERVATION');
-    await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(13, 0, 2), guests: 2 });
-    await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(13, 0, 3), guests: 2 });
-    const fourth = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(13, 0, 4), guests: 2 });
+    await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(13, 0, 2), guests: 2 });
+    await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(13, 0, 3), guests: 2 });
+    const fourth = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(13, 0, 4), guests: 2 });
     expect(fourth.status).toBe(409);
     expect(fourth.body.error.code).toBe('TOO_MANY_RESERVATIONS');
   });
@@ -102,7 +149,10 @@ describe('Booking engine через API', () => {
 
 describe('Життєвий цикл бронювання', () => {
   it('клієнт не може підтвердити власне бронювання; працівник — може (TC-14)', async () => {
-    const r = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(19, 0, 1), guests: 2 });
+    const r = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(19, 0, 1), guests: 2 });
     const self = await api().patch(`/api/reservations/${r.body.id}/status`).set(bearer(client)).send({ status: 'CONFIRMED' });
     expect(self.status).toBe(403);
     expect(self.body.error.code).toBe('TRANSITION_FORBIDDEN');
@@ -112,20 +162,29 @@ describe('Життєвий цикл бронювання', () => {
   });
 
   it('інший клієнт не бачить чуже бронювання', async () => {
-    const r = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(19, 0, 1), guests: 2 });
+    const r = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(19, 0, 1), guests: 2 });
     const res = await api().get(`/api/reservations/${r.body.id}`).set(bearer(client2));
     expect(res.status).toBe(403);
   });
 
   it('недопустимий перехід PENDING → COMPLETED відхиляється (TC-15)', async () => {
-    const r = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(19, 0, 1), guests: 2 });
+    const r = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(19, 0, 1), guests: 2 });
     const res = await api().patch(`/api/reservations/${r.body.id}/status`).set(bearer(staff)).send({ status: 'COMPLETED' });
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('INVALID_TRANSITION');
   });
 
   it('дедлайн онлайн-скасування: пізніше ніж за 60 хв — лише через ресторан', async () => {
-    const r = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(13, 0), guests: 2 });
+    const r = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(13, 0), guests: 2 });
     expect(r.status).toBe(201);
     setNow(12, 30);
     const late = await api().patch(`/api/reservations/${r.body.id}/status`).set(bearer(client)).send({ status: 'CANCELLED' });
@@ -137,14 +196,23 @@ describe('Життєвий цикл бронювання', () => {
       .send({ status: 'CANCELLED', reason: 'Гість зателефонував' });
     expect(byStaff.body.status).toBe('CANCELLED');
     // скасоване бронювання звільняє столик
-    const again = await api().post('/api/reservations').set(bearer(client2)).send({ startAt: at(13, 30), guests: 2, tableId: r.body.table.id });
+    const again = await api()
+      .post('/api/reservations')
+      .set(bearer(client2))
+      .send({ startAt: at(13, 30), guests: 2, tableId: r.body.table.id });
     expect(again.status).toBe(201);
   });
 
   it('check-in працівником за QR бронювання; підроблений токен відхиляється (TC-16)', async () => {
-    const r = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(13, 0), guests: 2 });
+    const r = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(13, 0), guests: 2 });
     await api().patch(`/api/reservations/${r.body.id}/status`).set(bearer(staff)).send({ status: 'CONFIRMED' });
-    const fake = await api().post('/api/reservations/check-in').set(bearer(staff)).send({ qr: `smartrest://reservation/${r.body.code}?t=forged` });
+    const fake = await api()
+      .post('/api/reservations/check-in')
+      .set(bearer(staff))
+      .send({ qr: `smartrest://reservation/${r.body.code}?t=forged` });
     expect(fake.status).toBe(400);
     expect(fake.body.error.code).toBe('INVALID_QR');
     const ok = await api().post('/api/reservations/check-in').set(bearer(staff)).send({ qr: r.body.qrPayload });
@@ -153,14 +221,20 @@ describe('Життєвий цикл бронювання', () => {
   });
 
   it('клієнт не може зробити check-in без сканування QR столика', async () => {
-    const r = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(13, 0), guests: 2 });
+    const r = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(13, 0), guests: 2 });
     await api().patch(`/api/reservations/${r.body.id}/status`).set(bearer(staff)).send({ status: 'CONFIRMED' });
     const res = await api().patch(`/api/reservations/${r.body.id}/status`).set(bearer(client)).send({ status: 'CHECKED_IN' });
     expect(res.status).toBe(403);
   });
 
   it('check-in занадто рано відхиляється', async () => {
-    const r = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(19, 0), guests: 2 });
+    const r = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(19, 0), guests: 2 });
     await api().patch(`/api/reservations/${r.body.id}/status`).set(bearer(staff)).send({ status: 'CONFIRMED' });
     const res = await api().post('/api/reservations/check-in').set(bearer(staff)).send({ code: r.body.code });
     expect(res.status).toBe(409);
@@ -168,8 +242,14 @@ describe('Життєвий цикл бронювання', () => {
   });
 
   it('фонова задача: непідтверджені → CANCELLED, неприбулі → NO_SHOW (TC-17)', async () => {
-    const pending = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(13, 0), guests: 2 });
-    const confirmed = await api().post('/api/reservations').set(bearer(staff)).send({ startAt: at(13, 0), guests: 4, guestName: 'Гість' });
+    const pending = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(13, 0), guests: 2 });
+    const confirmed = await api()
+      .post('/api/reservations')
+      .set(bearer(staff))
+      .send({ startAt: at(13, 0), guests: 4, guestName: 'Гість' });
     setNow(13, 25);
     const result = await runMaintenance();
     expect(result).toMatchObject({ cancelled: 1, noShow: 1 });
@@ -182,10 +262,16 @@ describe('Життєвий цикл бронювання', () => {
   });
 
   it('walk-in через QR столика: вільний столик → гість сідає одразу (TC-18)', async () => {
-    const scan = await api().post('/api/reservations/scan-table').set(bearer(client)).send({ qr: `smartrest://table/${fx.tables[1].qrToken}` });
+    const scan = await api()
+      .post('/api/reservations/scan-table')
+      .set(bearer(client))
+      .send({ qr: `smartrest://table/${fx.tables[1].qrToken}` });
     expect(scan.status).toBe(200);
     expect(scan.body.action).toBe('WALK_IN_AVAILABLE');
-    const walk = await api().post('/api/reservations/walk-in').set(bearer(client)).send({ qr: `smartrest://table/${fx.tables[1].qrToken}`, guests: 3 });
+    const walk = await api()
+      .post('/api/reservations/walk-in')
+      .set(bearer(client))
+      .send({ qr: `smartrest://table/${fx.tables[1].qrToken}`, guests: 3 });
     expect(walk.status).toBe(201);
     expect(walk.body).toMatchObject({ status: 'CHECKED_IN', source: 'WALK_IN' });
     // той самий столик для іншого гостя вже недоступний
@@ -194,7 +280,10 @@ describe('Життєвий цикл бронювання', () => {
   });
 
   it('walk-in скорочується, якщо далі на столику бронювання', async () => {
-    await api().post('/api/reservations').set(bearer(staff)).send({ startAt: at(13, 30), guests: 2, tableId: fx.tables[0].id, guestName: 'Наступний гість' });
+    await api()
+      .post('/api/reservations')
+      .set(bearer(staff))
+      .send({ startAt: at(13, 30), guests: 2, tableId: fx.tables[0].id, guestName: 'Наступний гість' });
     const scan = await api().post('/api/reservations/scan-table').set(bearer(client)).send({ qr: fx.tables[0].qrToken });
     expect(scan.body.action).toBe('WALK_IN_AVAILABLE');
     expect(scan.body.walkIn.maxDurationMin).toBe(75); // до 13:15 (13:30 − 15 хв буфера)

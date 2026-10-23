@@ -117,8 +117,15 @@ export function FloorPlan<T extends Table>({ tables, visual, onSelect, editable,
         onPointerLeave={() => setDrag(null)}
       >
         {Object.entries(ZONE_AREAS).map(([zone, a]) => (
-          <div key={zone} className="absolute rounded-2xl border border-dashed border-white/[0.07] bg-white/[0.015]" style={{ left: `${a.x}%`, top: `${a.y}%`, width: `${a.w}%`, height: `${a.h}%` }}>
-            <span className="absolute left-3 top-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-ink-500" style={{ fontSize: Math.max(8, 10 * scale) }}>
+          <div
+            key={zone}
+            className="absolute rounded-2xl border border-dashed border-white/[0.07] bg-white/[0.015]"
+            style={{ left: `${a.x}%`, top: `${a.y}%`, width: `${a.w}%`, height: `${a.h}%` }}
+          >
+            <span
+              className="absolute left-3 top-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-ink-500"
+              style={{ fontSize: Math.max(8, 10 * scale) }}
+            >
               {a.label}
             </span>
           </div>
@@ -141,13 +148,34 @@ export function FloorPlan<T extends Table>({ tables, visual, onSelect, editable,
               key={t.id}
               layout={!isDragging}
               className="absolute"
-              style={{ left: `${x}%`, top: `${y}%`, width: w, height: h, marginLeft: -w / 2, marginTop: -h / 2, zIndex: isDragging ? 20 : 1 }}
+              style={{
+                left: `${x}%`,
+                top: `${y}%`,
+                width: w,
+                height: h,
+                marginLeft: -w / 2,
+                marginTop: -h / 2,
+                zIndex: isDragging ? 20 : 1,
+              }}
             >
               {chairs(t, w, h).map((c, i) => (
                 <span
                   key={i}
-                  className={cn('absolute rounded-full transition-colors', v.tone === 'selected' || v.tone === 'occupied' ? 'bg-gold-300/70' : v.tone === 'busy' || v.tone === 'disabled' ? 'bg-white/8' : 'bg-white/20')}
-                  style={{ left: c.x - 7 * scale, top: c.y - 3.5 * scale, width: 14 * scale, height: 7 * scale, transform: `rotate(${c.r}deg)` }}
+                  className={cn(
+                    'absolute rounded-full transition-colors',
+                    v.tone === 'selected' || v.tone === 'occupied'
+                      ? 'bg-gold-300/70'
+                      : v.tone === 'busy' || v.tone === 'disabled'
+                        ? 'bg-white/8'
+                        : 'bg-white/20',
+                  )}
+                  style={{
+                    left: c.x - 7 * scale,
+                    top: c.y - 3.5 * scale,
+                    width: 14 * scale,
+                    height: 7 * scale,
+                    transform: `rotate(${c.r}deg)`,
+                  }}
                 />
               ))}
               <button

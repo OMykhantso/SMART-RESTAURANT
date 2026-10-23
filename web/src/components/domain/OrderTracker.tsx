@@ -18,7 +18,11 @@ const ICONS = {
 /** Візуальний трекер статусу замовлення (горизонтальний на desktop, вертикальний на mobile). */
 export function OrderTracker({ order }: { order: Order }) {
   if (order.status === 'CANCELLED') {
-    return <div className="rounded-2xl bg-rose-500/10 p-4 text-sm text-rose-200 ring-1 ring-rose-400/20">Замовлення скасовано{order.cancelReason ? `: ${order.cancelReason}` : ''}</div>;
+    return (
+      <div className="rounded-2xl bg-rose-500/10 p-4 text-sm text-rose-200 ring-1 ring-rose-400/20">
+        Замовлення скасовано{order.cancelReason ? `: ${order.cancelReason}` : ''}
+      </div>
+    );
   }
   const flow = order.type === 'DELIVERY' ? DELIVERY_FLOW : ORDER_FLOW;
   const current = flow.indexOf(order.status);
@@ -35,7 +39,12 @@ export function OrderTracker({ order }: { order: Order }) {
   return (
     <div className="relative">
       <div className="absolute left-5 right-5 top-5 hidden h-0.5 rounded-full bg-white/8 sm:block">
-        <motion.div className="gold-gradient h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${(Math.max(0, current) / (flow.length - 1)) * 100}%` }} transition={{ type: 'spring', stiffness: 80, damping: 20 }} />
+        <motion.div
+          className="gold-gradient h-full rounded-full"
+          initial={{ width: 0 }}
+          animate={{ width: `${(Math.max(0, current) / (flow.length - 1)) * 100}%` }}
+          transition={{ type: 'spring', stiffness: 80, damping: 20 }}
+        />
       </div>
       <ol className="relative grid gap-4 sm:grid-cols-6 sm:gap-2">
         {flow.map((s, i) => {
@@ -55,7 +64,9 @@ export function OrderTracker({ order }: { order: Order }) {
                 {done ? <Check className="size-4" /> : ICONS[s as keyof typeof ICONS]}
               </span>
               <span>
-                <span className={cn('block text-sm', active ? 'font-semibold text-gold-100' : done ? 'text-cream' : 'text-ink-500')}>{ORDER_STATUS[s].label}</span>
+                <span className={cn('block text-sm', active ? 'font-semibold text-gold-100' : done ? 'text-cream' : 'text-ink-500')}>
+                  {ORDER_STATUS[s].label}
+                </span>
                 <span className="block text-[11px] tabular-nums text-ink-400">{times[s] ? fmtTime(times[s]!) : '—'}</span>
               </span>
             </li>

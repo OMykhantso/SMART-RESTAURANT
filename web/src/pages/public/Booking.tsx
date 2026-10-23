@@ -116,7 +116,14 @@ export default function Booking() {
 
   const visual = (t: TablesAvailability['tables'][number]): TableVisual => {
     if (t.id === tableId) return { tone: 'selected', sublabel: `${t.seats} місць` };
-    if (t.state === 'FREE') return { tone: t.recommended ? 'recommended' : 'free', sublabel: `${t.seats} місць`, badge: t.recommended ? <span className="gold-gradient grid size-5 place-items-center rounded-full text-[10px] text-ink-950">✦</span> : undefined };
+    if (t.state === 'FREE')
+      return {
+        tone: t.recommended ? 'recommended' : 'free',
+        sublabel: `${t.seats} місць`,
+        badge: t.recommended ? (
+          <span className="gold-gradient grid size-5 place-items-center rounded-full text-[10px] text-ink-950">✦</span>
+        ) : undefined,
+      };
     if (t.state === 'TOO_SMALL') return { tone: 'disabled', sublabel: `${t.seats} місць`, disabled: true };
     return { tone: 'busy', sublabel: 'зайнято', disabled: true };
   };
@@ -126,7 +133,9 @@ export default function Booking() {
       <div className="max-w-3xl">
         <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gold-300">Booking engine</div>
         <h1 className="mt-3 font-display text-5xl tracking-tight text-cream md:text-6xl">Забронювати столик</h1>
-        <p className="mt-3 text-ink-300">Оберіть дату, кількість гостей і час — алгоритм підбере найкращий столик. За бажанням оберіть інший прямо на плані залу.</p>
+        <p className="mt-3 text-ink-300">
+          Оберіть дату, кількість гостей і час — алгоритм підбере найкращий столик. За бажанням оберіть інший прямо на плані залу.
+        </p>
       </div>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_380px]">
@@ -135,7 +144,12 @@ export default function Booking() {
           <Card className="p-5 sm:p-6">
             <StepTitle n={1} icon={<CalendarDays className="size-4" />} title="Дата" />
             <div className="mt-4 flex items-center gap-2">
-              <button disabled={dayOffset === 0} onClick={() => setDayOffset((o) => Math.max(0, o - 5))} className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/5 text-ink-200 disabled:opacity-30" aria-label="Раніше">
+              <button
+                disabled={dayOffset === 0}
+                onClick={() => setDayOffset((o) => Math.max(0, o - 5))}
+                className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/5 text-ink-200 disabled:opacity-30"
+                aria-label="Раніше"
+              >
                 <ChevronLeft className="size-4" />
               </button>
               <div className="grid flex-1 grid-cols-5 gap-2 sm:grid-cols-10">
@@ -152,17 +166,30 @@ export default function Booking() {
                         active ? 'border-transparent text-ink-950' : 'border-white/8 bg-white/[0.02] text-ink-200 hover:border-white/20',
                       )}
                     >
-                      {active && <motion.span layoutId="day-pill" className="gold-gradient absolute inset-0 rounded-2xl" transition={{ type: 'spring', stiffness: 500, damping: 40 }} />}
+                      {active && (
+                        <motion.span
+                          layoutId="day-pill"
+                          className="gold-gradient absolute inset-0 rounded-2xl"
+                          transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                        />
+                      )}
                       <span className="relative block text-[10px] uppercase tracking-wider opacity-70">
                         {d === isoDay() ? 'Сьог.' : new Intl.DateTimeFormat('uk-UA', { weekday: 'short', timeZone: 'UTC' }).format(dt)}
                       </span>
                       <span className="relative block font-display text-xl">{dt.getUTCDate()}</span>
-                      <span className="relative block text-[10px] opacity-70">{new Intl.DateTimeFormat('uk-UA', { month: 'short', timeZone: 'UTC' }).format(dt)}</span>
+                      <span className="relative block text-[10px] opacity-70">
+                        {new Intl.DateTimeFormat('uk-UA', { month: 'short', timeZone: 'UTC' }).format(dt)}
+                      </span>
                     </button>
                   );
                 })}
               </div>
-              <button disabled={dayOffset >= days.length - 10} onClick={() => setDayOffset((o) => o + 5)} className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/5 text-ink-200 disabled:opacity-30" aria-label="Пізніше">
+              <button
+                disabled={dayOffset >= days.length - 10}
+                onClick={() => setDayOffset((o) => o + 5)}
+                className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/5 text-ink-200 disabled:opacity-30"
+                aria-label="Пізніше"
+              >
                 <ChevronRight className="size-4" />
               </button>
             </div>
@@ -173,15 +200,30 @@ export default function Booking() {
             <div>
               <StepTitle n={2} icon={<Users className="size-4" />} title="Гості" />
               <div className="mt-4 flex items-center gap-3">
-                <button onClick={() => setGuests((g) => Math.max(1, g - 1))} disabled={guests <= 1} className="grid size-11 place-items-center rounded-2xl bg-white/5 text-cream transition hover:bg-white/10 disabled:opacity-30" aria-label="Менше гостей">
+                <button
+                  onClick={() => setGuests((g) => Math.max(1, g - 1))}
+                  disabled={guests <= 1}
+                  className="grid size-11 place-items-center rounded-2xl bg-white/5 text-cream transition hover:bg-white/10 disabled:opacity-30"
+                  aria-label="Менше гостей"
+                >
                   <Minus className="size-4" />
                 </button>
                 <div className="w-16 text-center">
-                  <motion.div key={guests} initial={{ y: -8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="font-display text-4xl text-cream">
+                  <motion.div
+                    key={guests}
+                    initial={{ y: -8, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="font-display text-4xl text-cream"
+                  >
                     {guests}
                   </motion.div>
                 </div>
-                <button onClick={() => setGuests((g) => Math.min(maxParty, g + 1))} disabled={guests >= maxParty} className="grid size-11 place-items-center rounded-2xl bg-white/5 text-cream transition hover:bg-white/10 disabled:opacity-30" aria-label="Більше гостей">
+                <button
+                  onClick={() => setGuests((g) => Math.min(maxParty, g + 1))}
+                  disabled={guests >= maxParty}
+                  className="grid size-11 place-items-center rounded-2xl bg-white/5 text-cream transition hover:bg-white/10 disabled:opacity-30"
+                  aria-label="Більше гостей"
+                >
                   <Plus className="size-4" />
                 </button>
               </div>
@@ -221,7 +263,9 @@ export default function Booking() {
             ) : availability.error ? (
               <div className="mt-5 rounded-2xl bg-rose-500/10 p-4 text-sm text-rose-200">{toApiError(availability.error).message}</div>
             ) : groups.length === 0 ? (
-              <div className="mt-5 rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-ink-300">На цю дату вільних слотів не залишилось — спробуйте інший день.</div>
+              <div className="mt-5 rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-ink-300">
+                На цю дату вільних слотів не залишилось — спробуйте інший день.
+              </div>
             ) : (
               <div className="mt-5 space-y-6">
                 {groups.map((g) => (
@@ -245,14 +289,30 @@ export default function Booking() {
                                   : 'cursor-not-allowed border-white/5 text-ink-600',
                             )}
                           >
-                            {active && <motion.span layoutId="slot-pill" className="gold-gradient absolute inset-0" transition={{ type: 'spring', stiffness: 500, damping: 40 }} />}
-                            <span className={cn('relative block font-display text-lg tabular-nums', !s.available && 'line-through')}>{s.time}</span>
-                            <span className={cn('relative mt-0.5 block text-[10px]', active ? 'text-ink-900/70' : hot ? 'text-amber-300' : 'text-ink-400')}>
+                            {active && (
+                              <motion.span
+                                layoutId="slot-pill"
+                                className="gold-gradient absolute inset-0"
+                                transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+                              />
+                            )}
+                            <span className={cn('relative block font-display text-lg tabular-nums', !s.available && 'line-through')}>
+                              {s.time}
+                            </span>
+                            <span
+                              className={cn(
+                                'relative mt-0.5 block text-[10px]',
+                                active ? 'text-ink-900/70' : hot ? 'text-amber-300' : 'text-ink-400',
+                              )}
+                            >
                               {!s.available ? 'зайнято' : hot ? `останні ${s.tablesLeft}` : `${s.tablesLeft} столиків`}
                             </span>
                             {s.available && !active && (
                               <span className="absolute inset-x-3 bottom-1 h-0.5 overflow-hidden rounded-full bg-white/5">
-                                <span className={cn('block h-full rounded-full', s.load > 0.7 ? 'bg-amber-400/70' : 'bg-gold-400/50')} style={{ width: `${Math.max(8, s.load * 100)}%` }} />
+                                <span
+                                  className={cn('block h-full rounded-full', s.load > 0.7 ? 'bg-amber-400/70' : 'bg-gold-400/50')}
+                                  style={{ width: `${Math.max(8, s.load * 100)}%` }}
+                                />
                               </span>
                             )}
                           </button>
@@ -325,7 +385,10 @@ export default function Booking() {
               <div className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-300">Ваше бронювання</div>
               <div className="mt-3 font-display text-2xl text-cream">{fmtFullDate(`${date}T12:00:00Z`)}</div>
               <div className="mt-1 text-ink-300">
-                {slot ? `${slot.time} – ${new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Kyiv' }).format(new Date(slot.endAt))}` : 'Оберіть час'} · {guestsLabel(guests)}
+                {slot
+                  ? `${slot.time} – ${new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Kyiv' }).format(new Date(slot.endAt))}`
+                  : 'Оберіть час'}{' '}
+                · {guestsLabel(guests)}
               </div>
             </div>
             <div className="space-y-4 p-6 pt-2">
@@ -353,12 +416,19 @@ export default function Booking() {
                   Після вибору часу ми покажемо рекомендований столик на плані залу.
                 </div>
               )}
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Побажання: день народження, дитячий стілець, біля вікна…" maxLength={500} className="min-h-20" />
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Побажання: день народження, дитячий стілець, біля вікна…"
+                maxLength={500}
+                className="min-h-20"
+              />
               <Button variant="gold" size="lg" className="w-full" disabled={!slot} loading={book.isPending} onClick={submit}>
                 {user ? 'Підтвердити бронювання' : 'Увійти та забронювати'}
               </Button>
               <p className="text-center text-xs leading-relaxed text-ink-400">
-                Безкоштовне скасування онлайн — до {config.data?.clientCancelDeadlineMin ?? 60} хв до візиту. Check-in доступний за {config.data?.checkInEarlyMin ?? 60} хв до початку.
+                Безкоштовне скасування онлайн — до {config.data?.clientCancelDeadlineMin ?? 60} хв до візиту. Check-in доступний за{' '}
+                {config.data?.checkInEarlyMin ?? 60} хв до початку.
               </p>
             </div>
           </Card>
@@ -368,18 +438,26 @@ export default function Booking() {
       <Modal open={Boolean(created)} onClose={() => navigate('/account')} size="sm" hideClose>
         {created && (
           <div className="text-center">
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 15 }} className="gold-gradient mx-auto grid size-16 place-items-center rounded-full text-ink-950">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+              className="gold-gradient mx-auto grid size-16 place-items-center rounded-full text-ink-950"
+            >
               <Check className="size-8" />
             </motion.div>
             <h3 className="mt-5 font-display text-3xl text-cream">Заявку прийнято!</h3>
             <p className="mt-2 text-sm text-ink-300">
-              {relativeDay(isoDay(new Date(created.startAt)))} о {created.time} · столик №{created.table.number} · {guestsLabel(created.guests)}
+              {relativeDay(isoDay(new Date(created.startAt)))} о {created.time} · столик №{created.table.number} ·{' '}
+              {guestsLabel(created.guests)}
             </p>
             <div className="mx-auto mt-6 w-fit rounded-3xl bg-cream p-4">
               <QRCodeSVG value={created.qrPayload ?? created.code} size={168} bgColor="#f5f0e8" fgColor="#0d0d11" />
             </div>
             <div className="mt-3 font-mono text-lg tracking-[0.3em] text-gold-200">{created.code}</div>
-            <p className="mx-auto mt-4 max-w-xs text-xs text-ink-400">Хостес підтвердить бронювання найближчим часом — ви отримаєте сповіщення. Покажіть цей QR при вході.</p>
+            <p className="mx-auto mt-4 max-w-xs text-xs text-ink-400">
+              Хостес підтвердить бронювання найближчим часом — ви отримаєте сповіщення. Покажіть цей QR при вході.
+            </p>
             <div className="mt-6 grid gap-2">
               <Button variant="gold" onClick={() => navigate(`/account/reservations/${created.id}`)}>
                 Деталі бронювання

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { computeSlots, isTableFree, nearestAlternatives, rankTables, type BusyInterval, type EngineTable } from '../src/modules/booking/engine';
+import {
+  computeSlots,
+  isTableFree,
+  nearestAlternatives,
+  rankTables,
+  type BusyInterval,
+  type EngineTable,
+} from '../src/modules/booking/engine';
 
 const d = (hhmm: string) => new Date(`2030-01-16T${hhmm}:00Z`);
 const T = (id: number, seats: number, zone: EngineTable['zone'] = 'HALL'): EngineTable => ({

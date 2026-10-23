@@ -5,8 +5,32 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import Svg, { Circle } from 'react-native-svg';
-import { Bike, CalendarPlus, CircleCheck, CreditCard, DoorOpen, MessageSquareHeart, Receipt, UtensilsCrossed, XCircle } from 'lucide-react-native';
-import { Badge, Body, Button, Caption, Card, Divider, DishImage, EmptyState, Eyebrow, Header, Screen, Skeleton, Title } from '../components/ui';
+import {
+  Bike,
+  CalendarPlus,
+  CircleCheck,
+  CreditCard,
+  DoorOpen,
+  MessageSquareHeart,
+  Receipt,
+  UtensilsCrossed,
+  XCircle,
+} from 'lucide-react-native';
+import {
+  Badge,
+  Body,
+  Button,
+  Caption,
+  Card,
+  Divider,
+  DishImage,
+  EmptyState,
+  Eyebrow,
+  Header,
+  Screen,
+  Skeleton,
+  Title,
+} from '../components/ui';
 import { OrderRow, OrderTimeline, ReservationRow } from '../components/domain';
 import { DeliveryRow } from '../components/delivery';
 import { isActiveDelivery, useMyDeliveries } from '../lib/delivery';
@@ -82,7 +106,9 @@ export function VisitsScreen() {
             {deliveries.data.filter(isActiveDelivery).map((o) => (
               <DeliveryRow key={o.id} order={o} onPress={() => nav.navigate('DeliveryOrder', { id: o.id })} />
             ))}
-            {deliveries.data.some((o) => !isActiveDelivery(o)) && <Eyebrow style={{ marginTop: 14, marginBottom: 10, color: colors.muted }}>Раніше</Eyebrow>}
+            {deliveries.data.some((o) => !isActiveDelivery(o)) && (
+              <Eyebrow style={{ marginTop: 14, marginBottom: 10, color: colors.muted }}>Раніше</Eyebrow>
+            )}
             {deliveries.data
               .filter((o) => !isActiveDelivery(o))
               .slice(0, 40)
@@ -98,7 +124,11 @@ export function VisitsScreen() {
           <>
             <Eyebrow style={{ marginBottom: 10 }}>Майбутні</Eyebrow>
             {upcoming.length === 0 ? (
-              <EmptyState icon={<CalendarPlus size={26} color={colors.gold} />} title="Немає активних бронювань" action={<Button title="Забронювати столик" onPress={() => nav.navigate('Booking')} />} />
+              <EmptyState
+                icon={<CalendarPlus size={26} color={colors.gold} />}
+                title="Немає активних бронювань"
+                action={<Button title="Забронювати столик" onPress={() => nav.navigate('Booking')} />}
+              />
             ) : (
               upcoming.map((r) => <ReservationRow key={r.id} r={r} onPress={() => nav.navigate('Reservation', { id: r.id })} />)
             )}
@@ -115,7 +145,11 @@ export function VisitsScreen() {
       ) : orders.isLoading ? (
         <Skeleton height={200} />
       ) : !orders.data?.length ? (
-        <EmptyState icon={<UtensilsCrossed size={26} color={colors.gold} />} title="Замовлень ще немає" text="Після check-in за столиком замовляйте прямо з телефона" />
+        <EmptyState
+          icon={<UtensilsCrossed size={26} color={colors.gold} />}
+          title="Замовлень ще немає"
+          text="Після check-in за столиком замовляйте прямо з телефона"
+        />
       ) : (
         orders.data.map((o) => <OrderRow key={o.id} order={o} onPress={() => nav.navigate('Order', { id: o.id })} />)
       )}
@@ -128,7 +162,10 @@ const SEG_LABEL = { deliveries: 'Доставка', reservations: 'Бронюв�
 export function ReservationScreen({ route, navigation }: ScreenProps<'Reservation'>) {
   const qc = useQueryClient();
   const toast = useToast();
-  const { data: r } = useQuery({ queryKey: ['reservation', route.params.id], queryFn: () => api.get<Reservation>(`/reservations/${route.params.id}`) });
+  const { data: r } = useQuery({
+    queryKey: ['reservation', route.params.id],
+    queryFn: () => api.get<Reservation>(`/reservations/${route.params.id}`),
+  });
   const orders = useMyOrders();
   const pop = useRef(new Animated.Value(route.params.justCreated ? 0 : 1)).current;
   useEffect(() => {
@@ -137,11 +174,18 @@ export function ReservationScreen({ route, navigation }: ScreenProps<'Reservatio
   const visitOrders = (orders.data ?? []).filter((o) => o.reservationId === route.params.id);
 
   const transition = useMutation({
-    mutationFn: (status: 'CANCELLED' | 'COMPLETED') => api.patch<Reservation>(`/reservations/${route.params.id}/status`, { status, reason: status === 'CANCELLED' ? 'Скасовано гостем у застосунку' : undefined }),
+    mutationFn: (status: 'CANCELLED' | 'COMPLETED') =>
+      api.patch<Reservation>(`/reservations/${route.params.id}/status`, {
+        status,
+        reason: status === 'CANCELLED' ? 'Скасовано гостем у застосунку' : undefined,
+      }),
     onSuccess: (res) => {
       haptic.success();
       qc.invalidateQueries();
-      toast({ title: res.status === 'COMPLETED' ? 'Дякуємо за візит! ❤️' : 'Бронювання скасовано', tone: res.status === 'COMPLETED' ? 'gold' : 'muted' });
+      toast({
+        title: res.status === 'COMPLETED' ? 'Дякуємо за візит! ❤️' : 'Бронювання скасовано',
+        tone: res.status === 'COMPLETED' ? 'gold' : 'muted',
+      });
     },
     onError: (e) => {
       haptic.error();
@@ -191,7 +235,9 @@ export function ReservationScreen({ route, navigation }: ScreenProps<'Reservatio
                 <Qr value={r.qrPayload!} size={200} />
               </View>
               <Text style={styles.code}>{r.code}</Text>
-              <Caption style={{ textAlign: 'center', marginTop: 8, paddingHorizontal: 10 }}>Покажіть хостес або відскануйте QR на столику, коли прийдете (доступно за 60 хв до початку)</Caption>
+              <Caption style={{ textAlign: 'center', marginTop: 8, paddingHorizontal: 10 }}>
+                Покажіть хостес або відскануйте QR на столику, коли прийдете (доступно за 60 хв до початку)
+              </Caption>
             </View>
           </>
         )}
@@ -200,12 +246,26 @@ export function ReservationScreen({ route, navigation }: ScreenProps<'Reservatio
       </LinearGradient>
 
       <View style={{ gap: 10, marginTop: 18 }}>
-        {r.status === 'CHECKED_IN' && <Button title="Замовити страви" icon={<UtensilsCrossed size={18} color="#141008" />} onPress={() => navigation.navigate('Tabs', { screen: 'Menu' })} />}
+        {r.status === 'CHECKED_IN' && (
+          <Button
+            title="Замовити страви"
+            icon={<UtensilsCrossed size={18} color="#141008" />}
+            onPress={() => navigation.navigate('Tabs', { screen: 'Menu' })}
+          />
+        )}
         {r.status === 'CHECKED_IN' &&
           (r.actions.canComplete ? (
-            <Button title="Завершити візит" variant="success" icon={<DoorOpen size={18} color={colors.success} />} loading={transition.isPending} onPress={() => transition.mutate('COMPLETED')} />
+            <Button
+              title="Завершити візит"
+              variant="success"
+              icon={<DoorOpen size={18} color={colors.success} />}
+              loading={transition.isPending}
+              onPress={() => transition.mutate('COMPLETED')}
+            />
           ) : (
-            r.unpaidOrdersCount > 0 && <Caption style={{ textAlign: 'center' }}>Щоб завершити візит, оплатіть замовлення ({r.unpaidOrdersCount})</Caption>
+            r.unpaidOrdersCount > 0 && (
+              <Caption style={{ textAlign: 'center' }}>Щоб завершити візит, оплатіть замовлення ({r.unpaidOrdersCount})</Caption>
+            )
           ))}
         {['PENDING', 'CONFIRMED'].includes(r.status) &&
           (r.actions.canCancel ? (
@@ -213,7 +273,11 @@ export function ReservationScreen({ route, navigation }: ScreenProps<'Reservatio
               title="Скасувати бронювання"
               variant="danger"
               icon={<XCircle size={18} color={colors.danger} />}
-              onPress={() => confirmAction('Скасувати бронювання?', `${r.time}, столик №${r.table.number}`, 'Так, скасувати', () => transition.mutate('CANCELLED'))}
+              onPress={() =>
+                confirmAction('Скасувати бронювання?', `${r.time}, столик №${r.table.number}`, 'Так, скасувати', () =>
+                  transition.mutate('CANCELLED'),
+                )
+              }
             />
           ) : (
             <Caption style={{ textAlign: 'center' }}>Онлайн-скасування недоступне менш ніж за годину до візиту</Caption>
@@ -251,7 +315,17 @@ function EtaRing({ minutes, total }: { minutes: number; total: number }) {
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Svg width={size} height={size} style={{ position: 'absolute', transform: [{ rotate: '-90deg' }] }}>
         <Circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.08)" strokeWidth={8} fill="none" />
-        <Circle cx={size / 2} cy={size / 2} r={r} stroke={colors.gold} strokeWidth={8} fill="none" strokeLinecap="round" strokeDasharray={`${c}`} strokeDashoffset={c * (1 - progress)} />
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke={colors.gold}
+          strokeWidth={8}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={`${c}`}
+          strokeDashoffset={c * (1 - progress)}
+        />
       </Svg>
       <Text style={{ fontFamily: fonts.bold, fontSize: 28, color: colors.text }}>{minutes}</Text>
       <Caption>хв</Caption>
@@ -262,7 +336,11 @@ function EtaRing({ minutes, total }: { minutes: number; total: number }) {
 export function OrderScreen({ route, navigation }: ScreenProps<'Order'>) {
   const qc = useQueryClient();
   const toast = useToast();
-  const { data: o } = useQuery({ queryKey: ['order', route.params.id], queryFn: () => api.get<Order>(`/orders/${route.params.id}`), refetchInterval: 30_000 });
+  const { data: o } = useQuery({
+    queryKey: ['order', route.params.id],
+    queryFn: () => api.get<Order>(`/orders/${route.params.id}`),
+    refetchInterval: 30_000,
+  });
   const cancel = useMutation({
     mutationFn: () => api.patch(`/orders/${route.params.id}/status`, { status: 'CANCELLED' }),
     onSuccess: () => {
@@ -307,9 +385,24 @@ export function OrderScreen({ route, navigation }: ScreenProps<'Order'>) {
       </LinearGradient>
 
       <View style={{ gap: 10, marginTop: 16 }}>
-        {o.actions.canPay && <Button title={`Оплатити ${money(o.total)}`} icon={<CreditCard size={18} color="#141008" />} onPress={() => navigation.navigate('Payment', { orderId: o.id })} />}
-        {o.actions.canReview && <Button title="Оцінити візит" variant="outline" icon={<MessageSquareHeart size={18} color={colors.goldLight} />} onPress={() => navigation.navigate('Review', { orderId: o.id })} />}
-        {o.actions.canCancel && <Button title="Скасувати замовлення" variant="danger" loading={cancel.isPending} onPress={() => cancel.mutate()} />}
+        {o.actions.canPay && (
+          <Button
+            title={`Оплатити ${money(o.total)}`}
+            icon={<CreditCard size={18} color="#141008" />}
+            onPress={() => navigation.navigate('Payment', { orderId: o.id })}
+          />
+        )}
+        {o.actions.canReview && (
+          <Button
+            title="Оцінити візит"
+            variant="outline"
+            icon={<MessageSquareHeart size={18} color={colors.goldLight} />}
+            onPress={() => navigation.navigate('Review', { orderId: o.id })}
+          />
+        )}
+        {o.actions.canCancel && (
+          <Button title="Скасувати замовлення" variant="danger" loading={cancel.isPending} onPress={() => cancel.mutate()} />
+        )}
       </View>
 
       <Card style={{ marginTop: 18 }}>
@@ -347,16 +440,51 @@ export function OrderScreen({ route, navigation }: ScreenProps<'Order'>) {
 }
 
 const styles = StyleSheet.create({
-  segment: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginVertical: 18 },
+  segment: {
+    flexDirection: 'row',
+    gap: 4,
+    padding: 4,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginVertical: 18,
+  },
   segBtn: { height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   segText: { fontFamily: fonts.semibold, fontSize: 14, color: colors.muted },
-  created: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: colors.successSoft, borderWidth: 1, borderColor: 'rgba(52,211,153,0.3)', marginBottom: 14 },
+  created: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: colors.successSoft,
+    borderWidth: 1,
+    borderColor: 'rgba(52,211,153,0.3)',
+    marginBottom: 14,
+  },
   ticket: { borderRadius: radius.xl, padding: 20, borderWidth: 1, borderColor: colors.goldBorder },
   infoRow: { flexDirection: 'row', marginTop: 18, gap: 10 },
   perforation: { height: 1, borderStyle: 'dashed', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', marginVertical: 20 },
-  qrWrap: { padding: 10, borderRadius: 24, backgroundColor: colors.text, shadowColor: colors.gold, shadowOpacity: 0.4, shadowRadius: 24, elevation: 8 },
+  qrWrap: {
+    padding: 10,
+    borderRadius: 24,
+    backgroundColor: colors.text,
+    shadowColor: colors.gold,
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 8,
+  },
   code: { fontFamily: fonts.bold, fontSize: 18, letterSpacing: 6, color: colors.goldLight, marginTop: 14 },
   statusCard: { borderRadius: radius.xl, padding: 20, borderWidth: 1, borderColor: colors.goldBorder },
   item: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
-  paid: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14, padding: 12, borderRadius: 14, backgroundColor: colors.successSoft },
+  paid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 14,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: colors.successSoft,
+  },
 });

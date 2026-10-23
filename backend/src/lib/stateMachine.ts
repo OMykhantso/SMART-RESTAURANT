@@ -136,21 +136,10 @@ export function canTransition<S extends string>(machine: Machine<S>, from: S, to
  *  409 INVALID_TRANSITION — переходу не існує в автоматі;
  *  403 TRANSITION_FORBIDDEN — перехід існує, але цей актор не має права його виконати.
  */
-export function assertTransition<S extends string>(
-  machine: Machine<S>,
-  labels: Record<S, string>,
-  from: S,
-  to: S,
-  actors: Actor[],
-) {
+export function assertTransition<S extends string>(machine: Machine<S>, labels: Record<S, string>, from: S, to: S, actors: Actor[]) {
   const allowed = allowedActors(machine, from, to);
   if (!allowed) {
-    throw new AppError(
-      409,
-      'INVALID_TRANSITION',
-      `Неможливо змінити статус «${labels[from]}» на «${labels[to]}»`,
-      { from, to },
-    );
+    throw new AppError(409, 'INVALID_TRANSITION', `Неможливо змінити статус «${labels[from]}» на «${labels[to]}»`, { from, to });
   }
   if (!actors.some((a) => allowed.includes(a))) {
     throw new AppError(403, 'TRANSITION_FORBIDDEN', `Ваша роль не може виконати перехід «${labels[from]}» → «${labels[to]}»`, {

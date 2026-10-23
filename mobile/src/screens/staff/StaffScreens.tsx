@@ -2,7 +2,25 @@ import { useMemo, useState } from 'react';
 import { Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
-import { Armchair, BellRing, Bike, CalendarClock, ChartColumn, ChefHat, ChevronRight, ClipboardList, DoorOpen, LogIn, MapPinned, Receipt, Soup, UserRound, Users, UsersRound, Wallet } from 'lucide-react-native';
+import {
+  Armchair,
+  BellRing,
+  Bike,
+  CalendarClock,
+  ChartColumn,
+  ChefHat,
+  ChevronRight,
+  ClipboardList,
+  DoorOpen,
+  LogIn,
+  MapPinned,
+  Receipt,
+  Soup,
+  UserRound,
+  Users,
+  UsersRound,
+  Wallet,
+} from 'lucide-react-native';
 import { Badge, Button, Caption, Card, EmptyState, Eyebrow, Screen, Skeleton, Title } from '../../components/ui';
 import { SectionTitle } from '../../components/domain';
 import { LiveFloorPlan, Legend, OrderTicket, ReservationCard, Segmented, StatTile, TABLE_STATE } from '../../components/staff';
@@ -29,7 +47,9 @@ function LiveDot() {
   return (
     <View style={styles.live}>
       <View style={[styles.liveDot, { backgroundColor: connected ? colors.success : colors.danger }]} />
-      <Text style={{ fontFamily: fonts.semibold, fontSize: 11.5, color: connected ? colors.success : colors.danger }}>{connected ? 'Наживо' : 'Офлайн'}</Text>
+      <Text style={{ fontFamily: fonts.semibold, fontSize: 11.5, color: connected ? colors.success : colors.danger }}>
+        {connected ? 'Наживо' : 'Офлайн'}
+      </Text>
     </View>
   );
 }
@@ -75,10 +95,33 @@ export function ShiftScreen() {
         </View>
       ) : (
         <View style={styles.grid}>
-          <StatTile label="Виручка сьогодні" value={money(t.revenue)} hint={`${t.paymentsCount} оплат · чайові ${money(t.tips)}`} icon={<Wallet size={18} color={colors.goldLight} />} />
-          <StatTile label="Гостей у залі" value={String(t.guestsInHouse)} hint={`${t.tables.occupied} з ${t.tables.total} столиків`} icon={<Users size={18} color={colors.success} />} tone="success" />
-          <StatTile label="Активних замовлень" value={String(t.orders.active)} hint={t.avgPrepMin ? `кухня ≈ ${t.avgPrepMin} хв` : 'сьогодні'} icon={<Receipt size={18} color={colors.orange} />} tone="orange" />
-          <StatTile label="Бронювань сьогодні" value={String(t.reservations.total)} hint={`${t.reservations.expectedGuests} гостей очікується`} icon={<CalendarClock size={18} color={colors.info} />} tone="info" />
+          <StatTile
+            label="Виручка сьогодні"
+            value={money(t.revenue)}
+            hint={`${t.paymentsCount} оплат · чайові ${money(t.tips)}`}
+            icon={<Wallet size={18} color={colors.goldLight} />}
+          />
+          <StatTile
+            label="Гостей у залі"
+            value={String(t.guestsInHouse)}
+            hint={`${t.tables.occupied} з ${t.tables.total} столиків`}
+            icon={<Users size={18} color={colors.success} />}
+            tone="success"
+          />
+          <StatTile
+            label="Активних замовлень"
+            value={String(t.orders.active)}
+            hint={t.avgPrepMin ? `кухня ≈ ${t.avgPrepMin} хв` : 'сьогодні'}
+            icon={<Receipt size={18} color={colors.orange} />}
+            tone="orange"
+          />
+          <StatTile
+            label="Бронювань сьогодні"
+            value={String(t.reservations.total)}
+            hint={`${t.reservations.expectedGuests} гостей очікується`}
+            icon={<CalendarClock size={18} color={colors.info} />}
+            tone="info"
+          />
         </View>
       )}
 
@@ -98,7 +141,9 @@ export function ShiftScreen() {
         <Card>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <BellRing size={20} color={colors.success} />
-            <Text style={{ flex: 1, fontFamily: fonts.medium, color: colors.textSoft }}>Усе під контролем — нових і готових замовлень немає.</Text>
+            <Text style={{ flex: 1, fontFamily: fonts.medium, color: colors.textSoft }}>
+              Усе під контролем — нових і готових замовлень немає.
+            </Text>
           </View>
         </Card>
       ) : (
@@ -107,12 +152,48 @@ export function ShiftScreen() {
 
       <SectionTitle title="Швидкий доступ" />
       <View style={{ gap: 10 }}>
-        <QuickLink icon={<ChefHat size={20} color={colors.orange} />} title="Кухня" text="Черга страв і таймери (перегляд)" onPress={() => nav.navigate('KitchenView')} />
-        <QuickLink icon={<Soup size={20} color={colors.warning} />} title="Стоп-лист" text="Вимкнути страву, що закінчилась" onPress={() => nav.navigate('StopList')} />
-        <QuickLink icon={<Bike size={20} color={colors.info} />} title="Доставка" text="Диспетчерська: курʼєри, статуси, призначення" onPress={() => nav.navigate('Dispatch')} />
-        {isAdmin && <QuickLink icon={<MapPinned size={20} color={colors.success} />} title="Зони доставки" text="Райони, тарифи, мінімальна сума" onPress={() => nav.navigate('Zones')} />}
-        {isAdmin && <QuickLink icon={<ChartColumn size={20} color={colors.goldLight} />} title="Аналітика" text="Виручка, топ страв, навантаження" onPress={() => nav.navigate('Analytics')} />}
-        {isAdmin && <QuickLink icon={<UsersRound size={20} color={colors.violet} />} title="Користувачі та ролі" text="Персонал, гості, доступи" onPress={() => nav.navigate('Users')} />}
+        <QuickLink
+          icon={<ChefHat size={20} color={colors.orange} />}
+          title="Кухня"
+          text="Черга страв і таймери (перегляд)"
+          onPress={() => nav.navigate('KitchenView')}
+        />
+        <QuickLink
+          icon={<Soup size={20} color={colors.warning} />}
+          title="Стоп-лист"
+          text="Вимкнути страву, що закінчилась"
+          onPress={() => nav.navigate('StopList')}
+        />
+        <QuickLink
+          icon={<Bike size={20} color={colors.info} />}
+          title="Доставка"
+          text="Диспетчерська: курʼєри, статуси, призначення"
+          onPress={() => nav.navigate('Dispatch')}
+        />
+        {isAdmin && (
+          <QuickLink
+            icon={<MapPinned size={20} color={colors.success} />}
+            title="Зони доставки"
+            text="Райони, тарифи, мінімальна сума"
+            onPress={() => nav.navigate('Zones')}
+          />
+        )}
+        {isAdmin && (
+          <QuickLink
+            icon={<ChartColumn size={20} color={colors.goldLight} />}
+            title="Аналітика"
+            text="Виручка, топ страв, навантаження"
+            onPress={() => nav.navigate('Analytics')}
+          />
+        )}
+        {isAdmin && (
+          <QuickLink
+            icon={<UsersRound size={20} color={colors.violet} />}
+            title="Користувачі та ролі"
+            text="Персонал, гості, доступи"
+            onPress={() => nav.navigate('Users')}
+          />
+        )}
       </View>
     </Screen>
   );
@@ -139,7 +220,11 @@ export function FloorScreen() {
   const refresh = useRefresh(['tables-live', 'orders']);
   const tables = data ?? [];
   const selected = tables.find((t) => t.id === selectedId) ?? null;
-  const counts = { free: tables.filter((t) => t.state === 'FREE').length, busy: tables.filter((t) => t.state === 'OCCUPIED' || t.state === 'LATE').length, soon: tables.filter((t) => t.state === 'RESERVED_SOON').length };
+  const counts = {
+    free: tables.filter((t) => t.state === 'FREE').length,
+    busy: tables.filter((t) => t.state === 'OCCUPIED' || t.state === 'LATE').length,
+    soon: tables.filter((t) => t.state === 'RESERVED_SOON').length,
+  };
 
   return (
     <Screen refreshControl={refresh}>
@@ -155,9 +240,17 @@ export function FloorScreen() {
         <Badge tone="gold">Зайнято {counts.busy}</Badge>
         <Badge tone="info">Скоро {counts.soon}</Badge>
       </View>
-      {isLoading ? <Skeleton height={260} /> : <LiveFloorPlan tables={tables} selectedId={selectedId} onSelect={(t) => setSelectedId(t.id === selectedId ? null : t.id)} />}
+      {isLoading ? (
+        <Skeleton height={260} />
+      ) : (
+        <LiveFloorPlan tables={tables} selectedId={selectedId} onSelect={(t) => setSelectedId(t.id === selectedId ? null : t.id)} />
+      )}
       <Legend />
-      {selected ? <TableDetails t={selected} /> : <Caption style={{ textAlign: 'center', marginTop: 18 }}>Торкніться столика, щоб побачити гостей, замовлення та дії</Caption>}
+      {selected ? (
+        <TableDetails t={selected} />
+      ) : (
+        <Caption style={{ textAlign: 'center', marginTop: 18 }}>Торкніться столика, щоб побачити гостей, замовлення та дії</Caption>
+      )}
     </Screen>
   );
 }
@@ -215,15 +308,34 @@ function TableDetails({ t }: { t: LiveTable }) {
               </Text>
             </View>
             <Caption style={{ marginTop: 4 }}>
-              {guestsLabel(t.next.guests)} · {t.next.code} · {t.next.minutesToStart > 0 ? `через ${t.next.minutesToStart} хв` : `запізнюються на ${-t.next.minutesToStart} хв`}
+              {guestsLabel(t.next.guests)} · {t.next.code} ·{' '}
+              {t.next.minutesToStart > 0 ? `через ${t.next.minutesToStart} хв` : `запізнюються на ${-t.next.minutesToStart} хв`}
             </Caption>
             {!t.current && t.next.status === 'CONFIRMED' && (
-              <Button title="Посадити гостей" size="sm" variant="success" style={{ marginTop: 12 }} icon={<LogIn size={16} color={colors.success} />} loading={action.isPending} onPress={() => action.mutate({ id: t.next!.reservationId, status: 'CHECKED_IN' })} />
+              <Button
+                title="Посадити гостей"
+                size="sm"
+                variant="success"
+                style={{ marginTop: 12 }}
+                icon={<LogIn size={16} color={colors.success} />}
+                loading={action.isPending}
+                onPress={() => action.mutate({ id: t.next!.reservationId, status: 'CHECKED_IN' })}
+              />
             )}
-            {t.next.status === 'PENDING' && <Button title="Підтвердити бронювання" size="sm" style={{ marginTop: 12 }} loading={action.isPending} onPress={() => action.mutate({ id: t.next!.reservationId, status: 'CONFIRMED' })} />}
+            {t.next.status === 'PENDING' && (
+              <Button
+                title="Підтвердити бронювання"
+                size="sm"
+                style={{ marginTop: 12 }}
+                loading={action.isPending}
+                onPress={() => action.mutate({ id: t.next!.reservationId, status: 'CONFIRMED' })}
+              />
+            )}
           </View>
         )}
-        {!t.current && !t.next && <Caption style={{ marginTop: 14 }}>Сьогодні більше немає бронювань — столик вільний для гостей без бронювання.</Caption>}
+        {!t.current && !t.next && (
+          <Caption style={{ marginTop: 14 }}>Сьогодні більше немає бронювань — столик вільний для гостей без бронювання.</Caption>
+        )}
       </Card>
       {active.length > 0 && (
         <>
@@ -266,7 +378,9 @@ export function StaffReservationsScreen() {
           const dt = new Date(`${d}T12:00:00Z`);
           return (
             <Pressable key={d} onPress={() => setDate(d)} style={[styles.day, active && styles.dayActive]}>
-              <Text style={[styles.dayWeek, active && { color: colors.gold }]}>{new Intl.DateTimeFormat('uk-UA', { weekday: 'short', timeZone: 'UTC' }).format(dt)}</Text>
+              <Text style={[styles.dayWeek, active && { color: colors.gold }]}>
+                {new Intl.DateTimeFormat('uk-UA', { weekday: 'short', timeZone: 'UTC' }).format(dt)}
+              </Text>
               <Text style={[styles.dayNum, active && { color: colors.goldLight }]}>{dt.getUTCDate()}</Text>
             </Pressable>
           );
@@ -287,7 +401,11 @@ export function StaffReservationsScreen() {
       {isLoading ? (
         <Skeleton height={120} />
       ) : list.length === 0 ? (
-        <EmptyState icon={<ClipboardList size={30} color={colors.gold} />} title="Немає бронювань" text="За цим фільтром на обраний день нічого немає." />
+        <EmptyState
+          icon={<ClipboardList size={30} color={colors.gold} />}
+          title="Немає бронювань"
+          text="За цим фільтром на обраний день нічого немає."
+        />
       ) : (
         list.map((r) => <ReservationCard key={r.id} r={r} />)
       )}
@@ -351,16 +469,69 @@ export function StaffOrdersScreen() {
 
 const styles = StyleSheet.create({
   headRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  avatar: { width: 48, height: 48, borderRadius: 16, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.goldBorder, alignItems: 'center', justifyContent: 'center' },
-  live: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: colors.goldSoft,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  live: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 99,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   liveDot: { width: 7, height: 7, borderRadius: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 18 },
-  quick: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  quickIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center' },
-  bigNum: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.goldBorder, alignItems: 'center', justifyContent: 'center' },
+  quick: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  quickIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bigNum: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: colors.goldSoft,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   block: { marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: colors.border },
   blockTitle: { fontFamily: fonts.semibold, fontSize: 14.5, color: colors.text, flex: 1 },
-  day: { flex: 1, height: 58, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  day: {
+    flex: 1,
+    height: 58,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   dayActive: { backgroundColor: colors.goldSoft, borderColor: colors.goldBorder },
   dayWeek: { fontFamily: fonts.semibold, fontSize: 10.5, color: colors.muted, textTransform: 'uppercase' },
   dayNum: { fontFamily: fonts.bold, fontSize: 17, color: colors.text, marginTop: 2 },

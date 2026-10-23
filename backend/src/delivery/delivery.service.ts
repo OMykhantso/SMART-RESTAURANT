@@ -65,7 +65,8 @@ function assertOpen() {
   const w = deliveryWindow();
   if (!w.isOpen) {
     throw conflict(
-      `Доставка зараз не працює. Замовлення приймаємо з ${w.opensAt} до ${w.lastOrderAt}` + (w.nextOpenLabel ? ` — відкриємось ${w.nextOpenLabel}` : ''),
+      `Доставка зараз не працює. Замовлення приймаємо з ${w.opensAt} до ${w.lastOrderAt}` +
+        (w.nextOpenLabel ? ` — відкриємось ${w.nextOpenLabel}` : ''),
       'DELIVERY_CLOSED',
       w,
     );
@@ -222,7 +223,14 @@ export async function createDeliveryOrder(actor: AuthUser, input: CreateDelivery
         },
       },
     });
-    await logStatus(tx, { orderId: created.id }, null, status, actor.id, status === 'NEW' ? 'Очікує онлайн-оплати' : 'Оплата готівкою курʼєру');
+    await logStatus(
+      tx,
+      { orderId: created.id },
+      null,
+      status,
+      actor.id,
+      status === 'NEW' ? 'Очікує онлайн-оплати' : 'Оплата готівкою курʼєру',
+    );
 
     if (input.saveAddressAs && input.address) {
       const hasDefault = await tx.address.count({ where: { userId: actor.id, isDefault: true } });
@@ -302,7 +310,14 @@ export async function assignCourier(actor: AuthUser, id: number, courierId: numb
       if (o.delivery.courierId !== courierId) await assertCourierCapacity(tx, courierId);
     }
     await tx.delivery.update({ where: { orderId: id }, data: { courierId, assignedAt: courierId ? now() : null } });
-    await logStatus(tx, { orderId: id }, o.status, o.status, actor.id, courierId ? 'Курʼєра призначено диспетчером' : 'Курʼєра знято диспетчером');
+    await logStatus(
+      tx,
+      { orderId: id },
+      o.status,
+      o.status,
+      actor.id,
+      courierId ? 'Курʼєра призначено диспетчером' : 'Курʼєра знято диспетчером',
+    );
     return loadOrder(id, tx);
   });
   broadcast(o, 'order:updated');
@@ -321,7 +336,10 @@ export async function pickUp(courier: AuthUser, id: number) {
     await transitionOrder(courier, id, 'DELIVERING', { db: tx });
     await tx.delivery.update({
       where: { orderId: id },
-      data: { etaAt: new Date(t.getTime() + o.delivery.zone.travelMin * 60000), ...(o.delivery.courierId ? {} : { courierId: courier.id, assignedAt: t }) },
+      data: {
+        etaAt: new Date(t.getTime() + o.delivery.zone.travelMin * 60000),
+        ...(o.delivery.courierId ? {} : { courierId: courier.id, assignedAt: t }),
+      },
     });
     return loadOrder(id, tx);
   });
@@ -379,7 +397,11 @@ export async function listCourierOrders(courier: AuthUser, scope: 'available' | 
       ? { type: 'DELIVERY', status: { in: ['CONFIRMED', 'PREPARING', 'READY'] }, delivery: { courierId: null } }
       : scope === 'mine'
         ? { type: 'DELIVERY', status: { in: ['CONFIRMED', 'PREPARING', 'READY', 'DELIVERING'] }, delivery: { courierId: courier.id } }
-        : { type: 'DELIVERY', status: 'DELIVERED', delivery: { courierId: courier.id, deliveredAt: { gte: DateTime.fromJSDate(dayStart).minus({ days: 6 }).toJSDate() } } };
+        : {
+            type: 'DELIVERY',
+            status: 'DELIVERED',
+            delivery: { courierId: courier.id, deliveredAt: { gte: DateTime.fromJSDate(dayStart).minus({ days: 6 }).toJSDate() } },
+          };
   const orders = await prisma.order.findMany({
     where,
     include: orderInclude,
@@ -400,7 +422,9 @@ export async function courierSummary(courier: AuthUser) {
       where: { method: 'CASH', status: 'SUCCEEDED', processedById: courier.id, paidAt: { gte: dayStart } },
       _sum: { amount: true, tip: true },
     }),
-    prisma.order.count({ where: { type: 'DELIVERY', status: { in: ['CONFIRMED', 'PREPARING', 'READY', 'DELIVERING'] }, delivery: { courierId: courier.id } } }),
+    prisma.order.count({
+      where: { type: 'DELIVERY', status: { in: ['CONFIRMED', 'PREPARING', 'READY', 'DELIVERING'] }, delivery: { courierId: courier.id } },
+    }),
   ]);
   const rides = delivered
     .filter((d) => d.delivery?.pickedUpAt && d.delivery.deliveredAt)

@@ -1,10 +1,47 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Banknote, Bike, CircleCheck, Clock, CreditCard, MapPin, MessageSquareHeart, Moon, Plus, RotateCcw, Star, Trash, Truck, XCircle } from 'lucide-react-native';
-import { Body, Button, Caption, Card, Chip, DishImage, Divider, EmptyState, Eyebrow, Field, Header, Screen, Skeleton, Title } from '../components/ui';
-import { AddressCard, CourierCard, DeliveryHero, DeliveryStepper, formatPhone, LocateMeButton, PaymentLine, ZonePicker } from '../components/delivery';
+import {
+  Banknote,
+  Bike,
+  CircleCheck,
+  Clock,
+  CreditCard,
+  MapPin,
+  MessageSquareHeart,
+  Moon,
+  Plus,
+  RotateCcw,
+  Star,
+  Trash,
+  Truck,
+  XCircle,
+} from 'lucide-react-native';
+import {
+  Body,
+  Button,
+  Caption,
+  Card,
+  Chip,
+  DishImage,
+  Divider,
+  EmptyState,
+  Eyebrow,
+  Field,
+  Header,
+  Screen,
+  Skeleton,
+} from '../components/ui';
+import {
+  AddressCard,
+  CourierCard,
+  DeliveryHero,
+  DeliveryStepper,
+  formatPhone,
+  LocateMeButton,
+  PaymentLine,
+  ZonePicker,
+} from '../components/delivery';
 import type { MyLocation } from '../lib/geo';
 import { colors, fonts, radius } from '../theme';
 import { useAuth } from '../lib/auth';
@@ -13,7 +50,15 @@ import { useToast } from '../lib/toast';
 import { haptic } from '../lib/notify';
 import { confirmAction } from '../lib/confirm';
 import { fmtDateShort, fmtTime, money } from '../lib/format';
-import { useAddresses, useAddressMutations, useCancelDelivery, useDelivery, useDeliveryInfo, usePlaceDelivery, useQuote } from '../lib/delivery';
+import {
+  useAddresses,
+  useAddressMutations,
+  useCancelDelivery,
+  useDelivery,
+  useDeliveryInfo,
+  usePlaceDelivery,
+  useQuote,
+} from '../lib/delivery';
 import type { PayMethod } from '../api/types';
 import type { ScreenProps } from '../navigation/types';
 
@@ -73,7 +118,8 @@ export function CheckoutScreen({ navigation }: ScreenProps<'Checkout'>) {
   const q = quote.data;
 
   const phoneOk = phone.replace(/\D/g, '').length >= 9;
-  const addressOk = mode === 'saved' ? Boolean(selected && selected.zone.isActive) : Boolean(zoneId && street.trim().length >= 2 && house.trim());
+  const addressOk =
+    mode === 'saved' ? Boolean(selected && selected.zone.isActive) : Boolean(zoneId && street.trim().length >= 2 && house.trim());
   const changeKop = changeFrom ? Math.round(Number(changeFrom.replace(',', '.')) * 100) : undefined;
   const changeOk = method !== 'CASH' || !changeKop || (q ? changeKop >= q.total : true);
   const canSubmit = Boolean(q?.canOrder) && phoneOk && addressOk && changeOk && cart.lines.length > 0 && !place.isPending;
@@ -122,7 +168,12 @@ export function CheckoutScreen({ navigation }: ScreenProps<'Checkout'>) {
     return (
       <Screen edges={['top']}>
         <Header title="Доставка" />
-        <EmptyState icon={<Bike size={26} color={colors.gold} />} title="Кошик порожній" text="Додайте страви з меню — і ми привеземо їх гарячими" action={<Button title="До меню" onPress={() => navigation.navigate('Tabs', { screen: 'Menu' })} />} />
+        <EmptyState
+          icon={<Bike size={26} color={colors.gold} />}
+          title="Кошик порожній"
+          text="Додайте страви з меню — і ми привеземо їх гарячими"
+          action={<Button title="До меню" onPress={() => navigation.navigate('Tabs', { screen: 'Menu' })} />}
+        />
       </Screen>
     );
   }
@@ -152,7 +203,9 @@ export function CheckoutScreen({ navigation }: ScreenProps<'Checkout'>) {
           ) : (
             <>
               {mode === 'saved' &&
-                addresses.data?.map((a) => <AddressCard key={a.id} address={a} selected={a.id === addressId} onPress={() => setAddressId(a.id)} />)}
+                addresses.data?.map((a) => (
+                  <AddressCard key={a.id} address={a} selected={a.id === addressId} onPress={() => setAddressId(a.id)} />
+                ))}
               {addresses.data && addresses.data.length > 0 && (
                 <Pressable
                   onPress={() => {
@@ -162,20 +215,36 @@ export function CheckoutScreen({ navigation }: ScreenProps<'Checkout'>) {
                   style={styles.toggleAddr}
                 >
                   {mode === 'saved' ? <Plus size={16} color={colors.gold} /> : <MapPin size={16} color={colors.gold} />}
-                  <Text style={{ fontFamily: fonts.semibold, color: colors.goldLight }}>{mode === 'saved' ? 'Інша адреса' : 'Обрати збережену адресу'}</Text>
+                  <Text style={{ fontFamily: fonts.semibold, color: colors.goldLight }}>
+                    {mode === 'saved' ? 'Інша адреса' : 'Обрати збережену адресу'}
+                  </Text>
                 </Pressable>
               )}
               {mode === 'new' && (
                 <Card style={{ marginTop: 4 }}>
-                  <LocateMeButton onLocated={(loc) => applyLocation(loc, { zone: setZoneId, street: setStreet, house: setHouse }, { street, house })} />
+                  <LocateMeButton
+                    onLocated={(loc) => applyLocation(loc, { zone: setZoneId, street: setStreet, house: setHouse }, { street, house })}
+                  />
                   <Text style={styles.fieldLabel}>Район</Text>
                   {info.data ? <ZonePicker zones={info.data.zones} value={zoneId} onChange={setZoneId} /> : <Skeleton height={90} />}
                   {touched && !zoneId ? <Text style={styles.err}>Оберіть район</Text> : null}
                   <View style={{ height: 14 }} />
-                  <Field label="Вулиця" value={street} onChangeText={setStreet} placeholder="вул. Мечникова" error={touched && street.trim().length < 2 ? 'Вкажіть вулицю' : null} />
+                  <Field
+                    label="Вулиця"
+                    value={street}
+                    onChangeText={setStreet}
+                    placeholder="вул. Мечникова"
+                    error={touched && street.trim().length < 2 ? 'Вкажіть вулицю' : null}
+                  />
                   <View style={{ flexDirection: 'row', gap: 10 }}>
                     <View style={{ flex: 1 }}>
-                      <Field label="Будинок" value={house} onChangeText={setHouse} placeholder="12" error={touched && !house.trim() ? 'Обовʼязково' : null} />
+                      <Field
+                        label="Будинок"
+                        value={house}
+                        onChangeText={setHouse}
+                        placeholder="12"
+                        error={touched && !house.trim() ? 'Обовʼязково' : null}
+                      />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Field label="Квартира" value={apartment} onChangeText={setApartment} placeholder="5" />
@@ -205,13 +274,32 @@ export function CheckoutScreen({ navigation }: ScreenProps<'Checkout'>) {
           <Eyebrow style={styles.section}>Отримувач</Eyebrow>
           <Card>
             <Field label="Імʼя" value={name} onChangeText={setName} />
-            <Field label="Телефон" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="+380 50 123 45 67" error={touched && !phoneOk ? 'Вкажіть номер, щоб курʼєр міг подзвонити' : null} />
+            <Field
+              label="Телефон"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              placeholder="+380 50 123 45 67"
+              error={touched && !phoneOk ? 'Вкажіть номер, щоб курʼєр міг подзвонити' : null}
+            />
           </Card>
 
           <Eyebrow style={styles.section}>Оплата</Eyebrow>
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <PayOption icon={<CreditCard size={20} color={method === 'CARD' ? '#141008' : colors.gold} />} title="Карткою онлайн" text="Apple Pay / Visa / Mastercard" active={method === 'CARD'} onPress={() => setMethod('CARD')} />
-            <PayOption icon={<Banknote size={20} color={method === 'CASH' ? '#141008' : colors.gold} />} title="Готівкою" text="курʼєру при отриманні" active={method === 'CASH'} onPress={() => setMethod('CASH')} />
+            <PayOption
+              icon={<CreditCard size={20} color={method === 'CARD' ? '#141008' : colors.gold} />}
+              title="Карткою онлайн"
+              text="Apple Pay / Visa / Mastercard"
+              active={method === 'CARD'}
+              onPress={() => setMethod('CARD')}
+            />
+            <PayOption
+              icon={<Banknote size={20} color={method === 'CASH' ? '#141008' : colors.gold} />}
+              title="Готівкою"
+              text="курʼєру при отриманні"
+              active={method === 'CASH'}
+              onPress={() => setMethod('CASH')}
+            />
           </View>
           {method === 'CASH' && (
             <View style={{ marginTop: 12 }}>
@@ -226,7 +314,15 @@ export function CheckoutScreen({ navigation }: ScreenProps<'Checkout'>) {
             </View>
           )}
 
-          <TextInput value={notes} onChangeText={setNotes} placeholder="Коментар до замовлення (прибори, алергії…)" placeholderTextColor={colors.faint} style={styles.notes} multiline maxLength={500} />
+          <TextInput
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Коментар до замовлення (прибори, алергії…)"
+            placeholderTextColor={colors.faint}
+            style={styles.notes}
+            multiline
+            maxLength={500}
+          />
         </Screen>
       </KeyboardAvoidingView>
 
@@ -249,7 +345,9 @@ export function CheckoutScreen({ navigation }: ScreenProps<'Checkout'>) {
             </View>
           </>
         ) : (
-          <Caption style={{ marginBottom: 12 }}>{activeZone ? 'Розраховуємо вартість…' : 'Оберіть адресу, щоб побачити вартість доставки'}</Caption>
+          <Caption style={{ marginBottom: 12 }}>
+            {activeZone ? 'Розраховуємо вартість…' : 'Оберіть адресу, щоб побачити вартість доставки'}
+          </Caption>
         )}
         {q && q.missingToMin > 0 ? (
           <Button title="Додати ще страв" variant="outline" onPress={() => navigation.navigate('Tabs', { screen: 'Menu' })} />
@@ -267,7 +365,19 @@ export function CheckoutScreen({ navigation }: ScreenProps<'Checkout'>) {
   );
 }
 
-function PayOption({ icon, title, text, active, onPress }: { icon: React.ReactNode; title: string; text: string; active: boolean; onPress: () => void }) {
+function PayOption({
+  icon,
+  title,
+  text,
+  active,
+  onPress,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+  active: boolean;
+  onPress: () => void;
+}) {
   return (
     <Pressable
       onPress={() => {
@@ -318,8 +428,15 @@ export function DeliveryOrderScreen({ route, navigation }: ScreenProps<'Delivery
   const tip = o.payment?.tip ?? 0;
 
   const repeat = () => {
-    for (const i of o.items) for (let k = 0; k < i.quantity; k++)
-      cart.add({ id: i.dishId, name: i.name, price: i.unitPrice, imageUrl: i.imageUrl, category: { id: 0, name: i.category.name, slug: i.category.slug, emoji: i.category.emoji } } as never);
+    for (const i of o.items)
+      for (let k = 0; k < i.quantity; k++)
+        cart.add({
+          id: i.dishId,
+          name: i.name,
+          price: i.unitPrice,
+          imageUrl: i.imageUrl,
+          category: { id: 0, name: i.category.name, slug: i.category.slug, emoji: i.category.emoji },
+        } as never);
     haptic.success();
     toast({ title: 'Страви додано в кошик', body: 'Перевірте наявність і оформіть доставку', tone: 'gold' });
     navigation.navigate('Cart');
@@ -344,7 +461,12 @@ export function DeliveryOrderScreen({ route, navigation }: ScreenProps<'Delivery
         <Card style={{ marginTop: 14, borderColor: 'rgba(251,191,36,0.35)' }}>
           <Text style={{ fontFamily: fonts.semibold, color: colors.text, fontSize: 15 }}>Залишилось оплатити</Text>
           <Caption style={{ marginTop: 2 }}>Неоплачене замовлення скасується через 15 хвилин після оформлення</Caption>
-          <Button title={`Оплатити ${money(o.total)}`} style={{ marginTop: 14 }} icon={<CreditCard size={18} color="#141008" />} onPress={() => navigation.navigate('Payment', { orderId: o.id, delivery: true })} />
+          <Button
+            title={`Оплатити ${money(o.total)}`}
+            style={{ marginTop: 14 }}
+            icon={<CreditCard size={18} color="#141008" />}
+            onPress={() => navigation.navigate('Payment', { orderId: o.id, delivery: true })}
+          />
         </Card>
       )}
 
@@ -384,7 +506,9 @@ export function DeliveryOrderScreen({ route, navigation }: ScreenProps<'Delivery
               <Text style={{ fontFamily: fonts.semibold, color: colors.text }}>
                 {i.quantity} × {i.name}
               </Text>
-              {['PREPARING', 'CONFIRMED'].includes(o.status) ? <Caption>{i.status === 'READY' ? '✓ готово' : i.status === 'COOKING' ? '● готується' : '○ у черзі'}</Caption> : null}
+              {['PREPARING', 'CONFIRMED'].includes(o.status) ? (
+                <Caption>{i.status === 'READY' ? '✓ готово' : i.status === 'COOKING' ? '● готується' : '○ у черзі'}</Caption>
+              ) : null}
               {i.notes ? <Caption style={{ fontStyle: 'italic' }}>«{i.notes}»</Caption> : null}
             </View>
             <Text style={{ fontFamily: fonts.semibold, color: colors.textSoft }}>{money(i.lineTotal)}</Text>
@@ -403,14 +527,22 @@ export function DeliveryOrderScreen({ route, navigation }: ScreenProps<'Delivery
       </Card>
 
       <View style={{ gap: 10, marginTop: 16 }}>
-        {o.actions.canReview && <Button title="Оцінити доставку" icon={<MessageSquareHeart size={18} color="#141008" />} onPress={() => navigation.navigate('Review', { orderId: o.id })} />}
+        {o.actions.canReview && (
+          <Button
+            title="Оцінити доставку"
+            icon={<MessageSquareHeart size={18} color="#141008" />}
+            onPress={() => navigation.navigate('Review', { orderId: o.id })}
+          />
+        )}
         {o.hasReview && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
             <Star size={14} color={colors.gold} fill={colors.gold} />
             <Caption>Дякуємо за відгук!</Caption>
           </View>
         )}
-        {['DELIVERED', 'CANCELLED'].includes(o.status) && <Button title="Повторити замовлення" variant="outline" icon={<RotateCcw size={18} color={colors.goldLight} />} onPress={repeat} />}
+        {['DELIVERED', 'CANCELLED'].includes(o.status) && (
+          <Button title="Повторити замовлення" variant="outline" icon={<RotateCcw size={18} color={colors.goldLight} />} onPress={repeat} />
+        )}
         {o.actions.canCancel && (
           <Button
             title="Скасувати замовлення"
@@ -418,11 +550,18 @@ export function DeliveryOrderScreen({ route, navigation }: ScreenProps<'Delivery
             icon={<XCircle size={18} color={colors.danger} />}
             loading={cancel.isPending}
             onPress={() =>
-              confirmAction('Скасувати доставку?', o.payment ? 'Кошти повернуться на картку' : 'Кухня ще не почала готувати', 'Скасувати', () => cancel.mutate({ id: o.id }))
+              confirmAction(
+                'Скасувати доставку?',
+                o.payment ? 'Кошти повернуться на картку' : 'Кухня ще не почала готувати',
+                'Скасувати',
+                () => cancel.mutate({ id: o.id }),
+              )
             }
           />
         )}
-        {['PREPARING', 'READY'].includes(o.status) && <Caption style={{ textAlign: 'center' }}>Кухня вже готує — скасувати замовлення неможливо</Caption>}
+        {['PREPARING', 'READY'].includes(o.status) && (
+          <Caption style={{ textAlign: 'center' }}>Кухня вже готує — скасувати замовлення неможливо</Caption>
+        )}
       </View>
     </Screen>
   );
@@ -439,7 +578,11 @@ export function AddressesScreen({ navigation }: ScreenProps<'Addresses'>) {
       {addresses.isLoading ? (
         <Skeleton height={200} />
       ) : !addresses.data?.length ? (
-        <EmptyState icon={<MapPin size={26} color={colors.gold} />} title="Адрес ще немає" text="Збережіть адресу — і оформлення доставки займе кілька секунд" />
+        <EmptyState
+          icon={<MapPin size={26} color={colors.gold} />}
+          title="Адрес ще немає"
+          text="Збережіть адресу — і оформлення доставки займе кілька секунд"
+        />
       ) : (
         addresses.data.map((a) => (
           <AddressCard
@@ -449,11 +592,21 @@ export function AddressesScreen({ navigation }: ScreenProps<'Addresses'>) {
             right={
               <View style={{ flexDirection: 'row', gap: 6 }}>
                 {!a.isDefault && (
-                  <Pressable accessibilityLabel="Зробити основною" onPress={() => m.update.mutate({ id: a.id, isDefault: true })} style={styles.iconBtn}>
+                  <Pressable
+                    accessibilityLabel="Зробити основною"
+                    onPress={() => m.update.mutate({ id: a.id, isDefault: true })}
+                    style={styles.iconBtn}
+                  >
                     <Star size={16} color={colors.gold} />
                   </Pressable>
                 )}
-                <Pressable accessibilityLabel="Видалити адресу" onPress={() => confirmAction('Видалити адресу?', `${a.label}: ${a.street}, ${a.house}`, 'Видалити', () => m.remove.mutate(a.id))} style={styles.iconBtn}>
+                <Pressable
+                  accessibilityLabel="Видалити адресу"
+                  onPress={() =>
+                    confirmAction('Видалити адресу?', `${a.label}: ${a.street}, ${a.house}`, 'Видалити', () => m.remove.mutate(a.id))
+                  }
+                  style={styles.iconBtn}
+                >
                   <Trash size={16} color={colors.danger} />
                 </Pressable>
               </View>
@@ -461,7 +614,12 @@ export function AddressesScreen({ navigation }: ScreenProps<'Addresses'>) {
           />
         ))
       )}
-      <Button title="Додати адресу" style={{ marginTop: 10 }} icon={<Plus size={18} color="#141008" />} onPress={() => navigation.navigate('AddressForm', {})} />
+      <Button
+        title="Додати адресу"
+        style={{ marginTop: 10 }}
+        icon={<Plus size={18} color="#141008" />}
+        onPress={() => navigation.navigate('AddressForm', {})}
+      />
     </Screen>
   );
 }
@@ -510,15 +668,29 @@ export function AddressFormScreen({ route, navigation }: ScreenProps<'AddressFor
             <Chip key={l} label={l} active={label === l} onPress={() => setLabel(l)} />
           ))}
         </View>
-        <LocateMeButton onLocated={(loc) => applyLocation(loc, { zone: setZoneId, street: setStreet, house: setHouse }, { street, house })} />
+        <LocateMeButton
+          onLocated={(loc) => applyLocation(loc, { zone: setZoneId, street: setStreet, house: setHouse }, { street, house })}
+        />
         <Text style={styles.fieldLabel}>Район</Text>
         {info.data ? <ZonePicker zones={info.data.zones} value={zoneId} onChange={setZoneId} /> : <Skeleton height={90} />}
         {touched && !zoneId ? <Text style={styles.err}>Оберіть район</Text> : null}
         <View style={{ height: 14 }} />
-        <Field label="Вулиця" value={street} onChangeText={setStreet} placeholder="вул. Мечникова" error={touched && street.trim().length < 2 ? 'Вкажіть вулицю' : null} />
+        <Field
+          label="Вулиця"
+          value={street}
+          onChangeText={setStreet}
+          placeholder="вул. Мечникова"
+          error={touched && street.trim().length < 2 ? 'Вкажіть вулицю' : null}
+        />
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{ flex: 1 }}>
-            <Field label="Будинок" value={house} onChangeText={setHouse} placeholder="12" error={touched && !house.trim() ? 'Обовʼязково' : null} />
+            <Field
+              label="Будинок"
+              value={house}
+              onChangeText={setHouse}
+              placeholder="12"
+              error={touched && !house.trim() ? 'Обовʼязково' : null}
+            />
           </View>
           <View style={{ flex: 1 }}>
             <Field label="Квартира" value={apartment} onChangeText={setApartment} />
@@ -551,18 +723,86 @@ export function AddressFormScreen({ route, navigation }: ScreenProps<'AddressFor
 
 const styles = StyleSheet.create({
   section: { marginTop: 22, marginBottom: 10 },
-  closed: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: colors.warningSoft, borderWidth: 1, borderColor: 'rgba(251,191,36,0.3)' },
-  toggleAddr: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderRadius: 16, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.goldBorder },
-  fieldLabel: { fontFamily: fonts.bold, fontSize: 11, letterSpacing: 1.2, color: colors.muted, textTransform: 'uppercase', marginBottom: 8 },
+  closed: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: colors.warningSoft,
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.3)',
+  },
+  toggleAddr: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.goldBorder,
+  },
+  fieldLabel: {
+    fontFamily: fonts.bold,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    color: colors.muted,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
   err: { color: colors.danger, fontSize: 12, marginTop: 6, fontFamily: fonts.medium },
   pay: { flex: 1, padding: 14, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   payIcon: { width: 40, height: 40, borderRadius: 13, backgroundColor: colors.goldSoft, alignItems: 'center', justifyContent: 'center' },
-  notes: { marginTop: 18, minHeight: 72, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(255,255,255,0.03)', padding: 14, color: colors.text, fontFamily: fonts.medium, textAlignVertical: 'top' },
-  checkout: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 20, paddingTop: 16, backgroundColor: 'rgba(12,12,16,0.98)', borderTopWidth: 1, borderTopColor: colors.border, borderTopLeftRadius: 26, borderTopRightRadius: 26 },
+  notes: {
+    marginTop: 18,
+    minHeight: 72,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    padding: 14,
+    color: colors.text,
+    fontFamily: fonts.medium,
+    textAlignVertical: 'top',
+  },
+  checkout: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    backgroundColor: 'rgba(12,12,16,0.98)',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+  },
   warn: { fontFamily: fonts.semibold, color: colors.warning, fontSize: 12.5, marginTop: 4 },
   hint: { fontFamily: fonts.semibold, color: colors.success, fontSize: 12.5, marginTop: 4 },
-  created: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: colors.successSoft, borderWidth: 1, borderColor: 'rgba(52,211,153,0.3)', marginBottom: 14 },
+  created: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: colors.successSoft,
+    borderWidth: 1,
+    borderColor: 'rgba(52,211,153,0.3)',
+    marginBottom: 14,
+  },
   pin: { width: 40, height: 40, borderRadius: 13, backgroundColor: colors.goldSoft, alignItems: 'center', justifyContent: 'center' },
   item: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
-  iconBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: colors.surfaceHigh, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceHigh,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
 });

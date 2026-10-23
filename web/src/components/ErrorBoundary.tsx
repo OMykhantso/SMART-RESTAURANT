@@ -14,7 +14,9 @@ export function reloadOnce(): boolean {
   return true;
 }
 
-const isChunkError = (e: unknown) => e instanceof Error && /dynamically imported module|Importing a module script failed|Failed to fetch|error loading dynamically/i.test(e.message);
+const isChunkError = (e: unknown) =>
+  e instanceof Error &&
+  /dynamically imported module|Importing a module script failed|Failed to fetch|error loading dynamically/i.test(e.message);
 
 /** Замість чорного екрана при помилці рендерингу — зрозуміле повідомлення та кнопка оновлення. */
 export class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -38,7 +40,9 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
         <div className="w-full max-w-xl">
           <div className="font-display text-3xl text-cream">{chunk ? 'Сайт оновився' : 'Щось пішло не так'}</div>
           <p className="mt-3 text-ink-300">
-            {chunk ? 'Завантажилась нова версія сайту — оновіть сторінку.' : 'На сторінці сталася помилка. Оновіть сторінку; якщо повториться — надішліть текст нижче розробнику.'}
+            {chunk
+              ? 'Завантажилась нова версія сайту — оновіть сторінку.'
+              : 'На сторінці сталася помилка. Оновіть сторінку; якщо повториться — надішліть текст нижче розробнику.'}
           </p>
           <pre className="mt-5 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left font-mono text-xs text-rose-200">
             {window.location.pathname}

@@ -3,13 +3,7 @@ import { createRouter } from '../../lib/router';
 import { prisma } from '../../lib/prisma';
 import { env } from '../../config';
 import * as auth from './auth.service';
-import {
-  changePasswordSchema,
-  loginSchema,
-  refreshSchema,
-  registerSchema,
-  updateProfileSchema,
-} from './auth.schemas';
+import { changePasswordSchema, loginSchema, refreshSchema, registerSchema, updateProfileSchema } from './auth.schemas';
 
 const { router, define } = createRouter('/auth');
 

@@ -38,7 +38,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
             : [...prev, { dishId: d.id, name: d.name, price: d.price, imageUrl: d.imageUrl, category: d.category?.slug, quantity: 1 }],
         ),
       setQty: (dishId, qty) =>
-        setLines((prev) => (qty <= 0 ? prev.filter((l) => l.dishId !== dishId) : prev.map((l) => (l.dishId === dishId ? { ...l, quantity: Math.min(50, qty) } : l)))),
+        setLines((prev) =>
+          qty <= 0
+            ? prev.filter((l) => l.dishId !== dishId)
+            : prev.map((l) => (l.dishId === dishId ? { ...l, quantity: Math.min(50, qty) } : l)),
+        ),
       setNotes: (dishId, notes) => setLines((prev) => prev.map((l) => (l.dishId === dishId ? { ...l, notes } : l))),
       clear: () => setLines([]),
       qtyOf: (dishId) => lines.find((l) => l.dishId === dishId)?.quantity ?? 0,

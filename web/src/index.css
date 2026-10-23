@@ -173,8 +173,7 @@
   background:
     radial-gradient(60rem 40rem at 85% -10%, rgb(200 147 58 / 0.13), transparent 60%),
     radial-gradient(50rem 35rem at -10% 20%, rgb(120 70 30 / 0.12), transparent 60%),
-    radial-gradient(40rem 30rem at 50% 120%, rgb(200 147 58 / 0.08), transparent 60%),
-    var(--color-ink-950);
+    radial-gradient(40rem 30rem at 50% 120%, rgb(200 147 58 / 0.08), transparent 60%), var(--color-ink-950);
 }
 
 .sonner-toast-custom {

@@ -128,7 +128,7 @@ define({
   description:
     'NEW→CONFIRMED (офіціант) → PREPARING (кухня) → READY (кухня) → SERVED (офіціант) → PAID (лише через оплату). ' +
     'Скасування: клієнт — лише NEW; офіціант/кухня — до початку приготування, з причиною. ' +
-      'Для доставки діє окремий автомат (DELIVERY_FLOW): статуси курʼєра змінюються лише через Delivery API.',
+    'Для доставки діє окремий автомат (DELIVERY_FLOW): статуси курʼєра змінюються лише через Delivery API.',
   tags: ['Orders'],
   auth: true,
   params: idParam,
@@ -242,7 +242,9 @@ define({
       take: query.limit,
       include: {
         user: { select: { name: true } },
-        order: { select: { id: true, table: { select: { number: true } }, items: { select: { dish: { select: { name: true } } }, take: 3 } } },
+        order: {
+          select: { id: true, table: { select: { number: true } }, items: { select: { dish: { select: { name: true } } }, take: 3 } },
+        },
       },
     });
     const agg = await prisma.review.aggregate({ where: { dishId: null }, _avg: { rating: true }, _count: { _all: true } });

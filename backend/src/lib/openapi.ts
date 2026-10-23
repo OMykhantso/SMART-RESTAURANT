@@ -53,7 +53,13 @@ export function buildOpenApi(registry: RegisteredRoute[] = routeRegistry, info: 
     const secured = r.auth === true || Boolean(r.roles);
     const description = [
       r.description,
-      r.roles ? `**Ролі:** ${r.roles.join(', ')}` : secured ? '**Потрібна автентифікація**' : r.auth === 'optional' ? 'Автентифікація опціональна' : 'Публічний endpoint',
+      r.roles
+        ? `**Ролі:** ${r.roles.join(', ')}`
+        : secured
+          ? '**Потрібна автентифікація**'
+          : r.auth === 'optional'
+            ? 'Автентифікація опціональна'
+            : 'Публічний endpoint',
     ]
       .filter(Boolean)
       .join('\n\n');
@@ -62,9 +68,14 @@ export function buildOpenApi(registry: RegisteredRoute[] = routeRegistry, info: 
     const successStatus = String(r.status ?? 200);
     responses[successStatus] = { description: r.responses?.[Number(successStatus)] ?? 'Успішна відповідь' };
     for (const [code, text] of Object.entries(r.responses ?? {})) {
-      if (code !== successStatus) responses[code] = { description: text, content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } };
+      if (code !== successStatus)
+        responses[code] = { description: text, content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } };
     }
-    if (r.body || r.query) responses['400'] ??= { description: 'Помилка валідації', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } };
+    if (r.body || r.query)
+      responses['400'] ??= {
+        description: 'Помилка валідації',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+      };
     if (secured) {
       responses['401'] ??= { description: 'Не автентифіковано' };
       if (r.roles) responses['403'] ??= { description: 'Недостатньо прав (RBAC)' };

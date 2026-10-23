@@ -15,7 +15,18 @@ const HERO = 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=
 
 function Logo({ size = 64 }: { size?: number }) {
   return (
-    <LinearGradient colors={['#1a1812', '#0d0d11']} style={{ width: size, height: size, borderRadius: size * 0.3, borderWidth: 1, borderColor: 'rgba(220,171,74,0.4)', alignItems: 'center', justifyContent: 'center' }}>
+    <LinearGradient
+      colors={['#1a1812', '#0d0d11']}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size * 0.3,
+        borderWidth: 1,
+        borderColor: 'rgba(220,171,74,0.4)',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <Text style={{ fontSize: size * 0.48 }}>🍽️</Text>
     </LinearGradient>
   );
@@ -25,8 +36,17 @@ export function WelcomeScreen({ navigation }: ScreenProps<'Welcome'>) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Image source={{ uri: HERO }} style={StyleSheet.absoluteFill} contentFit="cover" />
-      <LinearGradient colors={['rgba(8,8,11,0.35)', 'rgba(8,8,11,0.8)', '#08080b']} locations={[0, 0.45, 0.75]} style={StyleSheet.absoluteFill} />
-      <LinearGradient colors={['rgba(200,147,58,0.25)', 'transparent']} start={{ x: 1, y: 0 }} end={{ x: 0.3, y: 0.5 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient
+        colors={['rgba(8,8,11,0.35)', 'rgba(8,8,11,0.8)', '#08080b']}
+        locations={[0, 0.45, 0.75]}
+        style={StyleSheet.absoluteFill}
+      />
+      <LinearGradient
+        colors={['rgba(200,147,58,0.25)', 'transparent']}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.3, y: 0.5 }}
+        style={StyleSheet.absoluteFill}
+      />
       <SafeAreaView style={{ flex: 1, padding: 24, justifyContent: 'space-between' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 }}>
           <Logo size={48} />
@@ -41,7 +61,9 @@ export function WelcomeScreen({ navigation }: ScreenProps<'Welcome'>) {
             <Text style={{ fontFamily: fonts.displayItalic, color: colors.goldLight }}>передбачає</Text>
             {'\n'}ваші бажання
           </Title>
-          <Body style={{ marginTop: 16, fontSize: 16, lineHeight: 24 }}>Бронюйте столик, скануйте QR на столі, замовляйте та оплачуйте — усе в одному застосунку.</Body>
+          <Body style={{ marginTop: 16, fontSize: 16, lineHeight: 24 }}>
+            Бронюйте столик, скануйте QR на столі, замовляйте та оплачуйте — усе в одному застосунку.
+          </Body>
           <View style={{ marginTop: 24, gap: 12 }}>
             {[
               [<Sparkles key="a" size={18} color={colors.gold} />, 'Розумний підбір столика'],
@@ -50,7 +72,18 @@ export function WelcomeScreen({ navigation }: ScreenProps<'Welcome'>) {
               [<CreditCard key="d" size={18} color={colors.gold} />, 'Оплата без очікування рахунку'],
             ].map(([icon, text], i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: colors.goldSoft, alignItems: 'center', justifyContent: 'center' }}>{icon}</View>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 12,
+                    backgroundColor: colors.goldSoft,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {icon}
+                </View>
                 <Text style={{ fontFamily: fonts.medium, fontSize: 15, color: colors.textSoft }}>{text as string}</Text>
               </View>
             ))}
@@ -96,8 +129,24 @@ export function LoginScreen() {
 
   return (
     <AuthLayout title="З поверненням" subtitle="Увійдіть, щоб бронювати й замовляти">
-      <Field label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" placeholder="you@example.com" />
-      <Field label="Пароль" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" placeholder="••••••••" onSubmitEditing={() => submit()} />
+      <Field
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+        autoComplete="email"
+        placeholder="you@example.com"
+      />
+      <Field
+        label="Пароль"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        autoComplete="password"
+        placeholder="••••••••"
+        onSubmitEditing={() => submit()}
+      />
       {error && <Text style={styles.error}>{error}</Text>}
       <Button title="Увійти" loading={loading} onPress={() => submit()} />
       <View style={styles.demo}>
@@ -152,9 +201,31 @@ export function RegisterScreen() {
   return (
     <AuthLayout title="Новий акаунт" subtitle="Один акаунт для застосунку та сайту">
       <Field label="Імʼя" value={form.name} onChangeText={set('name')} error={errors.name} placeholder="Олександр" autoComplete="name" />
-      <Field label="Email" value={form.email} onChangeText={set('email')} error={errors.email} autoCapitalize="none" keyboardType="email-address" placeholder="you@example.com" />
-      <Field label="Телефон" value={form.phone} onChangeText={set('phone')} error={errors.phone} keyboardType="phone-pad" placeholder="+380 50 123 45 67" />
-      <Field label="Пароль" value={form.password} onChangeText={set('password')} error={errors.password} secureTextEntry placeholder="Мінімум 8 символів, літера і цифра" />
+      <Field
+        label="Email"
+        value={form.email}
+        onChangeText={set('email')}
+        error={errors.email}
+        autoCapitalize="none"
+        keyboardType="email-address"
+        placeholder="you@example.com"
+      />
+      <Field
+        label="Телефон"
+        value={form.phone}
+        onChangeText={set('phone')}
+        error={errors.phone}
+        keyboardType="phone-pad"
+        placeholder="+380 50 123 45 67"
+      />
+      <Field
+        label="Пароль"
+        value={form.password}
+        onChangeText={set('password')}
+        error={errors.password}
+        secureTextEntry
+        placeholder="Мінімум 8 символів, літера і цифра"
+      />
       {general && <Text style={styles.error}>{general}</Text>}
       <Button title="Зареєструватися" loading={loading} onPress={submit} />
     </AuthLayout>
@@ -164,7 +235,12 @@ export function RegisterScreen() {
 function AuthLayout({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <LinearGradient colors={['rgba(200,147,58,0.2)', 'transparent']} start={{ x: 1, y: 0 }} end={{ x: 0.2, y: 0.5 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient
+        colors={['rgba(200,147,58,0.2)', 'transparent']}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.2, y: 0.5 }}
+        style={StyleSheet.absoluteFill}
+      />
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
@@ -181,6 +257,14 @@ function AuthLayout({ title, subtitle, children }: { title: string; subtitle: st
 }
 
 const styles = StyleSheet.create({
-  error: { color: colors.danger, fontFamily: fonts.medium, marginBottom: 14, backgroundColor: colors.dangerSoft, padding: 12, borderRadius: 12, overflow: 'hidden' },
+  error: {
+    color: colors.danger,
+    fontFamily: fonts.medium,
+    marginBottom: 14,
+    backgroundColor: colors.dangerSoft,
+    padding: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
   demo: { marginTop: 28, padding: 16, borderRadius: 20, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed' },
 });

@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+.expo
+coverage
+test-results
+playwright-report
+certs
+backend/uploads
+backend/prisma/migrations
+docs
+package-lock.json
+*.md

@@ -10,6 +10,7 @@ import { useCategories, useCurrentVisit, useDishes, useRecommendations } from '@
 import { useCart } from '@/lib/cart';
 import { useAuth } from '@/lib/auth';
 import { cn, money } from '@/lib/format';
+import type { Dish } from '@/lib/types';
 
 type Sort = 'menu' | 'popular' | 'rating' | 'price_asc' | 'price_desc';
 
@@ -37,7 +38,7 @@ export default function MenuPage() {
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const grouped = useMemo(() => {
-    const map = new Map<string, NonNullable<typeof dishes.data>>();
+    const map = new Map<string, Dish[]>();
     for (const d of dishes.data ?? []) {
       const key = d.category?.slug ?? 'other';
       map.set(key, [...(map.get(key) ?? []), d]);
@@ -70,7 +71,9 @@ export default function MenuPage() {
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gold-300">Сезон осінь 2026</div>
           <h1 className="mt-3 font-display text-5xl tracking-tight text-cream md:text-6xl">Меню</h1>
-          <p className="mt-3 max-w-xl text-ink-300">Українська душа, італійська техніка і трохи магії від шефа Марка. Ціни в гривнях, вага — готової страви.</p>
+          <p className="mt-3 max-w-xl text-ink-300">
+            Українська душа, італійська техніка і трохи магії від шефа Марка. Ціни в гривнях, вага — готової страви.
+          </p>
         </div>
         {visit.data?.active ? (
           <div className="glass flex items-center gap-3 rounded-2xl px-4 py-3 ring-1 ring-emerald-400/20">
@@ -97,7 +100,12 @@ export default function MenuPage() {
         <div className="glass-strong rounded-3xl p-3 shadow-2xl shadow-black/30">
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-56 flex-1">
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Пошук страви, інгредієнта…" icon={<Search className="size-4" />} />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Пошук страви, інгредієнта…"
+                icon={<Search className="size-4" />}
+              />
             </div>
             <div className="flex flex-wrap gap-2">
               <Chip active={veg} onClick={() => setVeg((v) => !v)} icon={<Leaf className="size-3.5" />}>
@@ -154,10 +162,17 @@ export default function MenuPage() {
           ))}
         </div>
       ) : dishes.data?.length === 0 ? (
-        <EmptyState className="mt-10" icon={<SearchX className="size-7" />} title="Нічого не знайшли" text="Спробуйте змінити запит або фільтри." />
+        <EmptyState
+          className="mt-10"
+          icon={<SearchX className="size-7" />}
+          title="Нічого не знайшли"
+          text="Спробуйте змінити запит або фільтри."
+        />
       ) : flat ? (
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {dishes.data?.map((d) => <DishCard key={d.id} dish={d} onOpen={() => setOpenDish(d.id)} />)}
+          {dishes.data?.map((d) => (
+            <DishCard key={d.id} dish={d} onOpen={() => setOpenDish(d.id)} />
+          ))}
         </div>
       ) : (
         (categories.data ?? []).map((c) => {
@@ -165,9 +180,16 @@ export default function MenuPage() {
           if (!list?.length) return null;
           return (
             <section key={c.id} data-cat={c.slug} ref={(el) => void (sectionRefs.current[c.slug] = el)} className="mt-16 scroll-mt-40">
-              <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-6 flex items-end justify-between gap-4 border-b border-white/5 pb-4">
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="mb-6 flex items-end justify-between gap-4 border-b border-white/5 pb-4"
+              >
                 <div className="flex items-center gap-4">
-                  <span className="grid size-14 place-items-center rounded-2xl bg-white/[0.04] text-3xl ring-1 ring-white/8">{c.emoji}</span>
+                  <span className="grid size-14 place-items-center rounded-2xl bg-white/[0.04] text-3xl ring-1 ring-white/8">
+                    {c.emoji}
+                  </span>
                   <div>
                     <h2 className="font-display text-3xl text-cream">{c.name}</h2>
                     {c.description && <p className="text-sm text-ink-400">{c.description}</p>}
@@ -186,8 +208,18 @@ export default function MenuPage() {
       )}
 
       {cart.count > 0 && (
-        <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className={cn('fixed inset-x-0 z-30 flex justify-center px-4', visit.data?.active ? 'bottom-24' : 'bottom-6')}>
-          <Button variant="gold" size="xl" className="shadow-2xl shadow-black/60" onClick={() => cart.setOpen(true)} icon={<ShoppingBag className="size-5" />}>
+        <motion.div
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          className={cn('fixed inset-x-0 z-30 flex justify-center px-4', visit.data?.active ? 'bottom-24' : 'bottom-6')}
+        >
+          <Button
+            variant="gold"
+            size="xl"
+            className="shadow-2xl shadow-black/60"
+            onClick={() => cart.setOpen(true)}
+            icon={<ShoppingBag className="size-5" />}
+          >
             Кошик · {cart.count} · {money(cart.total)}
           </Button>
         </motion.div>

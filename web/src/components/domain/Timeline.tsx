@@ -12,7 +12,12 @@ export function Timeline({ history, kind }: { history: HistoryEntry[]; kind: 'or
         const m = meta(h.to);
         return (
           <li key={i} className="relative">
-            <span className={cn('absolute -left-[31px] top-1 size-3 rounded-full ring-4 ring-ink-900', m ? TONE_CLASSES[m.tone].dot : 'bg-ink-400')} />
+            <span
+              className={cn(
+                'absolute -left-[31px] top-1 size-3 rounded-full ring-4 ring-ink-900',
+                m ? TONE_CLASSES[m.tone].dot : 'bg-ink-400',
+              )}
+            />
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="text-sm font-medium text-cream">{h.from === h.to ? h.note : (m?.label ?? h.to)}</span>
               <span className="text-xs tabular-nums text-ink-400">{fmtDateTime(h.at)}</span>

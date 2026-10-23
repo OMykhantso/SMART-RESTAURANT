@@ -68,10 +68,7 @@ export function isTableFree(
   const bufferedStart = new Date(start.getTime() - bufferMin * MIN);
   const bufferedEnd = new Date(end.getTime() + bufferMin * MIN);
   return !busy.some(
-    (b) =>
-      b.tableId === tableId &&
-      b.reservationId !== excludeReservationId &&
-      overlaps(bufferedStart, bufferedEnd, b.startAt, b.endAt),
+    (b) => b.tableId === tableId && b.reservationId !== excludeReservationId && overlaps(bufferedStart, bufferedEnd, b.startAt, b.endAt),
   );
 }
 
@@ -212,20 +209,8 @@ export function computeSlots(input: SlotInput): Slot[] {
     const end = new Date(t + durationMs);
     if (start < input.earliestStart) continue;
 
-    const ranked = rankTables(
-      fitting,
-      input.busy,
-      input.guests,
-      start,
-      end,
-      input.dayOpen,
-      input.dayClose,
-      input.settings,
-      input.prefs,
-    );
-    const occupiedNow = new Set(
-      input.busy.filter((b) => overlaps(start, end, b.startAt, b.endAt)).map((b) => b.tableId),
-    );
+    const ranked = rankTables(fitting, input.busy, input.guests, start, end, input.dayOpen, input.dayClose, input.settings, input.prefs);
+    const occupiedNow = new Set(input.busy.filter((b) => overlaps(start, end, b.startAt, b.endAt)).map((b) => b.tableId));
     const best = ranked[0] ?? null;
     slots.push({
       startAt: start,
@@ -244,10 +229,7 @@ export function computeSlots(input: SlotInput): Slot[] {
 export function nearestAlternatives(slots: Slot[], desired: Date, limit = 4): Slot[] {
   return slots
     .filter((s) => s.available)
-    .sort(
-      (a, b) =>
-        Math.abs(a.startAt.getTime() - desired.getTime()) - Math.abs(b.startAt.getTime() - desired.getTime()),
-    )
+    .sort((a, b) => Math.abs(a.startAt.getTime() - desired.getTime()) - Math.abs(b.startAt.getTime() - desired.getTime()))
     .slice(0, limit)
     .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
 }

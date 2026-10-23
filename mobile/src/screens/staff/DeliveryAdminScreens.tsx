@@ -28,15 +28,14 @@ export function DispatchScreen() {
     setRefreshing(false);
   }, [qc]);
 
-  const all = list.data ?? [];
-  const groups = useMemo(
-    () => ({
+  const groups = useMemo(() => {
+    const all = list.data ?? [];
+    return {
       active: all.filter((o) => ['NEW', 'CONFIRMED', 'PREPARING', 'READY', 'DELIVERING'].includes(o.status)),
       done: all.filter((o) => o.status === 'DELIVERED'),
       cancelled: all.filter((o) => o.status === 'CANCELLED'),
-    }),
-    [all],
-  );
+    };
+  }, [list.data]);
   const waiting = groups.active.filter((o) => !o.delivery?.courier && o.status !== 'NEW').length;
   const onTheWay = groups.active.filter((o) => o.status === 'DELIVERING').length;
   const revenue = groups.done.reduce((s, o) => s + o.total, 0);
@@ -49,14 +48,20 @@ export function DispatchScreen() {
         <View style={styles.stripDiv} />
         <StripItem icon={<Bike size={16} color={colors.info} />} value={String(onTheWay)} label="в дорозі" />
         <View style={styles.stripDiv} />
-        <StripItem icon={<PackageCheck size={16} color={colors.success} />} value={money(revenue)} label={`доставлено · ${groups.done.length}`} />
+        <StripItem
+          icon={<PackageCheck size={16} color={colors.success} />}
+          value={money(revenue)}
+          label={`доставлено · ${groups.done.length}`}
+        />
       </View>
 
       <Eyebrow style={{ marginTop: 20, marginBottom: 10 }}>Курʼєри на зміні</Eyebrow>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {(couriers.data ?? []).map((c) => (
           <View key={c.id} style={styles.courierChip}>
-            <View style={[styles.dot, { backgroundColor: c.active === 0 ? colors.success : c.active >= 2 ? colors.danger : colors.warning }]} />
+            <View
+              style={[styles.dot, { backgroundColor: c.active === 0 ? colors.success : c.active >= 2 ? colors.danger : colors.warning }]}
+            />
             <Text style={{ fontFamily: fonts.semibold, color: colors.text, fontSize: 13 }}>{c.name}</Text>
             <Caption>{c.active === 0 ? 'вільний' : `${c.active} в роботі`}</Caption>
           </View>
@@ -112,7 +117,8 @@ function DispatchCard({ o, couriers }: { o: Order; couriers: { id: number; name:
   const d = o.delivery!;
   const meta = DELIVERY_META[o.status];
   const canAssign = ['CONFIRMED', 'PREPARING', 'READY'].includes(o.status);
-  const canCancel = o.status === 'NEW' || o.status === 'CONFIRMED' || (user?.role === 'ADMIN' && ['PREPARING', 'READY', 'DELIVERING'].includes(o.status));
+  const canCancel =
+    o.status === 'NEW' || o.status === 'CONFIRMED' || (user?.role === 'ADMIN' && ['PREPARING', 'READY', 'DELIVERING'].includes(o.status));
   const late = o.status === 'READY' && minutesSince(o.readyAt) >= 10;
   return (
     <View style={[styles.card, late && { borderColor: 'rgba(251,113,133,0.5)' }]}>
@@ -141,15 +147,23 @@ function DispatchCard({ o, couriers }: { o: Order; couriers: { id: number; name:
           <DeliveryProgress status={o.status} />
         </View>
       )}
-      {late && <Text style={{ fontFamily: fonts.semibold, color: colors.danger, fontSize: 12.5, marginTop: 8 }}>Готове вже {minutesSince(o.readyAt)} хв — терміново призначте курʼєра</Text>}
+      {late && (
+        <Text style={{ fontFamily: fonts.semibold, color: colors.danger, fontSize: 12.5, marginTop: 8 }}>
+          Готове вже {minutesSince(o.readyAt)} хв — терміново призначте курʼєра
+        </Text>
+      )}
 
       <View style={styles.courierRow}>
         <UserRound size={15} color={d.courier ? colors.info : colors.faint} />
-        <Text style={{ flex: 1, fontFamily: fonts.medium, color: d.courier ? colors.text : colors.faint, fontSize: 13 }}>{d.courier ? d.courier.name : 'Курʼєра не призначено'}</Text>
+        <Text style={{ flex: 1, fontFamily: fonts.medium, color: d.courier ? colors.text : colors.faint, fontSize: 13 }}>
+          {d.courier ? d.courier.name : 'Курʼєра не призначено'}
+        </Text>
         {d.courier?.phone ? <Phone size={14} color={colors.faint} /> : null}
         {canAssign && (
           <Pressable onPress={() => setPicking((v) => !v)} style={styles.assignBtn}>
-            <Text style={{ fontFamily: fonts.semibold, color: colors.goldLight, fontSize: 12.5 }}>{d.courier ? 'Змінити' : 'Призначити'}</Text>
+            <Text style={{ fontFamily: fonts.semibold, color: colors.goldLight, fontSize: 12.5 }}>
+              {d.courier ? 'Змінити' : 'Призначити'}
+            </Text>
           </Pressable>
         )}
       </View>
@@ -166,7 +180,10 @@ function DispatchCard({ o, couriers }: { o: Order; couriers: { id: number; name:
             </Pressable>
           ))}
           {d.courier && (
-            <Pressable onPress={() => assign.mutate({ id: o.id, courierId: null }, { onSuccess: () => setPicking(false) })} style={styles.pick}>
+            <Pressable
+              onPress={() => assign.mutate({ id: o.id, courierId: null }, { onSuccess: () => setPicking(false) })}
+              style={styles.pick}
+            >
               <Text style={{ fontFamily: fonts.semibold, color: colors.danger, fontSize: 13 }}>Зняти</Text>
             </Pressable>
           )}
@@ -175,8 +192,11 @@ function DispatchCard({ o, couriers }: { o: Order; couriers: { id: number; name:
       {canCancel && (
         <Pressable
           onPress={() =>
-            confirmAction('Скасувати доставку?', o.payment ? 'Клієнту автоматично повернуться кошти' : `Замовлення #${o.id}`, 'Скасувати', () =>
-              cancel.mutate({ id: o.id, reason: 'Скасовано рестораном' }),
+            confirmAction(
+              'Скасувати доставку?',
+              o.payment ? 'Клієнту автоматично повернуться кошти' : `Замовлення #${o.id}`,
+              'Скасувати',
+              () => cancel.mutate({ id: o.id, reason: 'Скасовано рестораном' }),
             )
           }
           style={styles.cancel}
@@ -196,7 +216,11 @@ export function ZonesScreen() {
   return (
     <Screen edges={['top']}>
       <Header title="Зони доставки" subtitle="Тарифи та райони обслуговування" />
-      {zones.isLoading ? <Skeleton height={300} /> : (zones.data ?? []).map((z) => <ZoneEditor key={`${z.id}-${z.fee}-${z.minOrder}-${z.travelMin}`} z={z} />)}
+      {zones.isLoading ? (
+        <Skeleton height={300} />
+      ) : (
+        (zones.data ?? []).map((z) => <ZoneEditor key={`${z.id}-${z.fee}-${z.minOrder}-${z.travelMin}`} z={z} />)
+      )}
     </Screen>
   );
 }
@@ -207,7 +231,11 @@ function ZoneEditor({ z }: { z: DeliveryZone }) {
   const [min, setMin] = useState(String(z.minOrder / 100));
   const [free, setFree] = useState(z.freeFrom ? String(z.freeFrom / 100) : '');
   const [travel, setTravel] = useState(String(z.travelMin));
-  const dirty = fee !== String(z.fee / 100) || min !== String(z.minOrder / 100) || free !== (z.freeFrom ? String(z.freeFrom / 100) : '') || travel !== String(z.travelMin);
+  const dirty =
+    fee !== String(z.fee / 100) ||
+    min !== String(z.minOrder / 100) ||
+    free !== (z.freeFrom ? String(z.freeFrom / 100) : '') ||
+    travel !== String(z.travelMin);
   const n = (v: string) => Math.round(Number(v.replace(',', '.')) * 100);
   return (
     <Card style={{ marginBottom: 12, opacity: z.isActive ? 1 : 0.75 }}>
@@ -216,7 +244,12 @@ function ZoneEditor({ z }: { z: DeliveryZone }) {
           <Text style={{ fontFamily: fonts.semibold, color: colors.text, fontSize: 16 }}>{z.name}</Text>
           {z.description ? <Caption>{z.description}</Caption> : null}
         </View>
-        <Switch value={z.isActive} onValueChange={(v) => update.mutate({ id: z.id, isActive: v })} trackColor={{ true: colors.gold, false: colors.surfaceHigh }} thumbColor={colors.text} />
+        <Switch
+          value={z.isActive}
+          onValueChange={(v) => update.mutate({ id: z.id, isActive: v })}
+          trackColor={{ true: colors.gold, false: colors.surfaceHigh }}
+          thumbColor={colors.text}
+        />
       </View>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
         <Num label="Доставка, ₴" value={fee} onChange={setFee} />
@@ -230,7 +263,15 @@ function ZoneEditor({ z }: { z: DeliveryZone }) {
           size="sm"
           style={{ marginTop: 12 }}
           loading={update.isPending}
-          onPress={() => update.mutate({ id: z.id, fee: n(fee), minOrder: n(min), freeFrom: free ? n(free) : null, travelMin: Math.round(Number(travel)) })}
+          onPress={() =>
+            update.mutate({
+              id: z.id,
+              fee: n(fee),
+              minOrder: n(min),
+              freeFrom: free ? n(free) : null,
+              travelMin: Math.round(Number(travel)),
+            })
+          }
         />
       )}
     </Card>
@@ -243,20 +284,77 @@ function Num({ label, value, onChange }: { label: string; value: string; onChang
       <Text style={{ fontFamily: fonts.medium, color: colors.muted, fontSize: 10.5, marginBottom: 4 }} numberOfLines={1}>
         {label}
       </Text>
-      <TextInput value={value} onChangeText={(t) => onChange(t.replace(/[^\d.,]/g, ''))} keyboardType="decimal-pad" style={styles.num} placeholder="—" placeholderTextColor={colors.faint} />
+      <TextInput
+        value={value}
+        onChangeText={(t) => onChange(t.replace(/[^\d.,]/g, ''))}
+        keyboardType="decimal-pad"
+        style={styles.num}
+        placeholder="—"
+        placeholderTextColor={colors.faint}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  strip: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  strip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   stripDiv: { width: 1, height: 28, backgroundColor: colors.border },
-  courierChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 99, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  courierChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 99,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  card: { padding: 16, borderRadius: radius.xl, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 12 },
-  courierRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12, padding: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.04)' },
+  card: {
+    padding: 16,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12,
+  },
+  courierRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+    padding: 10,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
   assignBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99, borderWidth: 1, borderColor: colors.goldBorder },
-  pick: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(255,255,255,0.03)' },
+  pick: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
   cancel: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-end', marginTop: 10, paddingVertical: 4 },
-  num: { height: 42, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(255,255,255,0.03)', paddingHorizontal: 10, color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
+  num: {
+    height: 42,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    paddingHorizontal: 10,
+    color: colors.text,
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+  },
 });

@@ -18,7 +18,14 @@ define({
     cart: z
       .string()
       .optional()
-      .transform((v) => (v ? v.split(',').map(Number).filter((n) => Number.isInteger(n) && n > 0) : [])),
+      .transform((v) =>
+        v
+          ? v
+              .split(',')
+              .map(Number)
+              .filter((n) => Number.isInteger(n) && n > 0)
+          : [],
+      ),
     limit: z.coerce.number().int().min(1).max(20).default(8),
   }),
   handler: async ({ query, user }) => {

@@ -31,7 +31,8 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
   // доставку оплачуємо через Delivery API, замовлення в залі — через Restaurant API
   const { data: order } = useQuery({
     queryKey: isDelivery ? ['delivery', 'order', route.params.orderId] : ['order', route.params.orderId],
-    queryFn: () => (isDelivery ? dapi.get<Order>(`/delivery/orders/${route.params.orderId}`) : api.get<Order>(`/orders/${route.params.orderId}`)),
+    queryFn: () =>
+      isDelivery ? dapi.get<Order>(`/delivery/orders/${route.params.orderId}`) : api.get<Order>(`/orders/${route.params.orderId}`),
   });
   const [number, setNumber] = useState('');
   const [exp, setExp] = useState('');
@@ -40,7 +41,10 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
   const [otp, setOtp] = useState('');
   const [challenge, setChallenge] = useState<number | null>(null);
   const [result, setResult] = useState<PayResult | null>(null);
-  const idem = useMemo(() => `app-${route.params.orderId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, [route.params.orderId]);
+  const idem = useMemo(
+    () => `app-${route.params.orderId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    [route.params.orderId],
+  );
   const pop = useRef(new Animated.Value(0)).current;
 
   const tip = order ? Math.round((order.total * tipPct) / 100 / 100) * 100 : 0;
@@ -76,7 +80,10 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
     },
   });
   const confirm = useMutation({
-    mutationFn: () => (isDelivery ? dapi.post<PayResult>(`/delivery/payments/${challenge}/confirm`, { otp }) : api.post<PayResult>(`/payments/${challenge}/confirm`, { otp })),
+    mutationFn: () =>
+      isDelivery
+        ? dapi.post<PayResult>(`/delivery/payments/${challenge}/confirm`, { otp })
+        : api.post<PayResult>(`/payments/${challenge}/confirm`, { otp }),
     onSuccess: success,
     onError: (e) => {
       haptic.error();
@@ -95,7 +102,9 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
           </LinearGradient>
         </Animated.View>
         <Title style={{ textAlign: 'center', marginTop: 24, fontSize: 34 }}>Оплачено!</Title>
-        <Body style={{ textAlign: 'center', marginTop: 6 }}>{isDelivery ? 'Замовлення вже на кухні — стежте за доставкою' : 'Дякуємо, що обрали Smart Restaurant'}</Body>
+        <Body style={{ textAlign: 'center', marginTop: 6 }}>
+          {isDelivery ? 'Замовлення вже на кухні — стежте за доставкою' : 'Дякуємо, що обрали Smart Restaurant'}
+        </Body>
         <View style={styles.receipt}>
           <Row k="Замовлення" v={`#${result.order.id}`} />
           <Row k="Сума" v={money(result.payment.amount)} />
@@ -106,10 +115,20 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
           <Row k="Транзакція" v={result.payment.providerRef.slice(0, 16)} />
         </View>
         {isDelivery ? (
-          <Button title="Стежити за доставкою" style={{ marginTop: 20 }} icon={<Bike size={18} color="#141008" />} onPress={() => navigation.replace('DeliveryOrder', { id: result.order.id, justCreated: true })} />
+          <Button
+            title="Стежити за доставкою"
+            style={{ marginTop: 20 }}
+            icon={<Bike size={18} color="#141008" />}
+            onPress={() => navigation.replace('DeliveryOrder', { id: result.order.id, justCreated: true })}
+          />
         ) : (
           <>
-            <Button title="Оцінити візит" variant="outline" style={{ marginTop: 20 }} onPress={() => navigation.replace('Review', { orderId: result.order.id })} />
+            <Button
+              title="Оцінити візит"
+              variant="outline"
+              style={{ marginTop: 20 }}
+              onPress={() => navigation.replace('Review', { orderId: result.order.id })}
+            />
             <Button title="Готово" style={{ marginTop: 10 }} onPress={() => navigation.goBack()} />
           </>
         )}
@@ -120,7 +139,14 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: colors.bg }}>
       <Screen edges={['top']} contentStyle={{ paddingBottom: 60 }}>
-        <Header title="Оплата" subtitle={order ? `Замовлення #${order.id} · ${order.table ? `столик №${order.table.number}` : `доставка · ${order.delivery?.zone.name ?? ''}`}` : undefined} />
+        <Header
+          title="Оплата"
+          subtitle={
+            order
+              ? `Замовлення #${order.id} · ${order.table ? `столик №${order.table.number}` : `доставка · ${order.delivery?.zone.name ?? ''}`}`
+              : undefined
+          }
+        />
         {!order ? (
           <Skeleton height={400} />
         ) : challenge ? (
@@ -128,8 +154,22 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
             <ShieldCheck size={44} color={colors.gold} />
             <Title style={{ fontSize: 26, marginTop: 12 }}>3-D Secure</Title>
             <Body style={{ textAlign: 'center', marginTop: 6 }}>Банк надіслав код підтвердження.{'\n'}Sandbox-код: 123456</Body>
-            <TextInput value={otp} onChangeText={(t) => setOtp(t.replace(/\D/g, '').slice(0, 6))} keyboardType="number-pad" autoFocus placeholder="••••••" placeholderTextColor={colors.faint} style={styles.otp} />
-            <Button title="Підтвердити" style={{ alignSelf: 'stretch', marginTop: 20 }} disabled={otp.length < 4} loading={confirm.isPending} onPress={() => confirm.mutate()} />
+            <TextInput
+              value={otp}
+              onChangeText={(t) => setOtp(t.replace(/\D/g, '').slice(0, 6))}
+              keyboardType="number-pad"
+              autoFocus
+              placeholder="••••••"
+              placeholderTextColor={colors.faint}
+              style={styles.otp}
+            />
+            <Button
+              title="Підтвердити"
+              style={{ alignSelf: 'stretch', marginTop: 20 }}
+              disabled={otp.length < 4}
+              loading={confirm.isPending}
+              onPress={() => confirm.mutate()}
+            />
           </View>
         ) : (
           <>
@@ -145,7 +185,13 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
               </View>
             </LinearGradient>
 
-            <Field label="Номер картки" value={number} onChangeText={(t) => setNumber(fmtCard(t))} keyboardType="number-pad" placeholder="4242 4242 4242 4242" />
+            <Field
+              label="Номер картки"
+              value={number}
+              onChangeText={(t) => setNumber(fmtCard(t))}
+              keyboardType="number-pad"
+              placeholder="4242 4242 4242 4242"
+            />
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <Field
@@ -160,7 +206,14 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Field label="CVC" value={cvc} onChangeText={(t) => setCvc(t.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" placeholder="123" secureTextEntry />
+                <Field
+                  label="CVC"
+                  value={cvc}
+                  onChangeText={(t) => setCvc(t.replace(/\D/g, '').slice(0, 4))}
+                  keyboardType="number-pad"
+                  placeholder="123"
+                  secureTextEntry
+                />
               </View>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 18 }}>
@@ -193,7 +246,9 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
                   }}
                   style={[styles.tip, tipPct === p && { borderColor: colors.goldBorder, backgroundColor: colors.goldSoft }]}
                 >
-                  <Text style={{ fontFamily: fonts.bold, color: tipPct === p ? colors.goldLight : colors.muted }}>{p === 0 ? 'Без' : `${p}%`}</Text>
+                  <Text style={{ fontFamily: fonts.bold, color: tipPct === p ? colors.goldLight : colors.muted }}>
+                    {p === 0 ? 'Без' : `${p}%`}
+                  </Text>
                 </Pressable>
               ))}
             </View>
@@ -206,7 +261,13 @@ export function PaymentScreen({ route, navigation }: ScreenProps<'Payment'>) {
                 <Text style={{ fontFamily: fonts.display, fontSize: 30, color: colors.goldLight }}>{money(order.total + tip)}</Text>
               </View>
             </View>
-            <Button title={`Сплатити ${money(order.total + tip)}`} icon={<Lock size={18} color="#141008" />} disabled={!valid} loading={pay.isPending} onPress={() => pay.mutate()} />
+            <Button
+              title={`Сплатити ${money(order.total + tip)}`}
+              icon={<Lock size={18} color="#141008" />}
+              disabled={!valid}
+              loading={pay.isPending}
+              onPress={() => pay.mutate()}
+            />
             <Caption style={{ textAlign: 'center', marginTop: 12 }}>Sandbox-платіж · номер картки й CVC не зберігаються</Caption>
           </>
         )}
@@ -248,12 +309,20 @@ function Stars({ value, onChange, size = 36 }: { value: number; onChange: (v: nu
 export function ReviewScreen({ route, navigation }: ScreenProps<'Review'>) {
   const qc = useQueryClient();
   const toast = useToast();
-  const { data: order } = useQuery({ queryKey: ['order', route.params.orderId], queryFn: () => api.get<Order>(`/orders/${route.params.orderId}`) });
+  const { data: order } = useQuery({
+    queryKey: ['order', route.params.orderId],
+    queryFn: () => api.get<Order>(`/orders/${route.params.orderId}`),
+  });
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [dishes, setDishes] = useState<Record<number, number>>({});
   const submit = useMutation({
-    mutationFn: () => api.post(`/orders/${route.params.orderId}/review`, { rating, comment: comment || undefined, dishes: Object.entries(dishes).map(([dishId, r]) => ({ dishId: Number(dishId), rating: r })) }),
+    mutationFn: () =>
+      api.post(`/orders/${route.params.orderId}/review`, {
+        rating,
+        comment: comment || undefined,
+        dishes: Object.entries(dishes).map(([dishId, r]) => ({ dishId: Number(dishId), rating: r })),
+      }),
     onSuccess: () => {
       haptic.success();
       qc.invalidateQueries();
@@ -274,7 +343,14 @@ export function ReviewScreen({ route, navigation }: ScreenProps<'Review'>) {
         </View>
         <Text style={{ fontFamily: fonts.display, fontSize: 18, color: colors.goldLight, marginTop: 10 }}>{LABELS[rating]}</Text>
       </View>
-      <Field label="Коментар" value={comment} onChangeText={setComment} placeholder={order?.type === 'DELIVERY' ? 'Гаряча? Вчасно? Курʼєр ввічливий?' : 'Що сподобалось найбільше?'} multiline style={{ height: 96, paddingTop: 14, textAlignVertical: 'top' }} />
+      <Field
+        label="Коментар"
+        value={comment}
+        onChangeText={setComment}
+        placeholder={order?.type === 'DELIVERY' ? 'Гаряча? Вчасно? Курʼєр ввічливий?' : 'Що сподобалось найбільше?'}
+        multiline
+        style={{ height: 96, paddingTop: 14, textAlignVertical: 'top' }}
+      />
       <Eyebrow style={{ marginBottom: 10 }}>Оцініть страви</Eyebrow>
       {unique.map((i) => (
         <View key={i.dishId} style={styles.dishRate}>
@@ -291,16 +367,92 @@ export function ReviewScreen({ route, navigation }: ScreenProps<'Review'>) {
 }
 
 const styles = StyleSheet.create({
-  card: { height: 190, borderRadius: 24, padding: 22, justifyContent: 'space-between', marginBottom: 22, borderWidth: 1, borderColor: 'rgba(220,171,74,0.25)' },
+  card: {
+    height: 190,
+    borderRadius: 24,
+    padding: 22,
+    justifyContent: 'space-between',
+    marginBottom: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(220,171,74,0.25)',
+  },
   chip: { width: 44, height: 32, borderRadius: 7 },
-  cardNumber: { fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }), fontSize: 20, letterSpacing: 2, color: colors.text },
+  cardNumber: {
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
+    fontSize: 20,
+    letterSpacing: 2,
+    color: colors.text,
+  },
   cardSmall: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 1.5, color: colors.muted },
-  testCard: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 99, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(255,255,255,0.03)' },
-  tip: { flex: 1, height: 46, borderRadius: 14, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
-  summary: { marginVertical: 20, padding: 16, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  challenge: { alignItems: 'center', padding: 24, borderRadius: radius.xl, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginTop: 20 },
-  otp: { marginTop: 22, width: 220, height: 64, borderRadius: 18, borderWidth: 1, borderColor: colors.goldBorder, backgroundColor: colors.bgElevated, textAlign: 'center', fontSize: 28, letterSpacing: 10, color: colors.text, fontFamily: fonts.bold },
-  okCircle: { width: 104, height: 104, borderRadius: 52, alignItems: 'center', justifyContent: 'center', shadowColor: colors.gold, shadowOpacity: 0.6, shadowRadius: 30, elevation: 12 },
+  testCard: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 99,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  tip: {
+    flex: 1,
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  summary: {
+    marginVertical: 20,
+    padding: 16,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  challenge: {
+    alignItems: 'center',
+    padding: 24,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: 20,
+  },
+  otp: {
+    marginTop: 22,
+    width: 220,
+    height: 64,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.bgElevated,
+    textAlign: 'center',
+    fontSize: 28,
+    letterSpacing: 10,
+    color: colors.text,
+    fontFamily: fonts.bold,
+  },
+  okCircle: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.gold,
+    shadowOpacity: 0.6,
+    shadowRadius: 30,
+    elevation: 12,
+  },
   receipt: { marginTop: 26, padding: 18, borderRadius: 20, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.18)' },
-  dishRate: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, borderRadius: 16, backgroundColor: colors.surface, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
+  dishRate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 8,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
 });

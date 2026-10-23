@@ -1,6 +1,19 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Bike, CalendarClock, ChefHat, Clock, Receipt, Search, ShieldCheck, Star, TrendingDown, TrendingUp, Users, Wallet } from 'lucide-react-native';
+import {
+  Bike,
+  CalendarClock,
+  ChefHat,
+  Clock,
+  Receipt,
+  Search,
+  ShieldCheck,
+  Star,
+  TrendingDown,
+  TrendingUp,
+  Users,
+  Wallet,
+} from 'lucide-react-native';
 import { Badge, Caption, Chip, EmptyState, Header, Screen, Skeleton } from '../../components/ui';
 import { SectionTitle } from '../../components/domain';
 import { StatTile } from '../../components/staff';
@@ -31,21 +44,73 @@ export function AnalyticsScreen() {
       ) : (
         <>
           <View style={styles.grid}>
-            <StatTile label="Виручка" value={money(data.kpis.revenue)} hint={<Delta v={data.deltas.revenue} />} icon={<Wallet size={18} color={colors.goldLight} />} />
-            <StatTile label="Середній чек" value={money(data.kpis.avgCheck)} hint={<Delta v={data.deltas.avgCheck} />} icon={<Receipt size={18} color={colors.orange} />} tone="orange" />
-            <StatTile label="Гостей обслуговано" value={String(data.kpis.guests)} hint={<Delta v={data.deltas.guests} />} icon={<Users size={18} color={colors.success} />} tone="success" />
-            <StatTile label="Бронювань" value={String(data.kpis.reservationsCount)} hint={`no-show ${data.kpis.noShowRate}% · скас. ${data.kpis.cancellationRate}%`} icon={<CalendarClock size={18} color={colors.info} />} tone="info" />
-            <StatTile label="Середня оцінка" value={data.kpis.avgRating ? data.kpis.avgRating.toFixed(1) : '—'} hint={`${data.kpis.reviewsCount} відгуків`} icon={<Star size={18} color={colors.warning} />} tone="warning" />
-            <StatTile label="Час на кухні" value={`${data.kpis.avgPrepMin} хв`} hint={`візит ≈ ${data.kpis.avgVisitMin} хв`} icon={<Clock size={18} color={colors.violet} />} tone="violet" />
+            <StatTile
+              label="Виручка"
+              value={money(data.kpis.revenue)}
+              hint={<Delta v={data.deltas.revenue} />}
+              icon={<Wallet size={18} color={colors.goldLight} />}
+            />
+            <StatTile
+              label="Середній чек"
+              value={money(data.kpis.avgCheck)}
+              hint={<Delta v={data.deltas.avgCheck} />}
+              icon={<Receipt size={18} color={colors.orange} />}
+              tone="orange"
+            />
+            <StatTile
+              label="Гостей обслуговано"
+              value={String(data.kpis.guests)}
+              hint={<Delta v={data.deltas.guests} />}
+              icon={<Users size={18} color={colors.success} />}
+              tone="success"
+            />
+            <StatTile
+              label="Бронювань"
+              value={String(data.kpis.reservationsCount)}
+              hint={`no-show ${data.kpis.noShowRate}% · скас. ${data.kpis.cancellationRate}%`}
+              icon={<CalendarClock size={18} color={colors.info} />}
+              tone="info"
+            />
+            <StatTile
+              label="Середня оцінка"
+              value={data.kpis.avgRating ? data.kpis.avgRating.toFixed(1) : '—'}
+              hint={`${data.kpis.reviewsCount} відгуків`}
+              icon={<Star size={18} color={colors.warning} />}
+              tone="warning"
+            />
+            <StatTile
+              label="Час на кухні"
+              value={`${data.kpis.avgPrepMin} хв`}
+              hint={`візит ≈ ${data.kpis.avgVisitMin} хв`}
+              icon={<Clock size={18} color={colors.violet} />}
+              tone="violet"
+            />
           </View>
 
           {data.delivery && (
             <>
               <SectionTitle title="Доставка" />
               <View style={styles.grid}>
-                <StatTile label="Доставлено" value={String(data.delivery.delivered)} hint={`${data.delivery.cancelled} скасовано`} icon={<Bike size={18} color={colors.info} />} tone="info" />
-                <StatTile label="Виручка доставки" value={money(data.delivery.revenue)} hint={`${data.delivery.share}% від усієї`} icon={<Wallet size={18} color={colors.goldLight} />} />
-                <StatTile label="Від замовлення до дверей" value={data.delivery.avgDeliveryMin ? `${data.delivery.avgDeliveryMin} хв` : '—'} hint={`плата за доставку ${money(data.delivery.fees)}`} icon={<Clock size={18} color={colors.violet} />} tone="violet" />
+                <StatTile
+                  label="Доставлено"
+                  value={String(data.delivery.delivered)}
+                  hint={`${data.delivery.cancelled} скасовано`}
+                  icon={<Bike size={18} color={colors.info} />}
+                  tone="info"
+                />
+                <StatTile
+                  label="Виручка доставки"
+                  value={money(data.delivery.revenue)}
+                  hint={`${data.delivery.share}% від усієї`}
+                  icon={<Wallet size={18} color={colors.goldLight} />}
+                />
+                <StatTile
+                  label="Від замовлення до дверей"
+                  value={data.delivery.avgDeliveryMin ? `${data.delivery.avgDeliveryMin} хв` : '—'}
+                  hint={`плата за доставку ${money(data.delivery.fees)}`}
+                  icon={<Clock size={18} color={colors.violet} />}
+                  tone="violet"
+                />
               </View>
               {data.delivery.byZone.slice(0, 6).map((z) => (
                 <View key={z.zone} style={styles.row}>
@@ -54,7 +119,12 @@ export function AnalyticsScreen() {
                       {z.zone}
                     </Text>
                     <View style={styles.track}>
-                      <View style={[styles.fill, { width: `${(z.orders / Math.max(1, data.delivery!.byZone[0].orders)) * 100}%`, backgroundColor: colors.info }]} />
+                      <View
+                        style={[
+                          styles.fill,
+                          { width: `${(z.orders / Math.max(1, data.delivery!.byZone[0].orders)) * 100}%`, backgroundColor: colors.info },
+                        ]}
+                      />
                     </View>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
@@ -67,10 +137,20 @@ export function AnalyticsScreen() {
           )}
 
           <SectionTitle title="Виручка по днях" />
-          <BarChart data={data.revenueByDay.map((d) => ({ label: d.date.slice(8), value: d.revenue, title: `${d.date}: ${money(d.revenue)} · ${d.orders} опл.` }))} format={money} />
+          <BarChart
+            data={data.revenueByDay.map((d) => ({
+              label: d.date.slice(8),
+              value: d.revenue,
+              title: `${d.date}: ${money(d.revenue)} · ${d.orders} опл.`,
+            }))}
+            format={money}
+          />
 
           <SectionTitle title="Навантаження по годинах" />
-          <BarChart data={data.ordersByHour.map((h) => ({ label: String(h.hour), value: h.orders, title: `${h.hour}:00 — ${h.orders} замовлень` }))} format={(v) => `${v}`} />
+          <BarChart
+            data={data.ordersByHour.map((h) => ({ label: String(h.hour), value: h.orders, title: `${h.hour}:00 — ${h.orders} замовлень` }))}
+            format={(v) => `${v}`}
+          />
 
           <SectionTitle title="Топ страв" />
           {data.topDishes.length === 0 ? (
@@ -123,7 +203,9 @@ function BarChart({ data, format }: { data: { label: string; value: number; titl
       <View style={styles.bars}>
         {data.map((d, i) => (
           <Pressable key={i} onPress={() => setActive(i)} style={styles.barHit} accessibilityLabel={d.title}>
-            <View style={[styles.bar, { height: `${Math.max((d.value / max) * 100, d.value ? 3 : 0)}%`, opacity: i === shown ? 1 : 0.55 }]} />
+            <View
+              style={[styles.bar, { height: `${Math.max((d.value / max) * 100, d.value ? 3 : 0)}%`, opacity: i === shown ? 1 : 0.55 }]}
+            />
           </Pressable>
         ))}
       </View>
@@ -153,7 +235,14 @@ export function UsersScreen() {
       <Header title="Користувачі" subtitle={data ? `Знайдено: ${data.total}` : undefined} />
       <View style={styles.searchBox}>
         <Search size={18} color={colors.faint} />
-        <TextInput value={search} onChangeText={setSearch} placeholder="Імʼя або email" placeholderTextColor={colors.faint} autoCapitalize="none" style={{ flex: 1, color: colors.text, fontFamily: fonts.medium, height: 44 }} />
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Імʼя або email"
+          placeholderTextColor={colors.faint}
+          autoCapitalize="none"
+          style={{ flex: 1, color: colors.text, fontFamily: fonts.medium, height: 44 }}
+        />
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12, marginBottom: 14 }}>
         <Chip label="Усі" active={role === 'ALL'} onPress={() => setRole('ALL')} />
@@ -201,15 +290,29 @@ function UserCard({ u }: { u: User }) {
                 label={ROLE_LABEL[r]}
                 active={u.role === r}
                 icon={r === 'ADMIN' ? <ShieldCheck size={14} color={u.role === r ? colors.goldLight : colors.textSoft} /> : undefined}
-                onPress={() => r !== u.role && confirmAction('Змінити роль?', `${u.name}: ${ROLE_LABEL[u.role]} → ${ROLE_LABEL[r]}`, 'Змінити', () => update.mutate({ id: u.id, role: r }))}
+                onPress={() =>
+                  r !== u.role &&
+                  confirmAction('Змінити роль?', `${u.name}: ${ROLE_LABEL[u.role]} → ${ROLE_LABEL[r]}`, 'Змінити', () =>
+                    update.mutate({ id: u.id, role: r }),
+                  )
+                }
               />
             ))}
           </View>
           <Pressable
-            onPress={() => confirmAction(u.isActive ? 'Деактивувати акаунт?' : 'Активувати акаунт?', u.isActive ? 'Користувач одразу втратить доступ до системи.' : 'Користувач знову зможе входити.', u.isActive ? 'Деактивувати' : 'Активувати', () => update.mutate({ id: u.id, isActive: !u.isActive }))}
+            onPress={() =>
+              confirmAction(
+                u.isActive ? 'Деактивувати акаунт?' : 'Активувати акаунт?',
+                u.isActive ? 'Користувач одразу втратить доступ до системи.' : 'Користувач знову зможе входити.',
+                u.isActive ? 'Деактивувати' : 'Активувати',
+                () => update.mutate({ id: u.id, isActive: !u.isActive }),
+              )
+            }
             style={[styles.toggle, { borderColor: u.isActive ? 'rgba(251,113,133,0.35)' : 'rgba(52,211,153,0.35)' }]}
           >
-            <Text style={{ fontFamily: fonts.semibold, color: u.isActive ? colors.danger : colors.success }}>{u.isActive ? 'Деактивувати' : 'Активувати'}</Text>
+            <Text style={{ fontFamily: fonts.semibold, color: u.isActive ? colors.danger : colors.success }}>
+              {u.isActive ? 'Деактивувати' : 'Активувати'}
+            </Text>
           </Pressable>
         </View>
       )}
@@ -221,18 +324,52 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 18 },
   chart: { padding: 14, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   chartTitle: { fontFamily: fonts.semibold, fontSize: 13, color: colors.text, marginBottom: 10 },
-  bars: { height: 130, flexDirection: 'row', alignItems: 'flex-end', gap: 2, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)' },
+  bars: {
+    height: 130,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
   barHit: { flex: 1, height: '100%', justifyContent: 'flex-end' },
   bar: { backgroundColor: colors.gold, borderTopLeftRadius: 4, borderTopRightRadius: 4, minHeight: 0 },
   axis: { flex: 1, textAlign: 'center', fontFamily: fonts.medium, fontSize: 9.5, color: colors.faint },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 8 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 8,
+  },
   rank: { width: 22, fontFamily: fonts.display, fontSize: 18, color: colors.gold, textAlign: 'center' },
   rowTitle: { fontFamily: fonts.semibold, fontSize: 14.5, color: colors.text },
   rowValue: { fontFamily: fonts.bold, fontSize: 14, color: colors.text },
   track: { height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.07)', marginTop: 6 },
   fill: { height: '100%', borderRadius: 2, backgroundColor: colors.gold },
-  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4, paddingHorizontal: 14, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  userCard: { padding: 14, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 10 },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 4,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  userCard: {
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 10,
+  },
   initials: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.goldSoft, alignItems: 'center', justifyContent: 'center' },
   toggle: { marginTop: 12, height: 42, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 });

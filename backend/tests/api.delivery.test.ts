@@ -46,14 +46,50 @@ beforeAll(async () => {
   fx = await seedFixtures();
   const hash = await bcrypt.hash('Passw0rd!', 4);
   const [c1, c2] = await Promise.all([
-    prisma.user.create({ data: { email: 'courier@test.ua', role: 'COURIER', name: 'Курʼєр Один', phone: '+380670000001', passwordHash: hash } }),
+    prisma.user.create({
+      data: { email: 'courier@test.ua', role: 'COURIER', name: 'Курʼєр Один', phone: '+380670000001', passwordHash: hash },
+    }),
     prisma.user.create({ data: { email: 'courier2@test.ua', role: 'COURIER', name: 'Курʼєр Два', passwordHash: hash } }),
   ]);
   courierIds = { c1: c1.id, c2: c2.id };
   const [center, far, closed] = await Promise.all([
-    prisma.deliveryZone.create({ data: { name: 'Печерський', fee: 4900, minOrder: 30000, freeFrom: 80000, travelMin: 15, sortOrder: 1, centerLat: 50.433, centerLng: 30.537, radiusKm: 3.2 } }),
-    prisma.deliveryZone.create({ data: { name: 'Оболонський', fee: 8900, minOrder: 50000, travelMin: 35, sortOrder: 2, centerLat: 50.506, centerLng: 30.497, radiusKm: 4.2 } }),
-    prisma.deliveryZone.create({ data: { name: 'Бровари', fee: 14900, minOrder: 80000, travelMin: 45, isActive: false, centerLat: 50.511, centerLng: 30.79, radiusKm: 5 } }),
+    prisma.deliveryZone.create({
+      data: {
+        name: 'Печерський',
+        fee: 4900,
+        minOrder: 30000,
+        freeFrom: 80000,
+        travelMin: 15,
+        sortOrder: 1,
+        centerLat: 50.433,
+        centerLng: 30.537,
+        radiusKm: 3.2,
+      },
+    }),
+    prisma.deliveryZone.create({
+      data: {
+        name: 'Оболонський',
+        fee: 8900,
+        minOrder: 50000,
+        travelMin: 35,
+        sortOrder: 2,
+        centerLat: 50.506,
+        centerLng: 30.497,
+        radiusKm: 4.2,
+      },
+    }),
+    prisma.deliveryZone.create({
+      data: {
+        name: 'Бровари',
+        fee: 14900,
+        minOrder: 80000,
+        travelMin: 45,
+        isActive: false,
+        centerLat: 50.511,
+        centerLng: 30.79,
+        radiusKm: 5,
+      },
+    }),
   ]);
   zones = { center: center.id, far: far.id, closed: closed.id };
   [client, client2, staff, kitchen, admin, courier, courier2] = await Promise.all([
@@ -89,9 +125,15 @@ describe('TC-D01 Єдиний вхід і довідники доставки', 
 
   it('розрахунок: мінімальна сума і безкоштовна доставка від порогу', async () => {
     setNow(13, 0);
-    const small = await dapi().post('/api/delivery/quote').send({ zoneId: zones.center, items: [{ dishId: fx.dishes.pizza.id, quantity: 1 }] }).expect(200);
+    const small = await dapi()
+      .post('/api/delivery/quote')
+      .send({ zoneId: zones.center, items: [{ dishId: fx.dishes.pizza.id, quantity: 1 }] })
+      .expect(200);
     expect(small.body).toMatchObject({ subtotal: 23500, fee: 4900, total: 28400, canOrder: false, missingToMin: 6500 });
-    const big = await dapi().post('/api/delivery/quote').send({ zoneId: zones.center, items: [{ dishId: fx.dishes.steak.id, quantity: 2 }] }).expect(200);
+    const big = await dapi()
+      .post('/api/delivery/quote')
+      .send({ zoneId: zones.center, items: [{ dishId: fx.dishes.steak.id, quantity: 2 }] })
+      .expect(200);
     expect(big.body).toMatchObject({ subtotal: 149000, fee: 0, total: 149000, canOrder: true });
     expect(big.body.etaMinutes).toBeGreaterThan(15);
   });
@@ -114,7 +156,12 @@ describe('TC-D06 Геолокація: район за координатами'
 
   it('неактивна зона (Бровари) і точка поза містом — не обслуговуються, з причиною', async () => {
     const brovary = await dapi().post('/api/delivery/locate').send({ lat: 50.511, lng: 30.79 }).expect(200);
-    expect(brovary.body).toMatchObject({ covered: false, reason: 'ZONE_INACTIVE', zone: null, nearest: { name: 'Бровари', isActive: false } });
+    expect(brovary.body).toMatchObject({
+      covered: false,
+      reason: 'ZONE_INACTIVE',
+      zone: null,
+      nearest: { name: 'Бровари', isActive: false },
+    });
     const lviv = await dapi().post('/api/delivery/locate').send({ lat: 49.84, lng: 24.03 }).expect(200);
     expect(lviv.body).toMatchObject({ covered: false, reason: 'OUT_OF_RANGE' });
     expect(lviv.body.fromRestaurantKm).toBeGreaterThan(400);
@@ -131,7 +178,11 @@ describe('TC-D06 Геолокація: район за координатами'
 describe('TC-D02 Правила оформлення доставки', () => {
   it('сума нижча за мінімальну → 422 BELOW_MIN_ORDER', async () => {
     setNow(13, 0);
-    const res = await dapi().post('/api/delivery/orders').set(bearer(client)).send(cashBody([{ dishId: fx.dishes.pizza.id, quantity: 1 }])).expect(422);
+    const res = await dapi()
+      .post('/api/delivery/orders')
+      .set(bearer(client))
+      .send(cashBody([{ dishId: fx.dishes.pizza.id, quantity: 1 }]))
+      .expect(422);
     expect(res.body.error.code).toBe('BELOW_MIN_ORDER');
     expect(res.body.error.details.missing).toBe(6500);
   });
@@ -139,9 +190,17 @@ describe('TC-D02 Правила оформлення доставки', () => {
   it('неактивна зона → 409, некоректний телефон → 422, не клієнт → 403', async () => {
     setNow(13, 0);
     const items = [{ dishId: fx.dishes.steak.id, quantity: 1 }];
-    const z = await dapi().post('/api/delivery/orders').set(bearer(client)).send(cashBody(items, { address: { zoneId: zones.closed, street: 'бульв. Незалежності', house: '1' } })).expect(409);
+    const z = await dapi()
+      .post('/api/delivery/orders')
+      .set(bearer(client))
+      .send(cashBody(items, { address: { zoneId: zones.closed, street: 'бульв. Незалежності', house: '1' } }))
+      .expect(409);
     expect(z.body.error.code).toBe('ZONE_INACTIVE');
-    const p = await dapi().post('/api/delivery/orders').set(bearer(client)).send(cashBody(items, { phone: '1234567890' })).expect(422);
+    const p = await dapi()
+      .post('/api/delivery/orders')
+      .set(bearer(client))
+      .send(cashBody(items, { phone: '1234567890' }))
+      .expect(422);
     expect(p.body.error.code).toBe('PHONE_INVALID');
     await dapi().post('/api/delivery/orders').set(bearer(staff)).send(cashBody(items)).expect(403);
   });
@@ -152,7 +211,12 @@ describe('TC-D02 Правила оформлення доставки', () => {
     const res = await dapi()
       .post('/api/delivery/orders')
       .set(bearer(client))
-      .send(cashBody([{ dishId: fx.dishes.steak.id, quantity: 1 }, { dishId: fx.dishes.tiramisu.id, quantity: 1 }]))
+      .send(
+        cashBody([
+          { dishId: fx.dishes.steak.id, quantity: 1 },
+          { dishId: fx.dishes.tiramisu.id, quantity: 1 },
+        ]),
+      )
       .expect(409);
     expect(res.body.error.code).toBe('DISH_UNAVAILABLE');
     await prisma.dish.update({ where: { id: fx.dishes.tiramisu.id }, data: { isAvailable: true } });
@@ -160,7 +224,11 @@ describe('TC-D02 Правила оформлення доставки', () => {
 
   it('поза годинами доставки → 409 DELIVERY_CLOSED з часом відкриття', async () => {
     setNow(23, 30);
-    const res = await dapi().post('/api/delivery/orders').set(bearer(client)).send(cashBody([{ dishId: fx.dishes.steak.id, quantity: 1 }])).expect(409);
+    const res = await dapi()
+      .post('/api/delivery/orders')
+      .set(bearer(client))
+      .send(cashBody([{ dishId: fx.dishes.steak.id, quantity: 1 }]))
+      .expect(409);
     expect(res.body.error.code).toBe('DELIVERY_CLOSED');
     expect(res.body.error.message).toMatch(/відкриємось/);
     setNow(13, 0);
@@ -239,7 +307,9 @@ describe('TC-D03 Готівка: клієнт → кухня (Restaurant API) �
       .expect(201);
     expect(review.body.reviewsCreated).toBe(2);
     const hist = await dapi().get(`/api/delivery/orders/${ctx.id}`).set(bearer(client)).expect(200);
-    expect(hist.body.history.map((h: { to: string }) => h.to)).toEqual(expect.arrayContaining(['CONFIRMED', 'PREPARING', 'READY', 'DELIVERING', 'DELIVERED']));
+    expect(hist.body.history.map((h: { to: string }) => h.to)).toEqual(
+      expect.arrayContaining(['CONFIRMED', 'PREPARING', 'READY', 'DELIVERING', 'DELIVERED']),
+    );
   });
 });
 
@@ -266,17 +336,35 @@ describe('TC-D04 Картка: NEW → оплата (3-D Secure, ідемпот�
     const card = { number: '4000000000000002', expMonth: 12, expYear: 2031, cvc: '123' };
     const declined = await dapi().post(`/api/delivery/orders/${ctx.id}/pay`).set(bearer(client2)).send({ card }).expect(402);
     expect(declined.body.error.code).toBe('PAYMENT_DECLINED');
-    await dapi().post(`/api/delivery/orders/${ctx.id}/pay`).set(bearer(client)).send({ card: { ...card, number: '4242424242424242' } }).expect(403);
+    await dapi()
+      .post(`/api/delivery/orders/${ctx.id}/pay`)
+      .set(bearer(client))
+      .send({ card: { ...card, number: '4242424242424242' } })
+      .expect(403);
   });
 
   it('3-D Secure → CONFIRMED; повтор з тим самим Idempotency-Key не створює другий платіж', async () => {
     const card = { number: '4000000000003220', expMonth: 12, expYear: 2031, cvc: '123' };
-    const first = await dapi().post(`/api/delivery/orders/${ctx.id}/pay`).set(bearer(client2)).set('Idempotency-Key', 'd-key-1').send({ card, tip: 1000 }).expect(200);
+    const first = await dapi()
+      .post(`/api/delivery/orders/${ctx.id}/pay`)
+      .set(bearer(client2))
+      .set('Idempotency-Key', 'd-key-1')
+      .send({ card, tip: 1000 })
+      .expect(200);
     expect(first.body.requiresAction).toBe(true);
     ctx.paymentId = first.body.payment.id;
-    const replay = await dapi().post(`/api/delivery/orders/${ctx.id}/pay`).set(bearer(client2)).set('Idempotency-Key', 'd-key-1').send({ card, tip: 1000 }).expect(200);
+    const replay = await dapi()
+      .post(`/api/delivery/orders/${ctx.id}/pay`)
+      .set(bearer(client2))
+      .set('Idempotency-Key', 'd-key-1')
+      .send({ card, tip: 1000 })
+      .expect(200);
     expect(replay.body).toMatchObject({ replayed: true, payment: { id: ctx.paymentId } });
-    const ok = await dapi().post(`/api/delivery/payments/${ctx.paymentId}/confirm`).set(bearer(client2)).send({ otp: '123456' }).expect(200);
+    const ok = await dapi()
+      .post(`/api/delivery/payments/${ctx.paymentId}/confirm`)
+      .set(bearer(client2))
+      .send({ otp: '123456' })
+      .expect(200);
     expect(ok.body.order).toMatchObject({ status: 'CONFIRMED', payment: { method: 'CARD', amount: 79400, tip: 1000 } });
     const again = await dapi()
       .post(`/api/delivery/orders/${ctx.id}/pay`)
@@ -300,7 +388,11 @@ describe('TC-D04 Картка: NEW → оплата (3-D Secure, ідемпот�
 describe('TC-D05 Обмеження: скасування, ліміти, доступ', () => {
   it('клієнт не може скасувати замовлення, яке вже готується; адміністратор — лише з причиною', async () => {
     setNow(15, 0);
-    const res = await dapi().post('/api/delivery/orders').set(bearer(client)).send(cashBody([{ dishId: fx.dishes.steak.id, quantity: 1 }])).expect(201);
+    const res = await dapi()
+      .post('/api/delivery/orders')
+      .set(bearer(client))
+      .send(cashBody([{ dishId: fx.dishes.steak.id, quantity: 1 }]))
+      .expect(201);
     const k = await api().get('/api/kitchen/orders').set(bearer(kitchen));
     const item = k.body.find((o: { id: number }) => o.id === res.body.id).items[0];
     await api().patch(`/api/kitchen/orders/${res.body.id}/items/${item.id}`).set(bearer(kitchen)).send({ status: 'COOKING' }).expect(200);
@@ -308,7 +400,11 @@ describe('TC-D05 Обмеження: скасування, ліміти, дос�
     expect(late.body.error.code).toBe('TOO_LATE_TO_CANCEL');
     const noReason = await dapi().post(`/api/delivery/orders/${res.body.id}/cancel`).set(bearer(admin)).send({}).expect(422);
     expect(noReason.body.error.code).toBe('REASON_REQUIRED');
-    await dapi().post(`/api/delivery/orders/${res.body.id}/cancel`).set(bearer(admin)).send({ reason: 'Курʼєр потрапив у ДТП' }).expect(200);
+    await dapi()
+      .post(`/api/delivery/orders/${res.body.id}/cancel`)
+      .set(bearer(admin))
+      .send({ reason: 'Курʼєр потрапив у ДТП' })
+      .expect(200);
     await dapi().get(`/api/delivery/orders/${res.body.id}`).set(bearer(client2)).expect(403);
   });
 
@@ -316,10 +412,18 @@ describe('TC-D05 Обмеження: скасування, ліміти, дос�
     setNow(15, 30);
     const ids: number[] = [];
     for (let i = 0; i < 3; i++) {
-      const r = await dapi().post('/api/delivery/orders').set(bearer(client2)).send(cashBody([{ dishId: fx.dishes.steak.id, quantity: 1 }])).expect(201);
+      const r = await dapi()
+        .post('/api/delivery/orders')
+        .set(bearer(client2))
+        .send(cashBody([{ dishId: fx.dishes.steak.id, quantity: 1 }]))
+        .expect(201);
       ids.push(r.body.id);
     }
-    const fourth = await dapi().post('/api/delivery/orders').set(bearer(client2)).send(cashBody([{ dishId: fx.dishes.steak.id, quantity: 1 }])).expect(409);
+    const fourth = await dapi()
+      .post('/api/delivery/orders')
+      .set(bearer(client2))
+      .send(cashBody([{ dishId: fx.dishes.steak.id, quantity: 1 }]))
+      .expect(409);
     expect(fourth.body.error.code).toBe('TOO_MANY_ACTIVE_DELIVERIES');
 
     await dapi().post(`/api/courier/orders/${ids[0]}/accept`).set(bearer(courier2)).expect(200);
@@ -328,9 +432,17 @@ describe('TC-D05 Обмеження: скасування, ліміти, дос�
     expect(busy.body.error.code).toBe('COURIER_BUSY');
     // відмова звільняє місце; диспетчер може призначити курʼєра сам
     await dapi().post(`/api/courier/orders/${ids[1]}/release`).set(bearer(courier2)).expect(200);
-    const assigned = await dapi().post(`/api/delivery/orders/${ids[2]}/assign`).set(bearer(staff)).send({ courierId: courierIds.c2 }).expect(200);
+    const assigned = await dapi()
+      .post(`/api/delivery/orders/${ids[2]}/assign`)
+      .set(bearer(staff))
+      .send({ courierId: courierIds.c2 })
+      .expect(200);
     expect(assigned.body.delivery.courier.id).toBe(courierIds.c2);
-    const notCourier = await dapi().post(`/api/delivery/orders/${ids[1]}/assign`).set(bearer(staff)).send({ courierId: fx.users.client.id }).expect(422);
+    const notCourier = await dapi()
+      .post(`/api/delivery/orders/${ids[1]}/assign`)
+      .set(bearer(staff))
+      .send({ courierId: fx.users.client.id })
+      .expect(422);
     expect(notCourier.body.error.code).toBe('NOT_A_COURIER');
     const couriers = await dapi().get('/api/courier/couriers').set(bearer(admin)).expect(200);
     expect(couriers.body.find((c: { id: number }) => c.id === courierIds.c2).active).toBe(2);
@@ -338,8 +450,15 @@ describe('TC-D05 Обмеження: скасування, ліміти, дос�
 
   it('фонова задача скасовує онлайн-замовлення, не оплачені за 15 хв', async () => {
     setNow(16, 0);
-    await prisma.order.updateMany({ where: { userId: fx.users.client2.id, type: 'DELIVERY', status: { notIn: ['CANCELLED', 'DELIVERED'] } }, data: { status: 'CANCELLED' } });
-    const r = await dapi().post('/api/delivery/orders').set(bearer(client2)).send({ ...cashBody([{ dishId: fx.dishes.steak.id, quantity: 1 }]), paymentMethod: 'CARD' }).expect(201);
+    await prisma.order.updateMany({
+      where: { userId: fx.users.client2.id, type: 'DELIVERY', status: { notIn: ['CANCELLED', 'DELIVERED'] } },
+      data: { status: 'CANCELLED' },
+    });
+    const r = await dapi()
+      .post('/api/delivery/orders')
+      .set(bearer(client2))
+      .send({ ...cashBody([{ dishId: fx.dishes.steak.id, quantity: 1 }]), paymentMethod: 'CARD' })
+      .expect(201);
     setNow(16, 10);
     expect((await runDeliveryMaintenance()).cancelled).toBe(0);
     setNow(16, 20);
@@ -352,9 +471,17 @@ describe('TC-D05 Обмеження: скасування, ліміти, дос�
 
 describe('TC-D06 Збережені адреси', () => {
   it('перша адреса стає основною; нова основна знімає позначку зі старої; видалення основної передає її іншій', async () => {
-    const first = await dapi().post('/api/addresses').set(bearer(client2)).send({ label: 'Дім', zoneId: zones.center, street: 'вул. Інститутська', house: '3' }).expect(201);
+    const first = await dapi()
+      .post('/api/addresses')
+      .set(bearer(client2))
+      .send({ label: 'Дім', zoneId: zones.center, street: 'вул. Інститутська', house: '3' })
+      .expect(201);
     expect(first.body.isDefault).toBe(true);
-    const second = await dapi().post('/api/addresses').set(bearer(client2)).send({ label: 'Робота', zoneId: zones.far, street: 'вул. Йорданська', house: '4', isDefault: true }).expect(201);
+    const second = await dapi()
+      .post('/api/addresses')
+      .set(bearer(client2))
+      .send({ label: 'Робота', zoneId: zones.far, street: 'вул. Йорданська', house: '4', isDefault: true })
+      .expect(201);
     expect(second.body.isDefault).toBe(true);
     let list = await dapi().get('/api/addresses').set(bearer(client2)).expect(200);
     expect(list.body.filter((a: { isDefault: boolean }) => a.isDefault)).toHaveLength(1);
@@ -362,7 +489,11 @@ describe('TC-D06 Збережені адреси', () => {
     list = await dapi().get('/api/addresses').set(bearer(client2)).expect(200);
     expect(list.body).toEqual([expect.objectContaining({ id: first.body.id, isDefault: true })]);
     await dapi().delete(`/api/addresses/${first.body.id}`).set(bearer(client)).expect(404);
-    await dapi().post('/api/addresses').set(bearer(client2)).send({ label: 'Дача', zoneId: zones.closed, street: 'вул. Лісна', house: '1' }).expect(409);
+    await dapi()
+      .post('/api/addresses')
+      .set(bearer(client2))
+      .send({ label: 'Дача', zoneId: zones.closed, street: 'вул. Лісна', house: '1' })
+      .expect(409);
   });
 });
 
@@ -372,7 +503,14 @@ describe('TC-D07 Обмеження цілісності БД для доста�
     const table = await prisma.diningTable.findFirstOrThrow();
     await expect(
       prisma.order.create({
-        data: { type: 'DELIVERY', tableId: table.id, reservationId: reservation?.id, createdById: fx.users.client.id, subtotal: 100, total: 100 },
+        data: {
+          type: 'DELIVERY',
+          tableId: table.id,
+          reservationId: reservation?.id,
+          createdById: fx.users.client.id,
+          subtotal: 100,
+          total: 100,
+        },
       }),
     ).rejects.toThrow(/orders_type_consistency|check constraint|violates/i);
     await expect(
@@ -380,14 +518,16 @@ describe('TC-D07 Обмеження цілісності БД для доста�
     ).rejects.toThrow();
 
     const delivery = await prisma.order.findFirstOrThrow({ where: { type: 'DELIVERY' } });
+    await expect(prisma.$executeRawUnsafe(`UPDATE deliveries SET phone = '0501234567' WHERE order_id = ${delivery.id}`)).rejects.toThrow(
+      /deliveries_phone_format|check/i,
+    );
     await expect(
-      prisma.$executeRawUnsafe(`UPDATE deliveries SET phone = '0501234567' WHERE order_id = ${delivery.id}`),
-    ).rejects.toThrow(/deliveries_phone_format|check/i);
-    await expect(
-      prisma.$executeRawUnsafe(`UPDATE deliveries SET change_from = 1000 WHERE order_id = ${delivery.id} AND payment_method = 'CARD'`).then(async (n) => {
-        if (n === 0) throw new Error('check: no card row to test');
-        return n;
-      }),
+      prisma
+        .$executeRawUnsafe(`UPDATE deliveries SET change_from = 1000 WHERE order_id = ${delivery.id} AND payment_method = 'CARD'`)
+        .then(async (n) => {
+          if (n === 0) throw new Error('check: no card row to test');
+          return n;
+        }),
     ).rejects.toThrow(/deliveries_change_only_cash|check/i);
 
     const dineIn = await prisma.order.create({
@@ -397,31 +537,46 @@ describe('TC-D07 Обмеження цілісності БД для доста�
         subtotal: 100,
         total: 100,
         tableId: table.id,
-        reservationId: (await prisma.reservation.create({
-          data: {
-            code: 'R-TESTDL',
-            checkinToken: 'tok-dl',
-            tableId: table.id,
-            guests: 2,
-            guestName: 'Тест',
-            startAt: new Date('2030-01-01T10:00:00Z'),
-            endAt: new Date('2030-01-01T11:00:00Z'),
-            status: 'COMPLETED',
-          },
-        })).id,
+        reservationId: (
+          await prisma.reservation.create({
+            data: {
+              code: 'R-TESTDL',
+              checkinToken: 'tok-dl',
+              tableId: table.id,
+              guests: 2,
+              guestName: 'Тест',
+              startAt: new Date('2030-01-01T10:00:00Z'),
+              endAt: new Date('2030-01-01T11:00:00Z'),
+              status: 'COMPLETED',
+            },
+          })
+        ).id,
       },
     });
     await expect(
       prisma.delivery.create({
-        data: { orderId: dineIn.id, zoneId: zones.center, recipientName: 'X', phone: '+380501112233', street: 'a', house: '1', fee: 0, paymentMethod: 'CASH' },
+        data: {
+          orderId: dineIn.id,
+          zoneId: zones.center,
+          recipientName: 'X',
+          phone: '+380501112233',
+          street: 'a',
+          house: '1',
+          fee: 0,
+          paymentMethod: 'CASH',
+        },
       }),
     ).rejects.toThrow(/DELIVERY|check/i);
   });
 
   it('у клієнта не може бути двох основних адрес (частковий UNIQUE)', async () => {
-    await prisma.address.create({ data: { userId: fx.users.admin.id, zoneId: zones.center, label: 'A', street: 's', house: '1', isDefault: true } });
+    await prisma.address.create({
+      data: { userId: fx.users.admin.id, zoneId: zones.center, label: 'A', street: 's', house: '1', isDefault: true },
+    });
     await expect(
-      prisma.address.create({ data: { userId: fx.users.admin.id, zoneId: zones.center, label: 'B', street: 's', house: '2', isDefault: true } }),
+      prisma.address.create({
+        data: { userId: fx.users.admin.id, zoneId: zones.center, label: 'B', street: 's', house: '2', isDefault: true },
+      }),
     ).rejects.toThrow();
   });
 });

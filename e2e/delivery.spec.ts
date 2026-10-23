@@ -14,7 +14,13 @@ async function login(request: APIRequestContext, email: string, password: string
   return (await res.json()).accessToken as string;
 }
 
-async function call<T = any>(request: APIRequestContext, method: 'GET' | 'PATCH' | 'POST', url: string, token: string, data?: unknown): Promise<T> {
+async function call<T = any>(
+  request: APIRequestContext,
+  method: 'GET' | 'PATCH' | 'POST',
+  url: string,
+  token: string,
+  data?: unknown,
+): Promise<T> {
   const res = await request.fetch(url, { method, data, headers: { Authorization: `Bearer ${token}` } });
   expect(res.ok(), `${method} ${url} → ${res.status()} ${await res.text()}`).toBeTruthy();
   return res.json();
@@ -36,12 +42,18 @@ test('доставка: Delivery API → kitchen display у Web → курʼєр
   await expect(page).toHaveURL(/\/kitchen$/);
 
   // клієнт оформлює доставку карткою на збережену адресу і платить (3-D Secure)
-  const dishes = await call<{ id: number; price: number; isAvailable: boolean; category?: { slug: string } }[]>(request, 'GET', '/api/dishes', client);
+  const dishes = await call<{ id: number; price: number; isAvailable: boolean; category?: { slug: string } }[]>(
+    request,
+    'GET',
+    '/api/dishes',
+    client,
+  );
   const main = dishes.filter((d) => d.isAvailable && d.category?.slug !== 'cocktails').sort((a, b) => b.price - a.price)[0];
   const addresses = await call<{ id: number }[]>(request, 'GET', `${DELIVERY}/api/addresses`, client);
   // у клієнта може бути не більше 3 активних доставок — звільняємо місце від попередніх запусків
   for (const o of await call<{ id: number; status: string }[]>(request, 'GET', `${DELIVERY}/api/delivery/orders/my?active=true`, client)) {
-    if (o.status === 'NEW' || o.status === 'CONFIRMED') await call(request, 'POST', `${DELIVERY}/api/delivery/orders/${o.id}/cancel`, client, {});
+    if (o.status === 'NEW' || o.status === 'CONFIRMED')
+      await call(request, 'POST', `${DELIVERY}/api/delivery/orders/${o.id}/cancel`, client, {});
   }
   const order = await call(request, 'POST', `${DELIVERY}/api/delivery/orders`, client, {
     items: [{ dishId: main.id, quantity: 2 }],
@@ -67,7 +79,9 @@ test('доставка: Delivery API → kitchen display у Web → курʼєр
   for (const it of k.find((o) => o.id === order.id)!.items) {
     await call(request, 'PATCH', `/api/kitchen/orders/${order.id}/items/${it.id}`, kitchen, { status: 'READY' });
   }
-  await expect(page.locator('section', { hasText: 'Готові до видачі' }).locator('article', { hasText: `#${order.id}` })).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('section', { hasText: 'Готові до видачі' }).locator('article', { hasText: `#${order.id}` })).toBeVisible({
+    timeout: 15_000,
+  });
 
   // курʼєр приймає, забирає і вручає — через Delivery API
   await call(request, 'POST', `${DELIVERY}/api/courier/orders/${order.id}/accept`, courier, {});
@@ -78,5 +92,7 @@ test('доставка: Delivery API → kitchen display у Web → курʼєр
   // обидві системи бачать той самий запис у спільній БД
   const viaRestaurant = await call(request, 'GET', `/api/orders/${order.id}`, client);
   expect(viaRestaurant).toMatchObject({ type: 'DELIVERY', status: 'DELIVERED', table: null });
-  expect(viaRestaurant.history.map((h: { to: string }) => h.to)).toEqual(expect.arrayContaining(['CONFIRMED', 'READY', 'DELIVERING', 'DELIVERED']));
+  expect(viaRestaurant.history.map((h: { to: string }) => h.to)).toEqual(
+    expect.arrayContaining(['CONFIRMED', 'READY', 'DELIVERING', 'DELIVERED']),
+  );
 });

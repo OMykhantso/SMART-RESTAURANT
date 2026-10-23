@@ -93,9 +93,12 @@ const zoneBody = z.object({
 
 /** Центр зони задається парою координат — інакше визначити район за геолокацією неможливо */
 function assertCenterPair(body: { centerLat?: number | null; centerLng?: number | null }) {
-  const hasLat = body.centerLat !== undefined, hasLng = body.centerLng !== undefined;
+  const hasLat = body.centerLat !== undefined,
+    hasLng = body.centerLng !== undefined;
   if (hasLat !== hasLng || (hasLat && (body.centerLat === null) !== (body.centerLng === null))) {
-    throw unprocessable('Центр зони задається обома координатами разом', 'CENTER_INCOMPLETE', { field: hasLat ? 'centerLng' : 'centerLat' });
+    throw unprocessable('Центр зони задається обома координатами разом', 'CENTER_INCOMPLETE', {
+      field: hasLat ? 'centerLng' : 'centerLat',
+    });
   }
 }
 
@@ -153,7 +156,9 @@ zones.define({
       // чому не обслуговуємо: адреса в неактивній зоні чи взагалі поза зонами
       reason: match ? null : nearest && nearest.ratio <= 1 && !nearest.zone.isActive ? 'ZONE_INACTIVE' : 'OUT_OF_RANGE',
       zone: match ? match.zone : null,
-      nearest: nearest ? { id: nearest.zone.id, name: nearest.zone.name, isActive: nearest.zone.isActive, distanceKm: round(nearest.distanceKm) } : null,
+      nearest: nearest
+        ? { id: nearest.zone.id, name: nearest.zone.name, isActive: nearest.zone.isActive, distanceKm: round(nearest.distanceKm) }
+        : null,
       fromRestaurantKm: round(fromRestaurantKm),
       // оцінка за відстанню; у розрахунку часу доставки використовується час зони (travelMin)
       rideMinEstimate: Math.max(5, Math.round((fromRestaurantKm / rules.courierSpeedKmh) * 60)),
@@ -164,7 +169,9 @@ zones.define({
 // ─────────────────────────────── Адреси клієнта ───────────────────────────────
 
 const addresses = createRouter('/addresses', deliveryRegistry);
-const addressInclude = { zone: { select: { id: true, name: true, fee: true, minOrder: true, freeFrom: true, travelMin: true, isActive: true } } };
+const addressInclude = {
+  zone: { select: { id: true, name: true, fee: true, minOrder: true, freeFrom: true, travelMin: true, isActive: true } },
+};
 
 addresses.define({
   method: 'get',
@@ -173,7 +180,11 @@ addresses.define({
   tags: ['Addresses'],
   roles: ['CLIENT'],
   handler: ({ user }) =>
-    prisma.address.findMany({ where: { userId: user!.id }, include: addressInclude, orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }] }),
+    prisma.address.findMany({
+      where: { userId: user!.id },
+      include: addressInclude,
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
+    }),
 });
 
 addresses.define({
@@ -374,7 +385,11 @@ orders.define({
   summary: 'Тестові картки sandbox-шлюзу',
   tags: ['Delivery payments'],
   handler: () =>
-    Object.entries(TEST_CARDS).map(([number, v]) => ({ number: number.replace(/(\d{4})(?=\d)/g, '$1 '), label: v.label, outcome: v.outcome.kind })),
+    Object.entries(TEST_CARDS).map(([number, v]) => ({
+      number: number.replace(/(\d{4})(?=\d)/g, '$1 '),
+      label: v.label,
+      outcome: v.outcome.kind,
+    })),
 });
 
 orders.define({
@@ -412,7 +427,12 @@ orders.define({
   tags: ['Delivery payments'],
   roles: ['CLIENT'],
   params: idParam,
-  body: z.object({ otp: z.string().trim().regex(/^\d{4,8}$/, 'Код складається з цифр') }),
+  body: z.object({
+    otp: z
+      .string()
+      .trim()
+      .regex(/^\d{4,8}$/, 'Код складається з цифр'),
+  }),
   handler: ({ user, params, body }) => confirm3ds(user!, params.id, body.otp),
 });
 

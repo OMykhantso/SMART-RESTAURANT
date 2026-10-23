@@ -95,7 +95,8 @@ function KitchenTicket({ order, now, canCook }: { order: Order; now: number; can
     mutationFn: (status: 'PREPARING' | 'READY') => api.patch<Order>(`/orders/${order.id}/status`, { status }),
     onSuccess: (o) => {
       haptic.success();
-      if (o.status === 'READY') toast({ title: o.table ? `#${o.id} готове — стіл №${o.table.number}` : `#${o.id} готове — передайте курʼєру`, tone: 'success' });
+      if (o.status === 'READY')
+        toast({ title: o.table ? `#${o.id} готове — стіл №${o.table.number}` : `#${o.id} готове — передайте курʼєру`, tone: 'success' });
       ['kitchen', 'orders', 'order', 'tables-live'].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
     },
     onError: (e) => toast({ title: (e as Error).message, tone: 'danger' }),
@@ -105,7 +106,8 @@ function KitchenTicket({ order, now, canCook }: { order: Order; now: number; can
   const norm = Math.max(...order.items.map((i) => i.prepTimeMin), 1);
   const ratio = elapsed / norm;
   const done = order.items.filter((i) => i.status === 'READY').length;
-  const timerColor = order.status === 'READY' ? colors.success : ratio >= 1 ? colors.danger : ratio >= 0.7 ? colors.warning : colors.textSoft;
+  const timerColor =
+    order.status === 'READY' ? colors.success : ratio >= 1 ? colors.danger : ratio >= 0.7 ? colors.warning : colors.textSoft;
 
   return (
     <View style={[styles.ticket, order.status !== 'READY' && ratio >= 1 && { borderColor: 'rgba(251,113,133,0.5)' }]}>
@@ -124,7 +126,8 @@ function KitchenTicket({ order, now, canCook }: { order: Order; now: number; can
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: fonts.bold, fontSize: 16, color: colors.text }}>#{order.id}</Text>
           <Caption>
-            {order.delivery ? `${order.delivery.zone.name} · ` : ''}прийнято {fmtTime(order.confirmedAt ?? order.createdAt)} · норма {norm} хв
+            {order.delivery ? `${order.delivery.zone.name} · ` : ''}прийнято {fmtTime(order.confirmedAt ?? order.createdAt)} · норма {norm}{' '}
+            хв
           </Caption>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
@@ -138,18 +141,44 @@ function KitchenTicket({ order, now, canCook }: { order: Order; now: number; can
         </View>
       </View>
       <View style={styles.progress}>
-        <View style={{ width: `${(done / order.items.length) * 100}%`, height: '100%', borderRadius: 3, backgroundColor: colors.success }} />
+        <View
+          style={{ width: `${(done / order.items.length) * 100}%`, height: '100%', borderRadius: 3, backgroundColor: colors.success }}
+        />
       </View>
 
       <View style={{ gap: 8, marginTop: 12 }}>
         {order.items.map((i) => (
-          <ItemRow key={i.id} item={i} disabled={!canCook || order.status === 'READY' || setItem.isPending} onPress={() => setItem.mutate({ orderId: order.id, itemId: i.id, status: NEXT[i.status] })} />
+          <ItemRow
+            key={i.id}
+            item={i}
+            disabled={!canCook || order.status === 'READY' || setItem.isPending}
+            onPress={() => setItem.mutate({ orderId: order.id, itemId: i.id, status: NEXT[i.status] })}
+          />
         ))}
       </View>
       {order.notes ? <Text style={styles.note}>💬 {order.notes}</Text> : null}
 
-      {canCook && order.status === 'CONFIRMED' && <Button title="Почати готувати" size="md" style={{ marginTop: 14 }} icon={<Play size={16} color="#141008" />} loading={setStatus.isPending} onPress={() => setStatus.mutate('PREPARING')} />}
-      {canCook && order.status === 'PREPARING' && <Button title="Усе готово" size="md" variant="success" style={{ marginTop: 14 }} icon={<Check size={16} color={colors.success} />} loading={setStatus.isPending} onPress={() => setStatus.mutate('READY')} />}
+      {canCook && order.status === 'CONFIRMED' && (
+        <Button
+          title="Почати готувати"
+          size="md"
+          style={{ marginTop: 14 }}
+          icon={<Play size={16} color="#141008" />}
+          loading={setStatus.isPending}
+          onPress={() => setStatus.mutate('PREPARING')}
+        />
+      )}
+      {canCook && order.status === 'PREPARING' && (
+        <Button
+          title="Усе готово"
+          size="md"
+          variant="success"
+          style={{ marginTop: 14 }}
+          icon={<Check size={16} color={colors.success} />}
+          loading={setStatus.isPending}
+          onPress={() => setStatus.mutate('READY')}
+        />
+      )}
       {order.status === 'READY' && (
         <View style={{ marginTop: 12 }}>
           <Badge tone="success">Чекає на офіціанта</Badge>
@@ -169,9 +198,20 @@ function ItemRow({ item, disabled, onPress }: { item: OrderItem; disabled: boole
         haptic.tap();
         onPress();
       }}
-      style={({ pressed }) => [styles.item, ready && { backgroundColor: colors.successSoft, borderColor: 'rgba(52,211,153,0.35)' }, cooking && { borderColor: 'rgba(253,186,116,0.4)' }, pressed && { opacity: 0.75 }]}
+      style={({ pressed }) => [
+        styles.item,
+        ready && { backgroundColor: colors.successSoft, borderColor: 'rgba(52,211,153,0.35)' },
+        cooking && { borderColor: 'rgba(253,186,116,0.4)' },
+        pressed && { opacity: 0.75 },
+      ]}
     >
-      <View style={[styles.check, ready && { backgroundColor: colors.success, borderColor: colors.success }, cooking && { borderColor: colors.orange }]}>
+      <View
+        style={[
+          styles.check,
+          ready && { backgroundColor: colors.success, borderColor: colors.success },
+          cooking && { borderColor: colors.orange },
+        ]}
+      >
         {ready ? <Check size={14} color="#06281c" strokeWidth={3} /> : cooking ? <Flame size={12} color={colors.orange} /> : null}
       </View>
       <Text style={styles.qty}>{item.quantity}×</Text>
@@ -194,9 +234,13 @@ export function StopListScreen({ embedded = false }: { embedded?: boolean }) {
   const availability = useAvailability();
   const [search, setSearch] = useState('');
   const [onlyStopped, setOnlyStopped] = useState(false);
-  const list = (dishes.data ?? []).filter((d) => !d.isArchived && (!onlyStopped || !d.isAvailable) && d.name.toLowerCase().includes(search.trim().toLowerCase()));
+  const list = (dishes.data ?? []).filter(
+    (d) => !d.isArchived && (!onlyStopped || !d.isAvailable) && d.name.toLowerCase().includes(search.trim().toLowerCase()),
+  );
   const stopped = (dishes.data ?? []).filter((d) => !d.isAvailable && !d.isArchived).length;
-  const groups = (categories.data ?? []).map((c) => ({ c, items: list.filter((d) => d.categoryId === c.id) })).filter((g) => g.items.length);
+  const groups = (categories.data ?? [])
+    .map((c) => ({ c, items: list.filter((d) => d.categoryId === c.id) }))
+    .filter((g) => g.items.length);
 
   return (
     <Screen>
@@ -210,7 +254,13 @@ export function StopListScreen({ embedded = false }: { embedded?: boolean }) {
       )}
       <View style={styles.searchBox}>
         <Search size={18} color={colors.faint} />
-        <TextInput value={search} onChangeText={setSearch} placeholder="Пошук страви" placeholderTextColor={colors.faint} style={{ flex: 1, color: colors.text, fontFamily: fonts.medium, height: 44 }} />
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Пошук страви"
+          placeholderTextColor={colors.faint}
+          style={{ flex: 1, color: colors.text, fontFamily: fonts.medium, height: 44 }}
+        />
       </View>
       <View style={{ marginTop: 12, marginBottom: 6 }}>
         <Segmented
@@ -225,7 +275,11 @@ export function StopListScreen({ embedded = false }: { embedded?: boolean }) {
       {dishes.isLoading ? (
         <Skeleton height={240} style={{ marginTop: 12 }} />
       ) : groups.length === 0 ? (
-        <EmptyState icon={<ChefHat size={30} color={colors.gold} />} title={onlyStopped ? 'Стоп-лист порожній' : 'Нічого не знайдено'} text={onlyStopped ? 'Усі страви доступні для замовлення.' : undefined} />
+        <EmptyState
+          icon={<ChefHat size={30} color={colors.gold} />}
+          title={onlyStopped ? 'Стоп-лист порожній' : 'Нічого не знайдено'}
+          text={onlyStopped ? 'Усі страви доступні для замовлення.' : undefined}
+        />
       ) : (
         groups.map(({ c, items }) => (
           <View key={c.id} style={{ marginTop: 18 }}>
@@ -254,17 +308,79 @@ export function StopListScreen({ embedded = false }: { embedded?: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  avatar: { width: 48, height: 48, borderRadius: 16, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.goldBorder, alignItems: 'center', justifyContent: 'center' },
-  ticket: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.border, marginBottom: 12 },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: colors.goldSoft,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ticket: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12,
+  },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  table: { width: 54, height: 54, borderRadius: 16, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.goldBorder, alignItems: 'center', justifyContent: 'center' },
+  table: {
+    width: 54,
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: colors.goldSoft,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   progress: { height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.07)', marginTop: 12, overflow: 'hidden' },
-  item: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 11, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(255,255,255,0.02)' },
-  check: { width: 24, height: 24, borderRadius: 8, borderWidth: 2, borderColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 11,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+  },
+  check: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   qty: { fontFamily: fonts.bold, fontSize: 15, color: colors.gold, width: 28 },
   itemName: { fontFamily: fonts.semibold, fontSize: 14.5, color: colors.text },
   note: { fontFamily: fonts.medium, fontSize: 13, color: colors.warning, marginTop: 10 },
-  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16, paddingHorizontal: 14, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 16,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   cat: { fontFamily: fonts.display, fontSize: 19, color: colors.text, marginBottom: 10 },
-  dish: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 8 },
+  dish: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 8,
+  },
 });

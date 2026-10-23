@@ -132,6 +132,8 @@ describe('Авторизація (RBAC перевіряється на серв�
     const res = await api().get('/api/openapi.json');
     expect(res.status).toBe(200);
     expect(res.body.openapi).toBe('3.1.0');
-    expect(Object.keys(res.body.paths)).toEqual(expect.arrayContaining(['/api/reservations', '/api/orders/{id}/status', '/api/payments/card']));
+    expect(Object.keys(res.body.paths)).toEqual(
+      expect.arrayContaining(['/api/reservations', '/api/orders/{id}/status', '/api/payments/card']),
+    );
   });
 });
