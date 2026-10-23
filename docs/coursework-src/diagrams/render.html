@@ -1,0 +1,416 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  html, body { margin: 0; background: #fff; }
+  svg { display: block; font-family: 'Liberation Sans', Arial, sans-serif; }
+</style>
+<script src="uc-specs.js"></script>
+</head><body>
+<svg id="c" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+const svg = document.getElementById('c');
+const C = {
+  ink: '#1f1f1f', line: '#4a4a4a', rel: '#6b6b6b',
+  login: ['#dbe6f7', '#3b5b92'], uc: ['#e1efdb', '#4b7d43'], sub: ['#fff3cf', '#b08a2c'],
+  grp: ['#ebe3f6', '#6c5394'], pill: ['#ebe3f6', '#6c5394'],
+};
+const layers = { lines: g(), shapes: g(), labels: g() };
+function g() { const el = document.createElementNS(NS, 'g'); svg.appendChild(el); return el; }
+function el(parent, tag, attrs, text) {
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  parent.appendChild(n);
+  return n;
+}
+const mctx = document.createElement('canvas').getContext('2d');
+function tw(text, size, weight = 400, style = 'normal') {
+  mctx.font = `${style} ${weight} ${size}px 'Liberation Sans', Arial, sans-serif`;
+  return mctx.measureText(text).width;
+}
+function wrap(text, size, weight, maxW) {
+  const words = text.split(' ');
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const t = cur ? cur + ' ' + w : w;
+    if (tw(t, size, weight) <= maxW || !cur) cur = t;
+    else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+function textBlock(parent, x, y, lines, size, weight, fill = C.ink, style = 'normal') {
+  const lh = size * 1.18;
+  const y0 = y - ((lines.length - 1) * lh) / 2 + size * 0.36;
+  lines.forEach((ln, k) => el(parent, 'text', { x, y: y0 + k * lh, 'text-anchor': 'middle', 'font-size': size, 'font-weight': weight, 'font-style': style, fill }, ln));
+}
+function edgePt(n, tx, ty) {
+  const dx = tx - n.cx, dy = ty - n.cy;
+  const t = 1 / Math.sqrt((dx / n.rx) ** 2 + (dy / n.ry) ** 2);
+  return [n.cx + dx * t, n.cy + dy * t];
+}
+function ellipse(n, colors, label, size, weight) {
+  el(layers.shapes, 'ellipse', { cx: n.cx, cy: n.cy, rx: n.rx, ry: n.ry, fill: colors[0], stroke: colors[1], 'stroke-width': 1.6 });
+  textBlock(layers.shapes, n.cx, n.cy, label, size, weight);
+}
+function defs() {
+  const d = el(svg, 'defs', {});
+  const m = el(d, 'marker', { id: 'open', viewBox: '0 0 12 12', refX: 11, refY: 6, markerWidth: 11, markerHeight: 11, orient: 'auto-start-reverse', markerUnits: 'userSpaceOnUse' });
+  el(m, 'path', { d: 'M1 1L11 6L1 11', fill: 'none', stroke: C.rel, 'stroke-width': 1.5 });
+  const m2 = el(d, 'marker', { id: 'solid', viewBox: '0 0 12 12', refX: 11, refY: 6, markerWidth: 10, markerHeight: 10, orient: 'auto-start-reverse', markerUnits: 'userSpaceOnUse' });
+  el(m2, 'path', { d: 'M0 0L12 6L0 12z', fill: C.line });
+  svg.insertBefore(d, svg.firstChild);
+}
+
+layers.back = document.createElementNS(NS, 'g');
+svg.insertBefore(layers.back, layers.lines);
+
+// ───────────────────────────── Use Case ─────────────────────────────
+function drawUC(spec) {
+  defs();
+  const F_MAIN = 25, F_SUB = 22, F_REL = 18;
+  const MAIN_RX = 140, SUB_RX = 122, GMAIN_RX = 140;
+  const X_ACTOR = 98;
+  const X_MAIN = 206 + MAIN_RX;               // 300
+  const X_SUB = X_MAIN + MAIN_RX + 100 + SUB_RX; // 648
+  const X_SEP = X_SUB + SUB_RX + 30;          // 790
+  const X_GMAIN = X_SEP + 30 + GMAIN_RX;      // 952
+  const X_GSUB = X_GMAIN + GMAIN_RX + 100 + SUB_RX; // 1300
+  const hasGroups = (spec.groups || []).length > 0;
+  const W = hasGroups ? X_GSUB + SUB_RX + 16 : X_SUB + SUB_RX + 16;
+  const SUB_GAP = 12, BLOCK_GAP = 26, TOP = 24;
+  const nodes = [];
+
+  function ucNode(cx, rx, text, size, weight) {
+    const lines = wrap(text, size, weight, rx * 1.6);
+    const ry = Math.max(size >= F_MAIN ? 34 : 30, (lines.length * size * 1.18) / 2 / 0.78 + 4);
+    return { cx, rx, ry, lines };
+  }
+  function layoutBlock(item, y, xMain, rxMain, xSub, colors) {
+    const main = ucNode(xMain, rxMain, item.t, F_MAIN, 700);
+    main.colors = item.kind === 'login' ? C.login : colors;
+    const subs = item.subs.map((s) => {
+      const sn = ucNode(xSub, SUB_RX, s.t, F_SUB, 400);
+      sn.colors = C.sub; sn.sub = true; sn.rel = s.rel;
+      return sn;
+    });
+    const subsH = subs.reduce((a, s) => a + 2 * s.ry, 0) + Math.max(0, subs.length - 1) * SUB_GAP;
+    const h = Math.max(2 * main.ry, subsH);
+    main.cy = y + h / 2;
+    let sy = y + (h - subsH) / 2;
+    for (const s of subs) { s.cy = sy + s.ry; sy += 2 * s.ry + SUB_GAP; }
+    nodes.push(main, ...subs);
+    return { main, subs, h };
+  }
+
+  let y = TOP;
+  const leftBlocks = spec.main.map((item) => { const b = layoutBlock(item, y, X_MAIN, MAIN_RX, X_SUB, C.uc); y += b.h + BLOCK_GAP; return b; });
+  const leftBottom = y - BLOCK_GAP;
+
+  let gy = TOP;
+  const groupBlocks = [];
+  const pills = [];
+  for (const grp of spec.groups || []) {
+    pills.push({ y: gy, label: grp.label });
+    gy += 58;
+    for (const item of grp.items) {
+      const b = layoutBlock(item, gy, X_GMAIN, GMAIN_RX, X_GSUB, C.grp);
+      groupBlocks.push(b);
+      gy += b.h + BLOCK_GAP + 8;
+    }
+    gy += 26;
+  }
+  const H = Math.max(leftBottom, gy - 34 - BLOCK_GAP) + TOP;
+
+  if (hasGroups) {
+    el(layers.back, 'line', { x1: X_SEP, y1: 6, x2: X_SEP, y2: H - 6, stroke: '#a0a0a0', 'stroke-width': 1.5, 'stroke-dasharray': '8 7' });
+    for (const p of pills) {
+      const w = tw(p.label, 22, 700, 'italic') + 44;
+      const cx = (X_SEP + W) / 2;
+      el(layers.shapes, 'rect', { x: cx - w / 2, y: p.y, width: w, height: 42, rx: 21, fill: C.pill[0], stroke: C.pill[1], 'stroke-width': 1.6 });
+      el(layers.shapes, 'text', { x: cx, y: p.y + 29, 'text-anchor': 'middle', 'font-size': 22, 'font-weight': 700, 'font-style': 'italic', fill: C.ink }, p.label);
+    }
+  }
+
+  // Актор
+  const ay = Math.round((TOP + leftBottom) / 2);
+  const A = layers.shapes;
+  el(A, 'circle', { cx: X_ACTOR, cy: ay - 52, r: 17, fill: '#f1f1f1', stroke: C.ink, 'stroke-width': 2.4 });
+  el(A, 'path', { d: `M${X_ACTOR} ${ay - 35}V${ay + 16}M${X_ACTOR - 30} ${ay - 18}H${X_ACTOR + 30}M${X_ACTOR} ${ay + 16}L${X_ACTOR - 23} ${ay + 52}M${X_ACTOR} ${ay + 16}L${X_ACTOR + 23} ${ay + 52}`, fill: 'none', stroke: C.ink, 'stroke-width': 2.4, 'stroke-linecap': 'round' });
+  const albl = wrap(spec.actor, 24, 700, 150);
+  textBlock(A, X_ACTOR, ay + 84 + (albl.length - 1) * 14, albl, 24, 700);
+
+  const origin = [X_ACTOR + 16, ay - 8];
+  for (const b of [...leftBlocks, ...groupBlocks]) {
+    const [ex, ey] = edgePt(b.main, origin[0], origin[1]);
+    el(layers.lines, 'line', { x1: origin[0], y1: origin[1], x2: ex, y2: ey, stroke: C.line, 'stroke-width': 1.5 });
+  }
+
+  for (const b of [...leftBlocks, ...groupBlocks]) {
+    for (const s of b.subs) {
+      const p1 = edgePt(b.main, s.cx, s.cy);
+      const p2 = edgePt(s, b.main.cx, b.main.cy);
+      const [from, to] = s.rel === 'include' ? [p1, p2] : [p2, p1];
+      el(layers.lines, 'line', { x1: from[0], y1: from[1], x2: to[0], y2: to[1], stroke: C.rel, 'stroke-width': 1.5, 'stroke-dasharray': '6 4', 'marker-end': 'url(#open)' });
+      const lbl = `«${s.rel}»`;
+      const mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2;
+      const w = tw(lbl, F_REL, 400, 'italic') + 6;
+      el(layers.labels, 'rect', { x: mx - w / 2, y: my - 12, width: w, height: 23, fill: '#fff' });
+      el(layers.labels, 'text', { x: mx, y: my + 6, 'text-anchor': 'middle', 'font-size': F_REL, 'font-style': 'italic', fill: '#3d3d3d' }, lbl);
+    }
+  }
+  for (const n of nodes) ellipse(n, n.colors, n.lines, n.sub ? F_SUB : F_MAIN, n.sub ? 400 : 700);
+  svg.appendChild(layers.labels);
+  return [W, H];
+}
+
+// ───────────────────────────── Архітектура ─────────────────────────────
+function box(x, y, w, h, title, lines, colors, opts = {}) {
+  const S = opts.layer || layers.shapes;
+  el(S, 'rect', { x, y, width: w, height: h, rx: opts.rx ?? 10, fill: colors[0], stroke: colors[1], 'stroke-width': opts.sw ?? 1.7, 'stroke-dasharray': opts.dash || '' });
+  const ts = opts.tsize ?? 21, ls = opts.lsize ?? 17.5, lh = ls * 1.32;
+  if (title) el(S, 'text', { x: x + 18, y: y + 14 + ts, 'font-size': ts, 'font-weight': 700, fill: C.ink }, title);
+  (lines || []).forEach((ln, k) => el(S, 'text', { x: x + 18, y: y + 26 + ts + lh * (k + 1) - 4, 'font-size': ls, fill: '#2e2e2e' }, ln));
+}
+function arrow(points, opts = {}) {
+  const d = 'M' + points.map((p) => p.join(' ')).join('L');
+  el(layers.lines, 'path', { d, fill: 'none', stroke: opts.color || C.line, 'stroke-width': opts.w ?? 2, 'stroke-dasharray': opts.dash || '', 'marker-end': opts.end === false ? '' : 'url(#solid)', 'marker-start': opts.both ? 'url(#solid)' : '' });
+}
+function label(x, y, text, opts = {}) {
+  const size = opts.size ?? 15.5;
+  const w = tw(text, size, opts.weight ?? 400, opts.style ?? 'normal') + 12;
+  el(layers.labels, 'rect', { x: x - w / 2, y: y - size + 1, width: w, height: size + 8, fill: '#fff' });
+  el(layers.labels, 'text', { x, y: y + 3, 'text-anchor': 'middle', 'font-size': size, 'font-style': opts.style ?? 'normal', 'font-weight': opts.weight ?? 400, fill: opts.color || '#333' }, text);
+}
+function drawArch() {
+  defs();
+  const W = 1292, H = 666;
+  const blue = ['#dbe6f7', '#3b5b92'], green = ['#e1efdb', '#4b7d43'], purple = ['#ebe3f6', '#6c5394'], amber = ['#fff3cf', '#b08a2c'], grey = ['#f2f2f2', '#8a8a8a'];
+  box(16, 96, 262, 168, 'Web-застосунок', ['React 19 · Vite', 'гість, офіціант,', 'кухня, адміністратор', 'nginx · HTTPS'], blue);
+  box(16, 420, 262, 168, 'Mobile-застосунок', ['React Native · Expo 57', 'гість + доставка, курʼєр,', 'зал, кухня, адмін', 'камера QR, сповіщення'], blue);
+  box(356, 14, 560, 636, '', [], ['#fafafa', '#9a9a9a'], { dash: '9 7', rx: 16, layer: layers.back });
+  el(layers.back, 'text', { x: 376, y: 44, 'font-size': 18, 'font-weight': 700, 'font-style': 'italic', fill: '#555' }, 'Backend · Node.js 22 · Express 5 · Docker');
+  box(386, 62, 500, 186, 'Restaurant API · порт 4000', ['REST + Socket.IO · Swagger (59 endpoint)', 'меню, столики, бронювання, check-in,', 'замовлення в залі, оплата, відгуки,', 'kitchen display, аналітика, користувачі', 'фон: автоскасування, no-show'], green);
+  box(386, 280, 500, 92, 'Спільне доменне ядро', ['Prisma-схема · автомат станів · JWT · оплати'], grey);
+  box(386, 404, 500, 212, 'Delivery API · порт 4100', ['REST + Socket.IO · Swagger (26 endpoint)', 'зони й тарифи, адреси, оформлення', 'та оплата доставки, черга курʼєрів,', 'диспетчерська, статуси «В дорозі»', 'і «Доставлено», повернення коштів', 'фон: скасування неоплачених (15 хв)'], purple);
+  box(1012, 150, 262, 320, 'PostgreSQL 16', ['одна база даних', 'для обох систем', '14 таблиць', 'міграції Prisma', 'CHECK · FK · UNIQUE', 'EXCLUDE · тригер', 'LISTEN / NOTIFY'], amber);
+  box(1012, 512, 262, 112, 'Платіжний шлюз', ['sandbox · 3-D Secure', 'повернення коштів'], grey);
+  arrow([[278, 170], [386, 170]], { both: true });
+  label(331, 156, 'REST · WS', { size: 14.5 });
+  arrow([[278, 452], [322, 452], [322, 226], [386, 226]], { both: true });
+  arrow([[278, 540], [386, 540]], { both: true });
+  label(331, 526, 'REST · WS', { size: 14.5 });
+  arrow([[636, 248], [636, 280]], { end: false, w: 1.8 });
+  arrow([[636, 372], [636, 404]], { end: false, w: 1.8 });
+  arrow([[886, 190], [1012, 190]], { both: true });
+  label(950, 176, 'SQL', { size: 14.5 });
+  arrow([[886, 226], [1012, 226]], { both: true, dash: '7 5', color: '#6c5394', w: 1.8 });
+  label(950, 249, 'NOTIFY', { size: 14, style: 'italic', color: '#6c5394' });
+  arrow([[886, 420], [1012, 420]], { both: true, dash: '7 5', color: '#6c5394', w: 1.8 });
+  label(950, 406, 'NOTIFY', { size: 14, style: 'italic', color: '#6c5394' });
+  arrow([[886, 454], [1012, 454]], { both: true });
+  label(950, 477, 'SQL', { size: 14.5 });
+  arrow([[886, 568], [1012, 568]]);
+  arrow([[886, 92], [1284, 92], [1284, 540], [1274, 540]]);
+  svg.appendChild(layers.labels);
+  return [W, H];
+}
+
+// ───────────────────────────── ER ─────────────────────────────
+function drawER() {
+  defs();
+  const EW = 290, ROW = 23, HEAD = 38, GAPX = 34;
+  const X = [12, 12 + EW + GAPX, 12 + 2 * (EW + GAPX), 12 + 3 * (EW + GAPX)];
+  const W = X[3] + EW + 14;
+  const amber = ['#fff3cf', '#b08a2c'], purple = ['#ebe3f6', '#6c5394'], plain = ['#ececec', '#5a5a5a'];
+  const ents = {
+    refresh_tokens: [0, 'A', plain, [['PK', 'id'], ['FK', 'user_id'], ['UK', 'token_hash (SHA-256)'], ['', 'expires_at, revoked_at']]],
+    tables: [0, 'B', plain, [['PK', 'id'], ['UK', 'number'], ['', 'seats, zone, pos_x, pos_y'], ['UK', 'qr_token']]],
+    status_changes: [0, 'C', plain, [['PK', 'id'], ['FK', 'reservation_id | order_id'], ['FK', 'actor_id'], ['', 'from_status → to_status'], ['', 'note, created_at']]],
+    users: [1, 'A', plain, [['PK', 'id'], ['UK', 'email'], ['', 'password_hash'], ['', 'role: CLIENT | STAFF |'], ['', '   KITCHEN | COURIER | ADMIN'], ['', 'name, phone, is_active']]],
+    reservations: [1, 'B', plain, [['PK', 'id'], ['UK', 'code R-XXXXXX'], ['FK', 'user_id'], ['FK', 'table_id'], ['', 'start_at, end_at, guests'], ['', 'status, source']]],
+    delivery_zones: [1, 'C', purple, [['PK', 'id'], ['UK', 'name'], ['', 'fee, min_order, free_from'], ['', 'travel_min 5..180'], ['', 'is_active, sort_order']]],
+    addresses: [1, 'D', purple, [['PK', 'id'], ['FK', 'user_id'], ['FK', 'zone_id'], ['', 'label, street, house'], ['', 'apartment, comment'], ['', 'is_default (≤ 1 на клієнта)']]],
+    orders: [2, 'A', amber, [['PK', 'id'], ['', 'type: DINE_IN | DELIVERY'], ['FK', 'reservation_id (NULL)'], ['FK', 'table_id (NULL)'], ['FK', 'user_id'], ['', 'status, subtotal, total'], ['', 'estimated_ready_at']]],
+    payments: [2, 'B', plain, [['PK', 'id'], ['FK', 'order_id'], ['', 'amount, tip, method'], ['', 'status (… REFUNDED)'], ['UK', 'idempotency_key']]],
+    deliveries: [2, 'C', purple, [['PK', 'order_id (FK, 1 : 1)'], ['FK', 'zone_id'], ['FK', 'courier_id → users'], ['', 'recipient_name, phone'], ['', 'адреса (знімок), fee'], ['', 'payment_method, eta_at'], ['', 'picked_up_at, delivered_at']]],
+    order_items: [3, 'A', plain, [['PK', 'id'], ['FK', 'order_id'], ['FK', 'dish_id'], ['', 'quantity, unit_price'], ['', 'status']]],
+    dishes: [3, 'B', plain, [['PK', 'id'], ['FK', 'category_id'], ['', 'name, price (коп.)'], ['', 'prep_time_min'], ['', 'is_available, is_archived']]],
+    categories: [3, 'C', plain, [['PK', 'id'], ['UK', 'name, slug'], ['', 'sort_order']]],
+    reviews: [3, 'D', plain, [['PK', 'id'], ['FK', 'order_id, user_id'], ['FK', 'dish_id (NULL = візит)'], ['', 'rating 1..5, comment']]],
+  };
+  const hOf = (n) => HEAD + n * ROW + 12;
+  const rowH = {};
+  for (const [, [, r, , rows]] of Object.entries(ents)) rowH[r] = Math.max(rowH[r] || 0, hOf(rows.length));
+  const rowY = { A: 14 }; rowY.B = rowY.A + rowH.A + 42; rowY.C = rowY.B + rowH.B + 42; rowY.D = rowY.C + rowH.C + 42;
+  const B = {};
+  for (const [name, [c, r, col, rows]] of Object.entries(ents)) {
+    const x = X[c], y = rowY[r], h = hOf(rows.length);
+    B[name] = { x, y, w: EW, h, r: x + EW, b: y + h, cx: x + EW / 2 };
+    const S = layers.shapes;
+    el(S, 'rect', { x, y, width: EW, height: h, rx: 8, fill: '#fff', stroke: col[1], 'stroke-width': 1.7 });
+    el(S, 'path', { d: `M${x} ${y + HEAD}V${y + 8}Q${x} ${y} ${x + 8} ${y}H${x + EW - 8}Q${x + EW} ${y} ${x + EW} ${y + 8}V${y + HEAD}Z`, fill: col[0], stroke: col[1], 'stroke-width': 1.7 });
+    el(S, 'text', { x: x + 14, y: y + 26, 'font-size': 19, 'font-weight': 700, fill: C.ink }, name);
+    rows.forEach(([k, a], idx) => {
+      const yy = y + HEAD + 21 + idx * ROW;
+      if (k) el(S, 'text', { x: x + 12, y: yy, 'font-size': 14, 'font-weight': 700, fill: k === 'PK' ? '#8a5a00' : k === 'FK' ? '#3b5b92' : '#6c5394' }, k);
+      el(S, 'text', { x: x + 46, y: yy, 'font-size': 16.5, fill: '#222' }, a);
+    });
+  }
+  const H = Math.max(...Object.values(B).map((b) => b.b)) + 14;
+  const card = (x, y, t) => el(layers.labels, 'text', { x, y, 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 700, fill: '#b04020' }, t);
+  // pts: від батька (1) до нащадка (N); ca/cb — зсув підписів
+  const rel = (pts, a, b, ca, cb) => { arrow(pts, { end: false, w: 1.7 }); card(...ca, a); card(...cb, b); };
+  const gx = (c) => X[c] - GAPX / 2; // середина проміжку перед колонкою c
+  const u = B.users, rs = B.reservations, o = B.orders;
+  // users → refresh_tokens (вліво)
+  rel([[u.x, u.y + 70], [B.refresh_tokens.r, u.y + 70]], '1', 'N', [u.x - 9, u.y + 64], [B.refresh_tokens.r + 9, u.y + 64]);
+  // users → orders (вправо)
+  rel([[u.r, u.y + 70], [o.x, u.y + 70]], '1', 'N', [u.r + 9, u.y + 64], [o.x - 9, u.y + 64]);
+  // users → reservations (вниз)
+  rel([[u.cx, u.b], [u.cx, rs.y]], '1', 'N', [u.cx + 11, u.b + 17], [u.cx + 11, rs.y - 6]);
+  // tables → reservations
+  rel([[B.tables.r, rs.y + 70], [rs.x, rs.y + 70]], '1', 'N', [B.tables.r + 9, rs.y + 64], [rs.x - 9, rs.y + 64]);
+  // reservations → orders
+  rel([[rs.r, rs.y + 100], [gx(2), rs.y + 100], [gx(2), o.b - 30], [o.x, o.b - 30]], '1', 'N', [rs.r + 7, rs.y + 94], [o.x - 7, o.b - 36]);
+  // reservations → status_changes
+  const sc = B.status_changes;
+  rel([[rs.x, rs.b - 30], [gx(1), rs.b - 30], [gx(1), sc.y + 60], [sc.r, sc.y + 60]], '1', 'N', [rs.x - 7, rs.b - 36], [sc.r + 7, sc.y + 54]);
+  // orders → payments
+  rel([[o.cx, o.b], [o.cx, B.payments.y]], '1', 'N', [o.cx + 11, o.b + 17], [o.cx + 11, B.payments.y - 6]);
+  // orders → order_items
+  rel([[o.r, o.y + 70], [B.order_items.x, o.y + 70]], '1', 'N', [o.r + 9, o.y + 64], [B.order_items.x - 9, o.y + 64]);
+  // dishes → order_items, categories → dishes
+  const d = B.dishes, oi = B.order_items, cat = B.categories;
+  rel([[d.cx, d.y], [d.cx, oi.b]], '1', 'N', [d.cx + 11, d.y - 6], [d.cx + 11, oi.b + 17]);
+  rel([[cat.cx, cat.y], [cat.cx, d.b]], '1', 'N', [cat.cx + 11, cat.y - 6], [cat.cx + 11, d.b + 17]);
+  // orders → deliveries (1 : 1) і orders → reviews через проміжок перед колонкою 3
+  const dl = B.deliveries, rv = B.reviews;
+  rel([[o.r, o.b - 40], [gx(3) - 6, o.b - 40], [gx(3) - 6, dl.y + 60], [dl.r, dl.y + 60]], '1', '1', [o.r + 7, o.b - 46], [dl.r + 7, dl.y + 54]);
+  rel([[o.r, o.b - 16], [gx(3) + 6, o.b - 16], [gx(3) + 6, rv.y + 60], [rv.x, rv.y + 60]], '1', 'N', [o.r + 7, o.b - 22], [rv.x - 7, rv.y + 54]);
+  // delivery_zones → deliveries, delivery_zones → addresses
+  const z = B.delivery_zones, ad = B.addresses;
+  rel([[z.r, z.y + 70], [dl.x, z.y + 70]], '1', 'N', [z.r + 9, z.y + 64], [dl.x - 9, z.y + 64]);
+  rel([[z.cx, z.b], [z.cx, ad.y]], '1', 'N', [z.cx + 11, z.b + 17], [z.cx + 11, ad.y - 6]);
+  svg.appendChild(layers.labels);
+  return [W, H];
+}
+
+
+// ───────────────────────────── Діаграма станів ─────────────────────────────
+function drawStates() {
+  defs();
+  const W = 1400;
+  const BW = 180, BH = 64, GAP = 52, X0 = 24;
+  const main = ['#e1efdb', '#4b7d43'], end = ['#dbe6f7', '#3b5b92'], bad = ['#fbe3dc', '#a6493a'], start = ['#fff3cf', '#b08a2c'];
+  const S = layers.shapes;
+  const nodes = {};
+  const node = (id, col, y, code, label, colors, dx = 0) => {
+    const x = X0 + col * (BW + GAP) + dx;
+    el(S, 'rect', { x, y, width: BW, height: BH, rx: 14, fill: colors[0], stroke: colors[1], 'stroke-width': 1.8 });
+    el(S, 'text', { x: x + BW / 2, y: y + 26, 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 700, fill: C.ink }, code);
+    el(S, 'text', { x: x + BW / 2, y: y + 48, 'text-anchor': 'middle', 'font-size': 15, fill: '#333' }, label);
+    nodes[id] = { x, y, w: BW, h: BH, cx: x + BW / 2, cy: y + BH / 2 };
+  };
+  const tag = (x, y, text, color = '#444', anchor = 'middle') => {
+    const w = tw(text, 14, 400, 'italic') + 8;
+    const left = anchor === 'middle' ? x - w / 2 : x - 4;
+    el(layers.labels, 'rect', { x: left, y: y - 13, width: w, height: 18, fill: '#fff' });
+    el(layers.labels, 'text', { x, y: y + 1, 'text-anchor': anchor, 'font-size': 14, 'font-style': 'italic', fill: color }, text);
+  };
+  const right = (a, b, label) => {
+    const A = nodes[a], B = nodes[b];
+    arrow([[A.x + A.w, A.cy], [B.x, B.cy]], { w: 1.8 });
+    // підпис над стрілкою, вище за верхній край блоків — не перекриває текст станів
+    if (label) tag((A.x + A.w + B.x) / 2, A.y - 9, label);
+  };
+  const down = (a, b, label, color = '#a6493a', off = 0, where = 'start') => {
+    const A = nodes[a], B = nodes[b];
+    const sx = A.cx + off;
+    const bx = Math.max(B.x + 14, Math.min(B.x + B.w - 14, sx));
+    const midY = A.y + A.h + 26;
+    arrow([[sx, A.y + A.h], [sx, midY], [bx, midY], [bx, B.y]], { w: 1.6, color, dash: '6 4' });
+    if (label && where === 'end') tag(bx + 8, midY + 30, label, color, 'start');
+    else if (label) tag(sx + 8, A.y + A.h + 18, label, color, 'start');
+  };
+  const lane = (y, title, sub) => {
+    el(S, 'text', { x: X0, y, 'font-size': 20, 'font-weight': 700, fill: C.ink }, title);
+    if (sub) el(S, 'text', { x: X0 + tw(title, 20, 700) + 14, y, 'font-size': 15, 'font-style': 'italic', fill: '#555' }, sub);
+  };
+
+  // 1. Бронювання
+  lane(30, 'Бронювання (візит)', 'reservations.status');
+  let y = 74;
+  node('r1', 0, y, 'PENDING', 'Очікує підтвердження', start);
+  node('r2', 1, y, 'CONFIRMED', 'Підтверджено', main);
+  node('r3', 2, y, 'CHECKED_IN', 'Гість у ресторані', main);
+  node('r4', 3, y, 'COMPLETED', 'Візит завершено', end);
+  node('rx1', 0, y + 136, 'REJECTED', 'Відхилено', bad);
+  node('rx2', 1, y + 136, 'CANCELLED', 'Скасовано', bad);
+  node('rx3', 2, y + 136, 'NO_SHOW', 'Гість не прийшов', bad);
+  right('r1', 'r2', 'STAFF');
+  right('r2', 'r3', 'QR: гість / хостес');
+  right('r3', 'r4', 'усе оплачено');
+  down('r1', 'rx1', 'STAFF, причина');
+  down('r2', 'rx2', 'клієнт ≥ 60 хв / STAFF', '#a6493a', -60);
+  down('r2', 'rx3', 'SYSTEM, +20 хв', '#a6493a', 60, 'end');
+  el(S, 'text', { x: X0 + 4 * (BW + GAP), y: y + 24, 'font-size': 14.5, fill: '#444' }, 'Старт: клієнт → PENDING;');
+  el(S, 'text', { x: X0 + 4 * (BW + GAP), y: y + 46, 'font-size': 14.5, fill: '#444' }, 'телефон (STAFF) → CONFIRMED;');
+  el(S, 'text', { x: X0 + 4 * (BW + GAP), y: y + 68, 'font-size': 14.5, fill: '#444' }, 'walk-in → CHECKED_IN.');
+  el(S, 'text', { x: X0 + 4 * (BW + GAP), y: y + 90, 'font-size': 14.5, fill: '#444' }, 'PENDING після початку → CANCELLED (SYSTEM)');
+
+  // 2. Замовлення в залі
+  y = 366;
+  lane(y - 44, 'Замовлення в залі', 'orders.type = DINE_IN');
+  node('o1', 0, y, 'NEW', 'Нове', start);
+  node('o2', 1, y, 'CONFIRMED', 'Прийнято', main);
+  node('o3', 2, y, 'PREPARING', 'Готується', main);
+  node('o4', 3, y, 'READY', 'Готово', main);
+  node('o5', 4, y, 'SERVED', 'Подано', main);
+  node('o6', 5, y, 'PAID', 'Оплачено', end);
+  node('ox', 1, y + 136, 'CANCELLED', 'Скасовано', bad, -(BW + GAP) / 2);
+  right('o1', 'o2', 'STAFF');
+  right('o2', 'o3', 'KITCHEN');
+  right('o3', 'o4', 'усі страви');
+  right('o4', 'o5', 'STAFF');
+  right('o5', 'o6', 'SYSTEM: платіж');
+  down('o1', 'ox', 'клієнт / STAFF', '#a6493a', -40);
+  down('o2', 'ox', 'STAFF, причина', '#a6493a', -40);
+
+  // 3. Доставка
+  y = 658;
+  lane(y - 44, 'Доставка (Delivery API)', 'orders.type = DELIVERY');
+  node('d1', 0, y, 'NEW', 'Очікує оплати', start);
+  node('d2', 1, y, 'CONFIRMED', 'Прийнято', main);
+  node('d3', 2, y, 'PREPARING', 'Готується', main);
+  node('d4', 3, y, 'READY', 'Чекає курʼєра', main);
+  node('d5', 4, y, 'DELIVERING', 'В дорозі', main);
+  node('d6', 5, y, 'DELIVERED', 'Доставлено', end);
+  node('dx', 1, y + 136, 'CANCELLED', 'Скасовано', bad, -(BW + GAP) / 2);
+  right('d1', 'd2', 'SYSTEM: оплата');
+  right('d2', 'd3', 'KITCHEN');
+  right('d3', 'd4', 'усі страви');
+  right('d4', 'd5', 'COURIER: забрав');
+  right('d5', 'd6', 'COURIER: вручив');
+  down('d1', 'dx', 'SYSTEM: 15 хв', '#a6493a', -40);
+  down('d2', 'dx', 'клієнт → REFUNDED', '#a6493a', -40);
+  el(S, 'text', { x: X0 + 2 * (BW + GAP), y: y + 166, 'font-size': 14.5, fill: '#444' }, 'Готівка: замовлення створюється одразу в CONFIRMED; курʼєр приймає замовлення,');
+  el(S, 'text', { x: X0 + 2 * (BW + GAP), y: y + 188, 'font-size': 14.5, fill: '#444' }, 'поки воно готується (статус не змінюється), а забирає — лише в стані READY.');
+  svg.appendChild(layers.labels);
+  return [W, 878];
+}
+
+const kind = new URLSearchParams(location.search).get('d');
+let size;
+if (kind === 'arch') size = drawArch();
+else if (kind === 'states') size = drawStates();
+else if (kind === 'er') size = drawER();
+else size = drawUC(window.UC_SPECS[kind]);
+svg.setAttribute('width', size[0]);
+svg.setAttribute('height', size[1]);
+svg.setAttribute('viewBox', `0 0 ${size[0]} ${size[1]}`);
+window.SIZE = size;
+</script>
+</body></html>
