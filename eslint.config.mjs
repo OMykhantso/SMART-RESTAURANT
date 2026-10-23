@@ -27,6 +27,11 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
+    // генератор діаграм документів: скрипт Node + код, що виконується в браузері
+    files: ['docs/coursework-src/**/*.{js,mjs}'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
+  {
     files: ['web/src/**/*.{ts,tsx}', 'mobile/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
     rules: {
