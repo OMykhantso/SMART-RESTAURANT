@@ -73,7 +73,8 @@ describe('Booking engine через API', () => {
   });
 
   it('перевіряє бізнес-правила часу: години роботи, сітка, минуле, мінімальний lead time (TC-13)', async () => {
-    const outside = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(22, 30, 1), guests: 2 });
+    // 08:00 — до відкриття в будь-який день тижня (графік роботи різний для буднів і вихідних)
+    const outside = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(8, 0, 1), guests: 2 });
     expect(outside.status).toBe(422);
     expect(outside.body.error.code).toBe('OUTSIDE_OPENING_HOURS');
     const misaligned = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(19, 10, 1), guests: 2 });

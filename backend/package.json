@@ -20,6 +20,7 @@
     "setup": "prisma migrate deploy && tsx prisma/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:weekdays": "node scripts/test-weekdays.mjs",
     "docs:api": "tsx scripts/generate-api-docs.ts"
   },
   "prisma": {
