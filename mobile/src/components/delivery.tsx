@@ -1,13 +1,14 @@
-import { useEffect, useRef, type ReactNode } from 'react';
-import { Animated, Easing, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { ActivityIndicator, Animated, Easing, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bike, Check, ChefHat, ClipboardCheck, CreditCard, House, MapPin, PackageCheck, Phone, Star, Wallet } from 'lucide-react-native';
+import { Bike, Check, ChefHat, ClipboardCheck, CreditCard, House, LocateFixed, MapPin, PackageCheck, Phone, Star, Wallet } from 'lucide-react-native';
 import { colors, fonts, goldGradient, radius } from '../theme';
 import { Badge, Caption, DishImage, PressableScale } from './ui';
 import { haptic } from '../lib/notify';
 import { fmtDateShort, fmtTime, money } from '../lib/format';
 import { DELIVERY_FLOW, DELIVERY_META } from '../lib/status';
 import { etaText, formatPhone } from '../lib/delivery';
+import { locateMe, locateSummary, type MyLocation } from '../lib/geo';
 import type { Address, DeliveryZone, Order, OrderStatus } from '../api/types';
 
 const STEP_ICON: Partial<Record<OrderStatus, (c: string) => ReactNode>> = {
@@ -271,6 +272,40 @@ export function AddressCard({ address, selected, onPress, right }: { address: Ad
 }
 
 /** Вибір району доставки: вартість, мінімальна сума і час у дорозі. */
+/** Кнопка «Моє місцезнаходження»: визначає район доставки й підказує вулицю за GPS */
+export function LocateMeButton({ onLocated }: { onLocated: (loc: MyLocation) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ text: string; ok: boolean } | null>(null);
+  const run = async () => {
+    haptic.tap();
+    setBusy(true);
+    try {
+      const loc = await locateMe();
+      const summary = locateSummary(loc.locate);
+      setResult(summary);
+      if (summary.ok) haptic.success();
+      else haptic.error();
+      onLocated(loc);
+    } catch (e) {
+      setResult({ ok: false, text: (e as Error).message || 'Не вдалося визначити місцезнаходження' });
+      haptic.error();
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <View style={{ marginBottom: 12 }}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Визначити адресу за геолокацією" onPress={run} disabled={busy} style={styles.locate}>
+        {busy ? <ActivityIndicator size="small" color={colors.gold} /> : <LocateFixed size={17} color={colors.gold} />}
+        <Text style={{ fontFamily: fonts.semibold, color: colors.goldLight, fontSize: 13.5 }}>{busy ? 'Визначаємо…' : 'Моє місцезнаходження'}</Text>
+      </Pressable>
+      {result ? (
+        <Text style={{ fontFamily: fonts.medium, fontSize: 12.5, marginTop: 6, color: result.ok ? colors.success : colors.warning }}>{result.text}</Text>
+      ) : null}
+    </View>
+  );
+}
+
 export function ZonePicker({ zones, value, onChange }: { zones: DeliveryZone[]; value: number | null; onChange: (id: number) => void }) {
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -321,6 +356,7 @@ export function PaymentLine({ order }: { order: Order }) {
 export { formatPhone };
 
 const styles = StyleSheet.create({
+  locate: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 11, borderRadius: 14, borderWidth: 1, borderColor: colors.goldBorder, backgroundColor: colors.goldSoft },
   stepTrack: { height: 3, marginHorizontal: 31, marginTop: 17, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' },
   stepFill: { height: '100%', backgroundColor: colors.gold, borderRadius: 2 },
   stepDot: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },

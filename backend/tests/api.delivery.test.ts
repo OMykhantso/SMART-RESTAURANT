@@ -51,9 +51,9 @@ beforeAll(async () => {
   ]);
   courierIds = { c1: c1.id, c2: c2.id };
   const [center, far, closed] = await Promise.all([
-    prisma.deliveryZone.create({ data: { name: 'Печерський', fee: 4900, minOrder: 30000, freeFrom: 80000, travelMin: 15, sortOrder: 1 } }),
-    prisma.deliveryZone.create({ data: { name: 'Оболонський', fee: 8900, minOrder: 50000, travelMin: 35, sortOrder: 2 } }),
-    prisma.deliveryZone.create({ data: { name: 'Бровари', fee: 14900, minOrder: 80000, travelMin: 45, isActive: false } }),
+    prisma.deliveryZone.create({ data: { name: 'Печерський', fee: 4900, minOrder: 30000, freeFrom: 80000, travelMin: 15, sortOrder: 1, centerLat: 50.433, centerLng: 30.537, radiusKm: 3.2 } }),
+    prisma.deliveryZone.create({ data: { name: 'Оболонський', fee: 8900, minOrder: 50000, travelMin: 35, sortOrder: 2, centerLat: 50.506, centerLng: 30.497, radiusKm: 4.2 } }),
+    prisma.deliveryZone.create({ data: { name: 'Бровари', fee: 14900, minOrder: 80000, travelMin: 45, isActive: false, centerLat: 50.511, centerLng: 30.79, radiusKm: 5 } }),
   ]);
   zones = { center: center.id, far: far.id, closed: closed.id };
   [client, client2, staff, kitchen, admin, courier, courier2] = await Promise.all([
@@ -101,6 +101,30 @@ describe('TC-D01 Єдиний вхід і довідники доставки', 
     const upd = await dapi().patch(`/api/delivery/zones/${zones.far}`).set(bearer(admin)).send({ fee: 9900 }).expect(200);
     expect(upd.body.fee).toBe(9900);
     await dapi().patch(`/api/delivery/zones/${zones.far}`).set(bearer(admin)).send({ travelMin: 2 }).expect(400);
+  });
+});
+
+describe('TC-D06 Геолокація: район за координатами', () => {
+  it('точка на Хрещатику → Печерський, з відстанню від ресторану й оцінкою часу в дорозі', async () => {
+    const res = await dapi().post('/api/delivery/locate').send({ lat: 50.447, lng: 30.522 }).expect(200);
+    expect(res.body).toMatchObject({ covered: true, reason: null, zone: { id: zones.center, name: 'Печерський', fee: 4900 } });
+    expect(res.body.fromRestaurantKm).toBeLessThan(1);
+    expect(res.body.rideMinEstimate).toBeGreaterThanOrEqual(5);
+  });
+
+  it('неактивна зона (Бровари) і точка поза містом — не обслуговуються, з причиною', async () => {
+    const brovary = await dapi().post('/api/delivery/locate').send({ lat: 50.511, lng: 30.79 }).expect(200);
+    expect(brovary.body).toMatchObject({ covered: false, reason: 'ZONE_INACTIVE', zone: null, nearest: { name: 'Бровари', isActive: false } });
+    const lviv = await dapi().post('/api/delivery/locate').send({ lat: 49.84, lng: 24.03 }).expect(200);
+    expect(lviv.body).toMatchObject({ covered: false, reason: 'OUT_OF_RANGE' });
+    expect(lviv.body.fromRestaurantKm).toBeGreaterThan(400);
+  });
+
+  it('некоректні координати → 400; центр зони задається лише парою координат → 422', async () => {
+    await dapi().post('/api/delivery/locate').send({ lat: 120, lng: 30 }).expect(400);
+    const half = await dapi().patch(`/api/delivery/zones/${zones.far}`).set(bearer(admin)).send({ centerLat: 50.5 }).expect(422);
+    expect(half.body.error.code).toBe('CENTER_INCOMPLETE');
+    await dapi().patch(`/api/delivery/zones/${zones.far}`).set(bearer(admin)).send({ radiusKm: 0.1 }).expect(400);
   });
 });
 

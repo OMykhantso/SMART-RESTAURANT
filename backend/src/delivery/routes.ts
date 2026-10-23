@@ -3,12 +3,14 @@ import { DateTime } from 'luxon';
 import { OrderStatus, PaymentMethod, type Prisma } from '@prisma/client';
 import { createRouter, deliveryRegistry, idParam } from '../lib/router';
 import { prisma } from '../lib/prisma';
-import { conflict, forbidden, notFound } from '../lib/errors';
+import { conflict, forbidden, notFound, unprocessable } from '../lib/errors';
+import { delivery as rules } from '../config';
 import { now, TZ } from '../lib/time';
 import { assertCanView, loadOrder, orderInclude, serializeOrder } from '../modules/orders/orders.service';
 import { confirm3ds, payByCard } from '../modules/payments/payments.service';
 import { TEST_CARDS } from '../modules/payments/sandbox';
 import * as svc from './delivery.service';
+import { distanceKm, locateZone, rankZones } from './geo';
 
 const money = z.number().int().min(0).max(100_000_000);
 const lineSchema = z.object({
@@ -84,7 +86,18 @@ const zoneBody = z.object({
   travelMin: z.number().int().min(5).max(180),
   isActive: z.boolean().optional(),
   sortOrder: z.number().int().min(0).max(1000).optional(),
+  centerLat: z.number().min(-90).max(90).nullable().optional(),
+  centerLng: z.number().min(-180).max(180).nullable().optional(),
+  radiusKm: z.number().min(0.5).max(50).nullable().optional(),
 });
+
+/** Центр зони задається парою координат — інакше визначити район за геолокацією неможливо */
+function assertCenterPair(body: { centerLat?: number | null; centerLng?: number | null }) {
+  const hasLat = body.centerLat !== undefined, hasLng = body.centerLng !== undefined;
+  if (hasLat !== hasLng || (hasLat && (body.centerLat === null) !== (body.centerLng === null))) {
+    throw unprocessable('Центр зони задається обома координатами разом', 'CENTER_INCOMPLETE', { field: hasLat ? 'centerLng' : 'centerLat' });
+  }
+}
 
 zones.define({
   method: 'post',
@@ -94,7 +107,10 @@ zones.define({
   roles: ['ADMIN'],
   status: 201,
   body: zoneBody,
-  handler: ({ body }) => prisma.deliveryZone.create({ data: body }),
+  handler: ({ body }) => {
+    assertCenterPair(body);
+    return prisma.deliveryZone.create({ data: body });
+  },
 });
 
 zones.define({
@@ -105,7 +121,10 @@ zones.define({
   roles: ['ADMIN'],
   params: idParam,
   body: zoneBody.partial(),
-  handler: ({ params, body }) => prisma.deliveryZone.update({ where: { id: params.id }, data: body }),
+  handler: ({ params, body }) => {
+    assertCenterPair(body);
+    return prisma.deliveryZone.update({ where: { id: params.id }, data: body });
+  },
 });
 
 zones.define({
@@ -115,6 +134,31 @@ zones.define({
   tags: ['Delivery'],
   body: z.object({ zoneId: z.number().int().positive(), items: itemsSchema }),
   handler: ({ body }) => svc.quote(body),
+});
+
+zones.define({
+  method: 'post',
+  path: '/locate',
+  summary: 'Геолокація: зона доставки за координатами клієнта, відстань від ресторану і час у дорозі',
+  tags: ['Delivery'],
+  body: z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }),
+  handler: async ({ body }) => {
+    const all = await prisma.deliveryZone.findMany({ orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] });
+    const match = locateZone(all, body);
+    const nearest = match ?? rankZones(all, body, true)[0] ?? null;
+    const fromRestaurantKm = distanceKm(rules.origin, body);
+    const round = (km: number) => Math.round(km * 10) / 10;
+    return {
+      covered: Boolean(match),
+      // чому не обслуговуємо: адреса в неактивній зоні чи взагалі поза зонами
+      reason: match ? null : nearest && nearest.ratio <= 1 && !nearest.zone.isActive ? 'ZONE_INACTIVE' : 'OUT_OF_RANGE',
+      zone: match ? match.zone : null,
+      nearest: nearest ? { id: nearest.zone.id, name: nearest.zone.name, isActive: nearest.zone.isActive, distanceKm: round(nearest.distanceKm) } : null,
+      fromRestaurantKm: round(fromRestaurantKm),
+      // оцінка за відстанню; у розрахунку часу доставки використовується час зони (travelMin)
+      rideMinEstimate: Math.max(5, Math.round((fromRestaurantKm / rules.courierSpeedKmh) * 60)),
+    };
+  },
 });
 
 // ─────────────────────────────── Адреси клієнта ───────────────────────────────

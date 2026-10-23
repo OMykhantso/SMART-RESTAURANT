@@ -258,6 +258,19 @@ export interface DeliveryZone {
   travelMin: number;
   isActive: boolean;
   sortOrder: number;
+  centerLat?: number | null;
+  centerLng?: number | null;
+  radiusKm?: number | null;
+}
+
+/** Результат POST /delivery/locate — зона доставки за координатами клієнта */
+export interface LocateResult {
+  covered: boolean;
+  reason: 'ZONE_INACTIVE' | 'OUT_OF_RANGE' | null;
+  zone: DeliveryZone | null;
+  nearest: { id: number; name: string; isActive: boolean; distanceKm: number } | null;
+  fromRestaurantKm: number;
+  rideMinEstimate: number;
 }
 
 export interface DeliveryWindow {

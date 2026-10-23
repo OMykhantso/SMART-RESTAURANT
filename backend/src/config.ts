@@ -92,5 +92,9 @@ export const delivery = {
   handoverMin: 5,
   /** Для демонстрацій поза годинами роботи: DELIVERY_IGNORE_HOURS=true */
   ignoreHours: process.env.DELIVERY_IGNORE_HOURS === 'true',
+  /** Розташування ресторану (вул. Хрещатик, 1, Київ) — звідси курʼєр виїжджає */
+  origin: { lat: 50.449, lng: 30.526 },
+  /** Середня швидкість курʼєра містом, км/год — для оцінки часу в дорозі за відстанню */
+  courierSpeedKmh: 18,
 };
 

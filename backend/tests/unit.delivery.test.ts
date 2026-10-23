@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { DateTime } from 'luxon';
 import { deliveryWindow, normalizePhone, priceFor } from '../src/delivery/delivery.service';
 import { canTransition, DELIVERY_FLOW, ORDER_FLOW } from '../src/lib/stateMachine';
+import { distanceKm, locateZone, rankZones } from '../src/delivery/geo';
+import { DELIVERY_ZONES } from '../prisma/data';
 
 const kyiv = (iso: string) => DateTime.fromISO(iso, { zone: 'Europe/Kyiv' }).toJSDate();
 
@@ -56,5 +58,46 @@ describe('Доставка: автомат станів', () => {
   });
   it('у залі курʼєрських переходів немає', () => {
     expect(canTransition(ORDER_FLOW, 'READY', 'DELIVERING', ['COURIER', 'ADMIN'])).toBe(false);
+  });
+});
+
+describe('Доставка: геолокація (TC-D06)', () => {
+  // зони з демо-даних: орієнтовні центри районів Києва
+  const zones = DELIVERY_ZONES.map((z, i) => ({
+    id: i + 1,
+    name: z.name,
+    isActive: z.isActive ?? true,
+    centerLat: z.center[0],
+    centerLng: z.center[1],
+    radiusKm: z.radiusKm,
+  }));
+
+  it('відстань за формулою гаверсинуса: Київ — Львів ≈ 470 км, точка сама до себе — 0', () => {
+    const kyiv = { lat: 50.4501, lng: 30.5234 };
+    const lviv = { lat: 49.8397, lng: 24.0297 };
+    expect(distanceKm(kyiv, lviv)).toBeGreaterThan(460);
+    expect(distanceKm(kyiv, lviv)).toBeLessThan(475);
+    expect(distanceKm(kyiv, kyiv)).toBe(0);
+  });
+
+  it('визначає район за координатами', () => {
+    expect(locateZone(zones, { lat: 50.4655, lng: 30.5155 })?.zone.name).toBe('Подільський'); // Контрактова площа
+    expect(locateZone(zones, { lat: 50.447, lng: 30.522 })?.zone.name).toBe('Печерський'); // Хрещатик
+    expect(locateZone(zones, { lat: 50.501, lng: 30.498 })?.zone.name).toBe('Оболонський'); // метро «Оболонь»
+    expect(locateZone(zones, { lat: 50.44, lng: 30.488 })?.zone.name).toBe('Солом’янський'); // вокзал
+  });
+
+  it('неактивна зона й точки поза містом не обслуговуються', () => {
+    const brovary = { lat: 50.511, lng: 30.79 };
+    expect(locateZone(zones, brovary)).toBeNull();
+    const nearest = rankZones(zones, brovary, true)[0];
+    expect(nearest.zone.name).toBe('Бровари');
+    expect(nearest.ratio).toBeLessThanOrEqual(1);
+    expect(locateZone(zones, { lat: 49.8397, lng: 24.0297 })).toBeNull(); // Львів
+  });
+
+  it('зона без центру не бере участі у пошуку', () => {
+    const withoutGeo = [{ id: 1, name: 'Стара зона', isActive: true, centerLat: null, centerLng: null, radiusKm: null }];
+    expect(locateZone(withoutGeo, { lat: 50.45, lng: 30.52 })).toBeNull();
   });
 });

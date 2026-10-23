@@ -370,6 +370,9 @@ async function main() {
         travelMin: z.travelMin,
         isActive: z.isActive ?? true,
         sortOrder: i,
+        centerLat: z.center[0],
+        centerLng: z.center[1],
+        radiusKm: z.radiusKm,
       },
     });
     zones.push({ ...created, streets: z.streets, weight: z.weight });

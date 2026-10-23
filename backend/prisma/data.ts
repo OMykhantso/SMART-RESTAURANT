@@ -23,17 +23,20 @@ export const DELIVERY_ZONES: {
   freeFrom: number | null;
   travelMin: number;
   isActive?: boolean;
+  /** орієнтовний центр району і радіус обслуговування — для визначення зони за геолокацією */
+  center: [lat: number, lng: number];
+  radiusKm: number;
   streets: string[];
   weight: number;
 }[] = [
-  { name: 'Печерський', description: 'Центр, Липки, Печерськ', fee: 49, minOrder: 300, freeFrom: 800, travelMin: 15, streets: ['вул. Мечникова', 'вул. Інститутська', 'бульв. Лесі Українки', 'вул. Шовковична', 'вул. Хрещатик'], weight: 30 },
-  { name: 'Шевченківський', description: 'Золоті ворота, Лукʼянівка', fee: 59, minOrder: 350, freeFrom: 900, travelMin: 20, streets: ['вул. Січових Стрільців', 'вул. Ярославів Вал', 'вул. Велика Житомирська', 'вул. Богдана Хмельницького'], weight: 22 },
-  { name: 'Подільський', description: 'Поділ, Контрактова площа', fee: 59, minOrder: 350, freeFrom: 900, travelMin: 20, streets: ['вул. Покровська', 'вул. Сагайдачного', 'вул. Костянтинівська'], weight: 14 },
-  { name: 'Голосіївський', description: 'Олімпійська, Деміївка', fee: 69, minOrder: 400, freeFrom: 1000, travelMin: 25, streets: ['вул. Антоновича', 'вул. Велика Васильківська', 'просп. Голосіївський'], weight: 12 },
-  { name: 'Солом’янський', description: 'Вокзал, Чоколівка', fee: 69, minOrder: 400, freeFrom: 1000, travelMin: 25, streets: ['просп. Повітрофлотський', 'вул. Солом’янська', 'бульв. Вацлава Гавела'], weight: 10 },
-  { name: 'Дніпровський', description: 'Лівий берег, Русанівка', fee: 79, minOrder: 400, freeFrom: 1100, travelMin: 30, streets: ['бульв. Верховної Ради', 'вул. Микільсько-Слобідська', 'просп. Соборності'], weight: 7 },
-  { name: 'Оболонський', description: 'Оболонь, Мінський масив', fee: 89, minOrder: 500, freeFrom: 1200, travelMin: 35, streets: ['просп. Оболонський', 'вул. Йорданська', 'вул. Героїв полку «Азов»'], weight: 5 },
-  { name: 'Бровари', description: 'Передмістя — тимчасово не обслуговується', fee: 149, minOrder: 800, freeFrom: null, travelMin: 45, isActive: false, streets: ['бульв. Незалежності (Бровари)'], weight: 0 },
+  { name: 'Печерський', description: 'Центр, Липки, Печерськ', fee: 49, minOrder: 300, freeFrom: 800, travelMin: 15, center: [50.433, 30.537], radiusKm: 3.2, streets: ['вул. Мечникова', 'вул. Інститутська', 'бульв. Лесі Українки', 'вул. Шовковична', 'вул. Хрещатик'], weight: 30 },
+  { name: 'Шевченківський', description: 'Золоті ворота, Лукʼянівка', fee: 59, minOrder: 350, freeFrom: 900, travelMin: 20, center: [50.457, 30.493], radiusKm: 3.4, streets: ['вул. Січових Стрільців', 'вул. Ярославів Вал', 'вул. Велика Житомирська', 'вул. Богдана Хмельницького'], weight: 22 },
+  { name: 'Подільський', description: 'Поділ, Контрактова площа', fee: 59, minOrder: 350, freeFrom: 900, travelMin: 20, center: [50.47, 30.507], radiusKm: 3, streets: ['вул. Покровська', 'вул. Сагайдачного', 'вул. Костянтинівська'], weight: 14 },
+  { name: 'Голосіївський', description: 'Олімпійська, Деміївка', fee: 69, minOrder: 400, freeFrom: 1000, travelMin: 25, center: [50.402, 30.509], radiusKm: 4.2, streets: ['вул. Антоновича', 'вул. Велика Васильківська', 'просп. Голосіївський'], weight: 12 },
+  { name: 'Солом’янський', description: 'Вокзал, Чоколівка', fee: 69, minOrder: 400, freeFrom: 1000, travelMin: 25, center: [50.435, 30.47], radiusKm: 3.6, streets: ['просп. Повітрофлотський', 'вул. Солом’янська', 'бульв. Вацлава Гавела'], weight: 10 },
+  { name: 'Дніпровський', description: 'Лівий берег, Русанівка', fee: 79, minOrder: 400, freeFrom: 1100, travelMin: 30, center: [50.452, 30.608], radiusKm: 4.2, streets: ['бульв. Верховної Ради', 'вул. Микільсько-Слобідська', 'просп. Соборності'], weight: 7 },
+  { name: 'Оболонський', description: 'Оболонь, Мінський масив', fee: 89, minOrder: 500, freeFrom: 1200, travelMin: 35, center: [50.506, 30.497], radiusKm: 4.2, streets: ['просп. Оболонський', 'вул. Йорданська', 'вул. Героїв полку «Азов»'], weight: 5 },
+  { name: 'Бровари', description: 'Передмістя — тимчасово не обслуговується', fee: 149, minOrder: 800, freeFrom: null, travelMin: 45, isActive: false, center: [50.511, 30.79], radiusKm: 5, streets: ['бульв. Незалежності (Бровари)'], weight: 0 },
 ];
 
 export const DELIVERY_COMMENTS = [

@@ -4,7 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Banknote, Bike, CircleCheck, Clock, CreditCard, MapPin, MessageSquareHeart, Moon, Plus, RotateCcw, Star, Trash, Truck, XCircle } from 'lucide-react-native';
 import { Body, Button, Caption, Card, Chip, DishImage, Divider, EmptyState, Eyebrow, Field, Header, Screen, Skeleton, Title } from '../components/ui';
-import { AddressCard, CourierCard, DeliveryHero, DeliveryStepper, formatPhone, PaymentLine, ZonePicker } from '../components/delivery';
+import { AddressCard, CourierCard, DeliveryHero, DeliveryStepper, formatPhone, LocateMeButton, PaymentLine, ZonePicker } from '../components/delivery';
+import type { MyLocation } from '../lib/geo';
 import { colors, fonts, radius } from '../theme';
 import { useAuth } from '../lib/auth';
 import { useCart } from '../lib/cart';
@@ -17,6 +18,17 @@ import type { PayMethod } from '../api/types';
 import type { ScreenProps } from '../navigation/types';
 
 const LABELS = ['Дім', 'Робота', 'Інше'];
+
+/** Заповнює форму адреси результатом геолокації: район — завжди, вулицю й будинок — лише якщо поля порожні */
+function applyLocation(
+  loc: MyLocation,
+  set: { zone: (id: number) => void; street: (v: string) => void; house: (v: string) => void },
+  current: { street: string; house: string },
+) {
+  if (loc.locate.covered && loc.locate.zone) set.zone(loc.locate.zone.id);
+  if (loc.street && !current.street.trim()) set.street(loc.street);
+  if (loc.house && !current.house.trim()) set.house(loc.house);
+}
 
 // ─────────────────────────────── Оформлення доставки ───────────────────────────────
 
@@ -155,6 +167,7 @@ export function CheckoutScreen({ navigation }: ScreenProps<'Checkout'>) {
               )}
               {mode === 'new' && (
                 <Card style={{ marginTop: 4 }}>
+                  <LocateMeButton onLocated={(loc) => applyLocation(loc, { zone: setZoneId, street: setStreet, house: setHouse }, { street, house })} />
                   <Text style={styles.fieldLabel}>Район</Text>
                   {info.data ? <ZonePicker zones={info.data.zones} value={zoneId} onChange={setZoneId} /> : <Skeleton height={90} />}
                   {touched && !zoneId ? <Text style={styles.err}>Оберіть район</Text> : null}
@@ -497,6 +510,7 @@ export function AddressFormScreen({ route, navigation }: ScreenProps<'AddressFor
             <Chip key={l} label={l} active={label === l} onPress={() => setLabel(l)} />
           ))}
         </View>
+        <LocateMeButton onLocated={(loc) => applyLocation(loc, { zone: setZoneId, street: setStreet, house: setHouse }, { street, house })} />
         <Text style={styles.fieldLabel}>Район</Text>
         {info.data ? <ZonePicker zones={info.data.zones} value={zoneId} onChange={setZoneId} /> : <Skeleton height={90} />}
         {touched && !zoneId ? <Text style={styles.err}>Оберіть район</Text> : null}

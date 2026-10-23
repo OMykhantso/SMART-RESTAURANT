@@ -357,6 +357,9 @@ model DeliveryZone {
   travelMin   Int     @map("travel_min") // орієнтовний час у дорозі, хв
   isActive    Boolean @default(true) @map("is_active")
   sortOrder   Int     @default(0) @map("sort_order")
+  centerLat   Float?  @map("center_lat") // центр зони — для визначення району за геолокацією
+  centerLng   Float?  @map("center_lng")
+  radiusKm    Float?  @map("radius_km") // радіус обслуговування від центру, км
 
   addresses  Address[]
   deliveries Delivery[]

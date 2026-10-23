@@ -155,7 +155,7 @@
 |---|---|---|---|
 | `POST` | `/api/uploads` | ADMIN | Завантажити зображення страви (multipart/form-data, поле file, до 5 МБ) → **201** |
 
-## Delivery API — endpoints (26), порт 4100
+## Delivery API — endpoints (27), порт 4100
 
 Окремий сервіс служби доставки. Типові коди помилок: `DELIVERY_CLOSED`, `ZONE_INACTIVE`, `BELOW_MIN_ORDER`, `PHONE_INVALID`,
 `TOO_MANY_ACTIVE_DELIVERIES`, `ALREADY_TAKEN`, `COURIER_BUSY`, `NOT_READY`, `TOO_LATE_TO_CANCEL`, `ORDER_NOT_AWAITING_PAYMENT`.
@@ -172,6 +172,7 @@
 |---|---|---|---|
 | `GET` | `/api/delivery/info` | публічний | Чи працює доставка зараз, години, зони і прогноз часу |
 | `POST` | `/api/delivery/quote` | публічний | Розрахунок: сума, вартість доставки, мінімальне замовлення і прогноз часу |
+| `POST` | `/api/delivery/locate` | публічний | Геолокація: зона доставки за координатами клієнта, відстань від ресторану і час у дорозі |
 
 ### Delivery zones
 

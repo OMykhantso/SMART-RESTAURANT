@@ -10,7 +10,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "ua.smartrest.app",
       "infoPlist": {
-        "NSCameraUsageDescription": "Камера потрібна для сканування QR-коду на столику."
+        "NSCameraUsageDescription": "Камера потрібна для сканування QR-коду на столику.",
+        "NSLocationWhenInUseUsageDescription": "Геолокація потрібна, щоб визначити район і адресу доставки."
       }
     },
     "android": {
@@ -23,7 +24,9 @@
       "predictiveBackGestureEnabled": false,
       "package": "ua.smartrest.app",
       "permissions": [
-        "CAMERA"
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -40,7 +43,13 @@
           "recordAudioAndroid": false
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Геолокація потрібна, щоб визначити район і адресу доставки."
+        }
+      ]
     ],
     "scheme": "smartrest",
     "backgroundColor": "#08080b",

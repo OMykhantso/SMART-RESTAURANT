@@ -14,9 +14,17 @@ const prisma = new PrismaClient();
 
 async function main() {
   let zones = 0;
+  let geo = 0;
   for (const [i, z] of DELIVERY_ZONES.entries()) {
     const exists = await prisma.deliveryZone.findUnique({ where: { name: z.name } });
-    if (exists) continue;
+    if (exists) {
+      // база з попередньої версії: дописуємо центр і радіус для геолокації, решту не чіпаємо
+      if (exists.centerLat == null) {
+        await prisma.deliveryZone.update({ where: { id: exists.id }, data: { centerLat: z.center[0], centerLng: z.center[1], radiusKm: z.radiusKm } });
+        geo++;
+      }
+      continue;
+    }
     await prisma.deliveryZone.create({
       data: {
         name: z.name,
@@ -27,6 +35,9 @@ async function main() {
         travelMin: z.travelMin,
         isActive: z.isActive ?? true,
         sortOrder: i,
+        centerLat: z.center[0],
+        centerLng: z.center[1],
+        radiusKm: z.radiusKm,
       },
     });
     zones++;
@@ -61,7 +72,7 @@ async function main() {
       addresses++;
     }
   }
-  console.log(`🛵 Доставка: районів +${zones}, курʼєрів +${couriers}, адрес +${addresses}`);
+  console.log(`🛵 Доставка: районів +${zones} (геолокація для ${geo}), курʼєрів +${couriers}, адрес +${addresses}`);
 }
 
 main()
