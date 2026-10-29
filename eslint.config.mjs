@@ -28,8 +28,12 @@ export default tseslint.config(
   },
   {
     // генератор діаграм документів: скрипт Node + код, що виконується в браузері
-    files: ['docs/coursework-src/**/*.{js,mjs}'],
+    files: ['docs/coursework-src/**/*.{js,mjs,cjs}'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
+  {
+    files: ['**/*.cjs'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
     files: ['web/src/**/*.{ts,tsx}', 'mobile/**/*.{ts,tsx}'],

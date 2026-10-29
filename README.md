@@ -220,11 +220,15 @@ npm run e2e                                       # повний цикл у з�
 | Use Case діаграма та специфікації | [docs/03-use-cases.md](docs/03-use-cases.md) |
 | Архітектура, Web ↔ Mobile інтеграція, безпека | [docs/04-architecture.md](docs/04-architecture.md) |
 | Логічна модель БД, обмеження, індекси | [docs/05-database.md](docs/05-database.md) |
-| Специфікація API (59 + 26 endpoints двох сервісів, згенеровано з коду) | [docs/06-api.md](docs/06-api.md) |
+| Специфікація API (59 + 27 endpoints двох сервісів, згенеровано з коду) | [docs/06-api.md](docs/06-api.md) |
 | Стани та бізнес-правила | [docs/07-business-logic.md](docs/07-business-logic.md) |
 | ADVANCED / BONUS: алгоритми | [docs/08-advanced.md](docs/08-advanced.md) |
 | Тестування | [docs/09-testing.md](docs/09-testing.md) |
 | Сценарій захисту | [docs/10-demo-script.md](docs/10-demo-script.md) |
+| **Пояснювальна записка** (Word, за методичкою) | [docs/KR_SMART_RESTAURANT.docx](docs/KR_SMART_RESTAURANT.docx) |
+| **КТ №1** — аналіз та проєктування (Word) | [docs/KT1_SMART_RESTAURANT.docx](docs/KT1_SMART_RESTAURANT.docx) |
+| **Презентація** для захисту | [docs/Presentation_SMART_RESTAURANT.pptx](docs/Presentation_SMART_RESTAURANT.pptx) |
+| Діаграми (use case, архітектура, ER, стани) і вихідні файли документів | [docs/diagrams](docs/diagrams), [docs/coursework-src](docs/coursework-src) |
 
 ## Структура репозиторію
 
