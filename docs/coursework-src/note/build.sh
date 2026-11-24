@@ -30,4 +30,6 @@ out += block('А.7 – Визначення зони доставки за ге�
 pathlib.Path('appA.md').write_text(out, encoding='utf-8')
 PY
 build kt1.md ../../KT1_SMART_RESTAURANT.docx --kt1
+build kt2.md ../../KT2_SMART_RESTAURANT.docx --kt2
+build kt3.md ../../KT3_SMART_RESTAURANT.docx --kt3
 build note.md ../../KR_SMART_RESTAURANT.docx ""

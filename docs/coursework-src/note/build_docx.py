@@ -33,7 +33,8 @@ SRC, OUT = args[0], args[1]
 PAGES = {}
 if '--pages' in sys.argv:
     PAGES = json.load(open(sys.argv[sys.argv.index('--pages') + 1]))
-KT1 = '--kt1' in sys.argv
+KT = next((a[4:] for a in sys.argv if a in ('--kt1', '--kt2', '--kt3')), None)
+KT1 = KT is not None
 BASE = os.path.dirname(os.path.abspath(SRC))
 FONT, MONO = 'Times New Roman', 'Courier New'
 TEXT_W = 21 - 2.5 - 2  # ширина тексту, см
@@ -359,7 +360,43 @@ def expand_abbr(src):
     return out
 
 
-lines = normalize(expand_abbr(read_lines(SRC)))
+CITE = re.compile(r'\[(\d+(?:\s*[,–-]\s*\d+)*)\]')
+
+
+def number_sources(src):
+    """@sources — список джерел із sources-all.md: лише процитовані, у порядку першого посилання (вимога методички)."""
+    if '@sources' not in src:
+        return src
+    master = {}
+    for row in open(os.path.join(BASE, 'sources-all.md'), encoding='utf-8'):
+        m = re.match(r'^(\d+)\. (.*)$', row.strip())
+        if m:
+            master[int(m.group(1))] = m.group(2)
+    order, in_code = [], False
+    for ln in src:
+        if ln.startswith('```'):
+            in_code = not in_code
+        elif not in_code:
+            for m in CITE.finditer(ln):
+                for n in map(int, re.findall(r'\d+', m.group(1))):
+                    if n in master and n not in order:
+                        order.append(n)
+    new = {old: i + 1 for i, old in enumerate(order)}
+    out, in_code = [], False
+    for ln in src:
+        if ln.startswith('```'):
+            in_code = not in_code
+        if ln == '@sources':
+            out += ['## СПИСОК ВИКОРИСТАНИХ ДЖЕРЕЛ', '']
+            out += [f'{new[o]}. {master[o]}' for o in order]
+            continue
+        if not in_code:
+            ln = CITE.sub(lambda m: '[' + re.sub(r'\d+', lambda d: str(new.get(int(d.group()), d.group())), m.group(1)) + ']', ln)
+        out.append(ln)
+    return out
+
+
+lines = normalize(expand_abbr(number_sources(read_lines(SRC))))
 blocks = []
 i = 0
 while i < len(lines):
@@ -415,8 +452,13 @@ para('«Інтернет-проєкт»', align=C, indent=False)
 para('на тему:', align=C, indent=False, before=6)
 para('«Інформаційна система ресторану SMART RESTAURANT з онлайн-бронюванням, QR check-in, замовленням зі смартфона, оплатою та доставкою»',
      align=C, indent=False, bold=True)
-if KT1:
-    para('Контрольна точка № 1. Аналіз та проєктування', align=C, indent=False, before=14)
+KT_TITLES = {
+    '1': 'Контрольна точка № 1. Аналіз та проєктування',
+    '2': 'Контрольна точка № 2. База даних, Backend/API та Web',
+    '3': 'Контрольна точка № 3. Mobile, інтеграція та ADVANCED-компоненти',
+}
+if KT:
+    para(KT_TITLES[KT], align=C, indent=False, before=14)
 
 
 def right_block(text, before=0):

@@ -32,4 +32,4 @@
 
 @include s2ui.md
 
-@include sources.md
+@sources
