@@ -90,8 +90,8 @@ export const delivery = {
   maxActivePerCourier: 2,
   /** Час на передачу замовлення курʼєру, хв (входить у прогноз доставки) */
   handoverMin: 5,
-  /** Для демонстрацій поза годинами роботи: DELIVERY_IGNORE_HOURS=true */
-  ignoreHours: process.env.DELIVERY_IGNORE_HOURS === 'true',
+  /** Для демонстрацій поза годинами роботи: DELIVERY_IGNORE_HOURS=true (у тестах не діє — вони самі керують часом) */
+  ignoreHours: process.env.DELIVERY_IGNORE_HOURS === 'true' && !isTestEnv,
   /** Розташування ресторану (вул. Хрещатик, 1, Київ) — звідси курʼєр виїжджає */
   origin: { lat: 50.449, lng: 30.526 },
   /** Середня швидкість курʼєра містом, км/год — для оцінки часу в дорозі за відстанню */

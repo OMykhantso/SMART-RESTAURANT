@@ -17,7 +17,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:delivery": "tsx prisma/seed-delivery.ts",
     "db:studio": "prisma studio",
-    "setup": "prisma migrate deploy && tsx prisma/seed.ts",
+    "setup": "prisma generate && prisma migrate deploy && tsx prisma/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:weekdays": "node scripts/test-weekdays.mjs",

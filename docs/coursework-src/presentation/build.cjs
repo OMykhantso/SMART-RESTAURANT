@@ -150,12 +150,12 @@ async function dims(file) {
   s.addText('Аналоги не покривають повний цикл', { placeholder: 'title' });
   const yes = { text: '✓', color: HEX.accent2 }, no = { text: '—', color: HEX.accent6 }, part = { text: 'частково', color: HEX.lt2 };
   const rowsData = [
-    ['Онлайн-бронювання', yes, no, part, no],
+    ['Онлайн-бронювання', yes, yes, part, no],
     ['QR check-in за бронюванням', no, no, no, no],
     ['Замовлення зі смартфона', no, yes, part, yes],
     ['Kitchen display', no, no, yes, no],
     ['Статус у реальному часі', no, part, no, yes],
-    ['Власна доставка', no, no, no, part],
+    ['Власна доставка закладу', no, part, yes, no],
   ];
   const hdr = (t, gold) => ({ text: t, options: { bold: true, color: gold ? HEX.dk1 : HEX.lt1, fill: { color: gold ? HEX.accent1 : '2B2620' }, align: 'center', valign: 'middle' } });
   const rows = [[hdr('Функція'), hdr('OpenTable'), hdr('Choice QR'), hdr('Poster POS'), hdr('Glovo'), hdr('Smart Restaurant', true)]];
@@ -175,8 +175,9 @@ async function dims(file) {
     { text: 'кожен аналог закриває лише частину процесу — Smart Restaurant поєднує зал, кухню, оплату й доставку в одній системі без посередника' },
   ], { x: 0.6, y: 5.35, w: 12.1, h: 0.9, fontSize: 17, objectName: 'Висновок аналізу' });
   s.addNotes(
-    'Я розглянув чотири аналоги: OpenTable — бронювання, Choice QR — електронне меню, Poster POS — система для персоналу, Glovo — доставка. ' +
-      'Кожен покриває лише частину процесу. Звідси ніша: повний цикл у залі разом із власною доставкою.',
+    'Я розглянув чотири аналоги. OpenTable — бронювання. Choice QR — QR-меню, замовлення й оплата зі смартфона, бронювання за заявкою і сайт для доставки, але без check-in і kitchen display. ' +
+      'Poster POS — система для персоналу з kitchen display і застосунком курʼєра, але без застосунку для гостя. Glovo — агрегатор доставки з комісією. ' +
+      'Кожен покриває лише частину процесу. Звідси ніша: повний цикл у залі разом із власною доставкою в одній системі.',
   );
 
   // ───────── 4. Ролі та процеси ─────────
@@ -389,7 +390,7 @@ async function dims(file) {
   s = pres.addSlide({ masterName: 'CONTENT', sectionTitle: 'Результати' });
   s.addText('Тестування: автоматичне і на кожен push', { placeholder: 'title' });
   const stats = [
-    ['118', 'тестів API', 'зал — 77, доставка — 41', HEX.accent2],
+    ['118', 'тестів backend', 'зал — 77, доставка — 41', HEX.accent2],
     ['× 7', 'днів тижня', 'увесь набір «ніби сьогодні» кожен день', HEX.accent1],
     ['4', 'E2E у браузері', 'захист і доставка через UI', HEX.accent3],
     ['0', 'зауважень ESLint', 'TypeScript strict, Prettier', HEX.accent4],
@@ -414,7 +415,7 @@ async function dims(file) {
     x: 0.6, y: 5.95, w: 12.1, h: 0.8, fontSize: 14, color: C.background2, objectName: 'Що перевірено',
   });
   s.addNotes(
-    'Тестування автоматичне: 118 інтеграційних і модульних тестів API на реальній PostgreSQL, і весь набір проганяється сім разів — ніби сьогодні кожен день тижня, ' +
+    'Тестування автоматичне: 118 модульних та інтеграційних тестів серверної частини на реальній PostgreSQL, і весь набір проганяється сім разів — ніби сьогодні кожен день тижня, ' +
       'бо графік роботи різний. Ще чотири наскрізні тести в браузері проходять сценарій захисту й доставку. Усе це виконує GitHub Actions на кожен push.',
   );
 

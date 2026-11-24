@@ -11,7 +11,9 @@ python3 build_docx.py <in.md> <out.docx> [--pages pages.json] [--kt1]
   !fig 2.3 | path | Підпис [| ширина, см]  — рисунок «Рис. 2.3. Підпис»
   !eq (2.1) | формула                      — формула по центру з номером праворуч
   Таблиця 1.1 – Назва  + markdown-таблиця  — «Таблиця 1.1» праворуч курсивом, назва по центру
-  ```lang … ```                            — лістинг (Courier New 10)
+  ```lang … ```                            — лістинг (Courier New 9, інтервал 13,5 пт: ≤ 55 рядків на сторінці)
+  @abbr                                    — перелік скорочень із abbr.txt (лише ті, що є в тексті)
+  ~ текст                                  — рядок переліку без абзацного відступу
 """
 import json
 import os
@@ -20,7 +22,7 @@ import sys
 
 from docx import Document
 from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_TAB_ALIGNMENT, WD_TAB_LEADER
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_LINE_SPACING, WD_TAB_ALIGNMENT, WD_TAB_LEADER
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
@@ -291,7 +293,9 @@ def add_code(lines):
         f.first_line_indent = Cm(0)
         f.left_indent = Cm(0.2)
         f.alignment = WD_ALIGN_PARAGRAPH.LEFT
-        f.line_spacing = 1.0
+        # методичка: у лістингах не більше 55 рядків на сторінці; 728 пт висоти / 13,5 пт = 53 рядки
+        f.line_spacing = Pt(13.5)
+        f.line_spacing_rule = WD_LINE_SPACING.EXACTLY
         f.space_before = Pt(4) if k == 0 else Pt(0)
         f.space_after = Pt(6) if k == len(lines) - 1 else Pt(0)
         if k < len(lines) - 1 and len(lines) <= 30:
@@ -315,7 +319,46 @@ def read_lines(path):
     return out
 
 
-lines = read_lines(SRC)
+def normalize(src):
+    """Апостроф U+02BC → U+2019 (його розпізнає перевірка правопису Word); код у лістингах не змінюється."""
+    out, in_code = [], False
+    for ln in src:
+        if ln.startswith('```'):
+            in_code = not in_code
+        out.append(ln if in_code else ln.replace('ʼ', '’'))
+    return out
+
+
+def expand_abbr(src):
+    """@abbr — перелік скорочень і термінів, які справді трапляються в тексті документа (abbr.txt)."""
+    if '@abbr' not in src:
+        return src
+    text, in_code = [], False
+    for ln in src:
+        if ln.startswith('```'):
+            in_code = not in_code
+        elif not in_code and ln != '@abbr':
+            text.append(ln)
+    text = '\n'.join(text)
+    entries = []
+    for row in open(os.path.join(BASE, 'abbr.txt'), encoding='utf-8'):
+        if row.startswith('#') or '|' not in row:
+            continue
+        key, meaning = [x.strip() for x in row.split('|', 1)]
+        probes = [x.strip() for x in key.split('/')] if key not in ('UI/UX', 'HTTP/HTTPS') else [key.split('/')[0]]
+        if any(re.search(r'(?<![\w-])' + re.escape(pr) + r'(?![\w])', text, re.I if pr[0].islower() or pr[1:].islower() else 0) for pr in probes):
+            entries.append((key, meaning))
+    rank = lambda k: (0 if re.match(r'[А-ЯҐЄІЇа-яґєії]', k) else 2 if k[0].isdigit() else 1, k.lower())
+    out = []
+    for ln in src:
+        if ln == '@abbr':
+            out.extend(f'~ {k} – {m}' for k, m in sorted(entries, key=lambda e: rank(e[0])))
+        else:
+            out.append(ln)
+    return out
+
+
+lines = normalize(expand_abbr(read_lines(SRC)))
 blocks = []
 i = 0
 while i < len(lines):
@@ -355,6 +398,8 @@ while i < len(lines):
         blocks.append(('ol', (m.group(1), m.group(2))))
     elif ln.startswith('- '):
         blocks.append(('ul', ln[2:]))
+    elif ln.startswith('~ '):
+        blocks.append(('def', ln[2:]))
     else:
         blocks.append(('p', ln.strip()))
     i += 1
@@ -367,7 +412,7 @@ para('Кафедра систем віртуальної реальності', 
 para('КУРСОВА РОБОТА', align=C, indent=False, bold=True, size=16, before=120)
 para('«Інтернет-проєкт»', align=C, indent=False)
 para('на тему:', align=C, indent=False, before=6)
-para('«Інформаційна система ресторану SMART RESTAURANT з онлайн-бронюванням, QR check-in, замовленням зі смартфона та оплатою»',
+para('«Інформаційна система ресторану SMART RESTAURANT з онлайн-бронюванням, QR check-in, замовленням зі смартфона, оплатою та доставкою»',
      align=C, indent=False, bold=True)
 if KT1:
     para('Контрольна точка № 1. Аналіз та проєктування', align=C, indent=False, before=14)
@@ -502,6 +547,9 @@ for k, v in blocks:
         continue
     if k == 'ul':
         para('– ' + v)
+        continue
+    if k == 'def':
+        para(v, align=WD_ALIGN_PARAGRAPH.LEFT, indent=False)
         continue
     para(v)
 

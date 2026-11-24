@@ -16,7 +16,7 @@ flowchart LR
     end
     subgraph D[Delivery API · порт 4100]
       DAPI[REST · Express 5 · zod · той самий JWT]
-      DBL[зони й тарифи · адреси · оформлення<br/>оплата · курʼєр · диспетчерська]
+      DBL[зони й тарифи · геолокація · адреси<br/>оформлення · оплата · курʼєр · диспетчерська]
       DRT[Socket.IO: клієнт, курʼєри, диспетчер]
       DJOB[фонові задачі: неоплачені замовлення]
     end
@@ -52,9 +52,9 @@ flowchart LR
 | Компонент | Технології | Роль |
 |---|---|---|
 | **Web** | React 19, TypeScript, Vite 7, Tailwind CSS 4, React Router 7, TanStack Query, Motion, Recharts, Socket.IO client, jsQR | Сайт для гостей (меню, бронювання, кабінет, оплата) + робоче місце персоналу (дашборд, план залу, бронювання, kanban, QR-сканер), Kitchen display, адмін-панель |
-| **Mobile** | React Native 0.86, Expo SDK 57, React Navigation 7, expo-camera, expo-secure-store, expo-notifications, expo-haptics | Гість: бронювання з планом залу, QR check-in камерою, меню й кошик, **доставка додому** (адреси, оформлення, оплата, відстеження курʼєра), статус наживо, відгуки. **Курʼєр**: черга, мої доставки, маршрут, готівка. Зал / адмін: **диспетчерська доставок**, зони й тарифи |
+| **Mobile** | React Native 0.86, Expo SDK 57, React Navigation 7, expo-camera, expo-location, expo-secure-store, expo-notifications, expo-haptics | Гість: бронювання з планом залу, QR check-in камерою, меню й кошик, **доставка додому** (адреси, район за GPS, оформлення, оплата, відстеження курʼєра), статус наживо, відгуки. **Курʼєр**: черга, мої доставки, маршрут, готівка. Зал / адмін: **диспетчерська доставок**, зони й тарифи |
 | **Restaurant API** | Node.js 22, Express 5, TypeScript, zod 4, jsonwebtoken, bcryptjs, Luxon, helmet, rate-limit, multer | REST API ресторану, валідація, автентифікація й авторизація, бізнес-логіка залу й кухні (порт 4000) |
-| **Delivery API** | той самий стек, окремий процес `dist/delivery/server.js` | доставка: зони, адреси, розрахунок, оформлення, оплата, курʼєр, диспетчерська (порт 4100) |
+| **Delivery API** | той самий стек, окремий процес `dist/delivery/server.js` | доставка: зони, геолокація, адреси, розрахунок, оформлення, оплата, курʼєр, диспетчерська (порт 4100) |
 | **Real-time** | Socket.IO 4 (у кожному сервісі свій) + PostgreSQL LISTEN/NOTIFY | Restaurant: `user:<id>`, `staff`, `kitchen`, `public`; Delivery: `user:<id>`, `couriers`, `dispatch` |
 | **БД** | PostgreSQL 16, Prisma 6 (міграції) | 14 таблиць, CHECK/FK/UNIQUE/EXCLUDE-обмеження, тригер, індекси |
 | **Документація API** | OpenAPI 3.1 генерується з тих самих zod-схем, що валідують запити | Swagger UI `/api/docs` |
@@ -84,8 +84,9 @@ backend/src
 ├── lib/bus.ts                  # PostgreSQL LISTEN/NOTIFY між системами
 └── delivery/                   # ── Delivery API (окремий процес, порт 4100) ──
     ├── server.ts, app.ts       # власний HTTP + Socket.IO + Swagger
-    ├── routes.ts               # зони, адреси, quote, доставки, оплата, курʼєр, диспетчерська
+    ├── routes.ts               # зони, locate, адреси, quote, доставки, оплата, курʼєр, диспетчерська
     ├── delivery.service.ts     # тарифи, години, оформлення, курʼєрські дії
+    ├── geo.ts                  # геолокація: відстань (гаверсинус), зона за координатами
     ├── realtime.ts             # кімнати user / couriers / dispatch
     └── scheduler.ts            # скасування неоплачених онлайн-замовлень
 ```

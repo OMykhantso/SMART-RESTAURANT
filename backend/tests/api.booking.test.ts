@@ -78,7 +78,7 @@ describe('Booking engine через API', () => {
     expect(res.body.error.code).toBe('NO_TABLES_AVAILABLE');
   });
 
-  it('БД-рівень: EXCLUDE-обмеження не дає вставити перетин навіть в обхід API', async () => {
+  it('БД-рівень: EXCLUDE-обмеження не дає вставити перетин навіть в обхід API (TC-12b)', async () => {
     const t = fx.tables[1];
     const base = { tableId: t.id, guests: 2, status: 'CONFIRMED' as const, guestName: 'X', checkinToken: 'x' };
     await prisma.reservation.create({
