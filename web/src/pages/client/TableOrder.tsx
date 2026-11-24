@@ -23,7 +23,12 @@ export default function TableOrder() {
   const visitOrders = useMemo(() => (orders.data ?? []).filter((o) => o.reservationId === active?.id), [orders.data, active?.id]);
   const bill = visitOrders.filter((o) => o.status !== 'CANCELLED').reduce((s, o) => s + o.total, 0);
 
-  if (visit.isLoading) return <div className="mx-auto max-w-6xl px-4 pt-32"><Skeleton className="h-64" /></div>;
+  if (visit.isLoading)
+    return (
+      <div className="mx-auto max-w-6xl px-4 pt-32">
+        <Skeleton className="h-64" />
+      </div>
+    );
 
   if (!active) {
     return (
@@ -33,13 +38,20 @@ export default function TableOrder() {
           title="Спершу — check-in за столиком"
           text={
             <>
-              Відскануйте QR-код на своєму столику в мобільному застосунку Smart Restaurant або покажіть QR бронювання хостес. Після check-in тут зʼявиться меню для замовлення.
+              Відскануйте QR-код на своєму столику в мобільному застосунку Smart Restaurant або покажіть QR бронювання хостес. Після
+              check-in тут зʼявиться меню для замовлення.
             </>
           }
           action={
             <div className="flex flex-wrap justify-center gap-2">
-              <Link to="/booking"><Button variant="gold">Забронювати столик</Button></Link>
-              <Link to="/account"><Button variant="glass" icon={<Smartphone className="size-4" />}>Мої бронювання</Button></Link>
+              <Link to="/booking">
+                <Button variant="gold">Забронювати столик</Button>
+              </Link>
+              <Link to="/account">
+                <Button variant="glass" icon={<Smartphone className="size-4" />}>
+                  Мої бронювання
+                </Button>
+              </Link>
             </div>
           }
         />
@@ -93,9 +105,14 @@ export default function TableOrder() {
               <ul className="mt-4 space-y-2">
                 {visitOrders.map((o) => (
                   <li key={o.id}>
-                    <Link to={`/account/orders/${o.id}`} className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.03] p-3 transition hover:bg-white/[0.06]">
+                    <Link
+                      to={`/account/orders/${o.id}`}
+                      className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.03] p-3 transition hover:bg-white/[0.06]"
+                    >
                       <div className="min-w-0">
-                        <div className="text-sm text-cream">#{o.id} · {money(o.total)}</div>
+                        <div className="text-sm text-cream">
+                          #{o.id} · {money(o.total)}
+                        </div>
                         <div className="truncate text-xs text-ink-400">{o.items.map((i) => i.name).join(', ')}</div>
                       </div>
                       <OrderBadge status={o.status} />
@@ -105,11 +122,19 @@ export default function TableOrder() {
               </ul>
             )}
           </Card>
-          <Button variant="gold" size="lg" className="w-full" disabled={cart.count === 0} onClick={() => cart.setOpen(true)} icon={<ShoppingBag className="size-5" />}>
+          <Button
+            variant="gold"
+            size="lg"
+            className="w-full"
+            disabled={cart.count === 0}
+            onClick={() => cart.setOpen(true)}
+            icon={<ShoppingBag className="size-5" />}
+          >
             {cart.count ? `Кошик · ${cart.count} · ${money(cart.total)}` : 'Кошик порожній'}
           </Button>
           <p className="flex items-start gap-2 px-1 text-xs text-ink-400">
-            <UtensilsCrossed className="mt-0.5 size-3.5 shrink-0 text-gold-300" /> Статуси оновлюються в реальному часі — сторінку перезавантажувати не потрібно.
+            <UtensilsCrossed className="mt-0.5 size-3.5 shrink-0 text-gold-300" /> Статуси оновлюються в реальному часі — сторінку
+            перезавантажувати не потрібно.
           </p>
         </div>
       </div>

@@ -103,10 +103,20 @@ export default function MenuAdmin() {
               </thead>
               <tbody>
                 {dishes.data?.map((d) => (
-                  <tr key={d.id} className={cn('border-b border-white/[0.03] transition hover:bg-white/[0.02]', d.isArchived && 'opacity-50')}>
+                  <tr
+                    key={d.id}
+                    className={cn('border-b border-white/[0.03] transition hover:bg-white/[0.02]', d.isArchived && 'opacity-50')}
+                  >
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-3">
-                        <DishImage src={d.imageUrl} alt={d.name} category={d.category?.slug} className="size-11 shrink-0" rounded="rounded-xl" zoom={false} />
+                        <DishImage
+                          src={d.imageUrl}
+                          alt={d.name}
+                          category={d.category?.slug}
+                          className="size-11 shrink-0"
+                          rounded="rounded-xl"
+                          zoom={false}
+                        />
                         <div>
                           <div className="text-cream">
                             {d.name} {d.isChefChoice && <span className="text-gold-300">✦</span>}
@@ -125,7 +135,11 @@ export default function MenuAdmin() {
                     <td className="px-4 py-2.5 text-ink-200">{d.avgRating ? `★ ${d.avgRating}` : '—'}</td>
                     <td className="px-4 py-2.5 text-ink-200">{d.ordersCount}</td>
                     <td className="px-4 py-2.5">
-                      <Switch checked={d.isAvailable} disabled={d.isArchived} onChange={(v) => toggle.mutate({ id: d.id, isAvailable: v })} />
+                      <Switch
+                        checked={d.isAvailable}
+                        disabled={d.isArchived}
+                        onChange={(v) => toggle.mutate({ id: d.id, isAvailable: v })}
+                      />
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex justify-end gap-1">
@@ -138,7 +152,13 @@ export default function MenuAdmin() {
                             <Button size="icon" variant="ghost" className="size-8" onClick={() => setEditing(d)} aria-label="Редагувати">
                               <Edit3 className="size-4" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="size-8 hover:text-rose-300" onClick={() => confirm(`Видалити «${d.name}»?`) && remove.mutate(d.id)} aria-label="Видалити">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-8 hover:text-rose-300"
+                              onClick={() => confirm(`Видалити «${d.name}»?`) && remove.mutate(d.id)}
+                              aria-label="Видалити"
+                            >
                               {d.ordersCount > 0 ? <Archive className="size-4" /> : <Trash2 className="size-4" />}
                             </Button>
                           </>
@@ -158,9 +178,34 @@ export default function MenuAdmin() {
   );
 }
 
-const EMPTY = { name: '', description: '', price: '', categoryId: 0, imageUrl: '', weightGrams: '', calories: '', prepTimeMin: '15', isVegetarian: false, isSpicy: false, isChefChoice: false, isAvailable: true, tags: '', allergens: '' };
+const EMPTY = {
+  name: '',
+  description: '',
+  price: '',
+  categoryId: 0,
+  imageUrl: '',
+  weightGrams: '',
+  calories: '',
+  prepTimeMin: '15',
+  isVegetarian: false,
+  isSpicy: false,
+  isChefChoice: false,
+  isAvailable: true,
+  tags: '',
+  allergens: '',
+};
 
-function DishForm({ dish, categories, onClose, onSaved }: { dish: Dish | 'new' | null; categories: Category[]; onClose: () => void; onSaved: () => void }) {
+function DishForm({
+  dish,
+  categories,
+  onClose,
+  onSaved,
+}: {
+  dish: Dish | 'new' | null;
+  categories: Category[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
   const [f, setF] = useState(EMPTY);
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -201,8 +246,14 @@ function DishForm({ dish, categories, onClose, onSaved }: { dish: Dish | 'new' |
         isSpicy: f.isSpicy,
         isChefChoice: f.isChefChoice,
         isAvailable: f.isAvailable,
-        tags: f.tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean),
-        allergens: f.allergens.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean),
+        tags: f.tags
+          .split(',')
+          .map((t) => t.trim().toLowerCase())
+          .filter(Boolean),
+        allergens: f.allergens
+          .split(',')
+          .map((t) => t.trim().toLowerCase())
+          .filter(Boolean),
       };
       return dish === 'new' ? api.post('/dishes', body) : api.patch(`/dishes/${(dish as Dish).id}`, body);
     },
@@ -234,7 +285,8 @@ function DishForm({ dish, categories, onClose, onSaved }: { dish: Dish | 'new' |
     }
   };
 
-  const set = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setF((x) => ({ ...x, [k]: e.target.value }));
+  const set = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    setF((x) => ({ ...x, [k]: e.target.value }));
 
   return (
     <Modal
@@ -255,10 +307,27 @@ function DishForm({ dish, categories, onClose, onSaved }: { dish: Dish | 'new' |
     >
       <div className="grid gap-6 md:grid-cols-[260px_1fr]">
         <div className="space-y-3">
-          <DishImage src={f.imageUrl || null} alt={f.name} category={categories.find((c) => c.id === Number(f.categoryId))?.slug} className="aspect-square w-full" rounded="rounded-3xl" zoom={false} />
-          <label className={cn('flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 text-sm text-ink-200 transition hover:border-gold-400/40', uploading && 'opacity-50')}>
+          <DishImage
+            src={f.imageUrl || null}
+            alt={f.name}
+            category={categories.find((c) => c.id === Number(f.categoryId))?.slug}
+            className="aspect-square w-full"
+            rounded="rounded-3xl"
+            zoom={false}
+          />
+          <label
+            className={cn(
+              'flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 text-sm text-ink-200 transition hover:border-gold-400/40',
+              uploading && 'opacity-50',
+            )}
+          >
             <ImageUp className="size-4" /> {uploading ? 'Завантаження…' : 'Завантажити фото'}
-            <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
+            />
           </label>
           <Input value={f.imageUrl} onChange={set('imageUrl')} placeholder="або URL зображення" className="text-xs" />
         </div>

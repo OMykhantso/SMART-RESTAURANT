@@ -89,6 +89,8 @@ export function homeFor(role: Role | undefined): string {
       return '/staff';
     case 'KITCHEN':
       return '/kitchen';
+    case 'COURIER':
+      return '/courier';
     default:
       return '/account';
   }

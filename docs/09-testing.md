@@ -5,14 +5,16 @@
 | Рівень | Інструмент | Що перевіряється | Запуск |
 |---|---|---|---|
 | Модульні тести | Vitest | booking engine, sandbox-шлюз (Luhn, строк, 3DS), автомати станів, рекомендації на контрольних даних | `cd backend && npm test` |
-| Інтеграційні тести API | Vitest + Supertest + реальна PostgreSQL | автентифікація, RBAC, валідація, бізнес-правила, обмеження БД, повний цикл, WebSocket-події | `cd backend && npm test` |
-| E2E (браузер) | Playwright, `e2e/full-cycle.spec.ts` | реєстрація → бронювання на плані залу → підтвердження (real-time toast) → check-in → замовлення з кошика → статуси наживо → оплата 3-D Secure → відгук → завершення візиту; RBAC у UI; дві вкладки з різними ролями без F5 | `npm run dev` + `npm run e2e` |
-| Статичний аналіз | TypeScript strict (backend, web, mobile) | типи API, екранів, навігації | `npm run typecheck` / `npm run build` |
-| CI | GitHub Actions | усе вищезазначене на кожен push | `.github/workflows/ci.yml` |
+| Інтеграційні тести API | Vitest + Supertest + реальна PostgreSQL | автентифікація, RBAC, валідація, бізнес-правила, обмеження БД, повний цикл, WebSocket-події; **Delivery API**: тарифи, години, оформлення, оплата, курʼєр, скасування з поверненням коштів, ліміти, обмеження БД, шина LISTEN/NOTIFY | `cd backend && npm test` |
+| E2E (браузер) | Playwright, `e2e/full-cycle.spec.ts`, `e2e/delivery.spec.ts` | реєстрація → бронювання на плані залу → підтвердження (real-time toast) → check-in → замовлення з кошика → статуси наживо → оплата 3-D Secure → відгук → завершення візиту; RBAC у UI; дві вкладки з різними ролями без F5; **доставка: оплата в Delivery API → тікет «Доставка» на kitchen display у Web без перезавантаження → «Готово» → курʼєр вручає** | `npm run dev` + `npm run e2e` |
+| Візуальна перевірка Mobile | Expo web-превʼю + Playwright (390×844) | головна, меню, кошик, оформлення доставки (збережена / нова адреса, картка / готівка), оплата, відстеження, історія, адреси; курʼєр; диспетчерська, зони, аналітика | вручну перед захистом |
+| Статичний аналіз | TypeScript strict (backend, web, mobile), ESLint (typescript-eslint, react-hooks), Prettier | типи API, екранів, навігації; невикористаний код, правила хуків; єдиний стиль | `npm run typecheck`, `npm run lint`, `npm run format:check` |
+| Незалежність від дня запуску | Vitest + `TEST_DAY_SHIFT` | увесь набір 7 разів — ніби сьогодні кожен день тижня (графік роботи ресторану й доставки різний для буднів і вихідних) | `npm run test:weekdays` |
+| CI | GitHub Actions | lint і формат; backend — типи, тести для 7 днів тижня, збірка; web — збірка; mobile — типи; **E2E** — Playwright проти Restaurant API + Delivery API + Web на PostgreSQL | `.github/workflows/ci.yml` |
 
 Тести інтеграції виконуються в **окремій тестовій БД** (`smart_restaurant_test`), час підміняється (`vi.setSystemTime`) — сценарії детерміновані незалежно від того, коли їх запускають.
 
-**Результат:** `Test Files 5 passed · Tests 77 passed`; E2E — `3 passed` (повний цикл ≈ 14 с).
+**Результат:** `Test Files 7 passed · Tests 118 passed` (77 — Restaurant API, 41 — Delivery API) для кожного з 7 днів тижня; E2E — `4 passed` (локально, на Docker-стеку і в CI); ESLint — 0 зауважень.
 
 **E2E-сценарій** повторює захист: новий клієнт реєструється через форму, обирає перший вільний слот, бачить рекомендований столик на плані залу, отримує toast «Бронювання … підтверджено!» після дії хостес, робить замовлення з кошика, бачить зміну статусів «Готується» → «Подано» без оновлення сторінки, платить карткою `4000 0000 0000 3220` з кодом 3-D Secure, залишає відгук і завершує візит. Якщо ранній check-in у момент запуску неможливий (до візиту > 60 хв або рекомендований столик ще зайнятий), тест садить гостя за вільний столик через QR (walk-in), а зайве бронювання скасовує — тож тест не залежить від часу запуску в межах робочих годин.
 
@@ -35,7 +37,7 @@
 | TC-12 | Конфлікт бронювання | той самий столик, перетин 19:00/19:30 | 409 `TABLE_ALREADY_BOOKED` + альтернативи | як очікувалось | ✅ |
 | TC-12a | Усі столи зайняті | 3 бронювання на 19:00 | 409 `NO_TABLES_AVAILABLE` | як очікувалось | ✅ |
 | TC-12b | Гарантія БД | вставка перетину напряму через ORM | помилка EXCLUDE `reservations_no_overlap` | як очікувалось | ✅ |
-| TC-13 | Правила часу | 22:30 (закриття 23:00), 19:10, минуле, < 30 хв, 15 гостей | 422 / 400 з відповідними кодами | як очікувалось | ✅ |
+| TC-13 | Правила часу | 08:00 (до відкриття в будь-який день), 19:10, минуле, < 30 хв, 15 гостей | 422 / 400 з відповідними кодами | як очікувалось | ✅ |
 | TC-13a | Ліміти клієнта | 4-те активне бронювання, перетин з власним | 409 `TOO_MANY_RESERVATIONS`, `OVERLAPPING_OWN_RESERVATION` | як очікувалось | ✅ |
 | TC-14 | Підтвердження | клієнт / працівник підтверджує | 403 `TRANSITION_FORBIDDEN` / 200 `CONFIRMED` | як очікувалось | ✅ |
 | TC-15 | Недопустимий перехід | `PENDING → COMPLETED` | 409 `INVALID_TRANSITION` | як очікувалось | ✅ |
@@ -64,6 +66,15 @@
 | TC-36 | Real-time | клієнт підключений до Socket.IO | отримує `reservation:updated`, `order:updated`, `payment:succeeded` | як очікувалось | ✅ |
 | TC-37 | Аналітика і рекомендації | після оплат | KPI > 0, топ страв; рекомендації з причинами, без страв з кошика | як очікувалось | ✅ |
 | TC-38 | Swagger | `GET /api/openapi.json` | OpenAPI 3.1 з усіма шляхами | як очікувалось | ✅ |
+| TC-D01 | Єдиний вхід, довідники | токен Restaurant API у Delivery API; зони для клієнта й адміна; розрахунок вартості | 200 `/me`; без токена 401; клієнт бачить лише активні зони; доставка безкоштовна від порогу | як очікувалось | ✅ |
+| TC-D02 | Правила оформлення | сума < мінімальної, неактивна зона, телефон `1234567890`, стоп-лист, 23:30, решта з меншої суми | 422 `BELOW_MIN_ORDER` (+бракує), 409 `ZONE_INACTIVE`, 422 `PHONE_INVALID`, 409 `DISH_UNAVAILABLE`, 409 `DELIVERY_CLOSED`, 422 `CHANGE_TOO_SMALL` | як очікувалось | ✅ |
+| TC-D03 | Готівка: повний цикл | клієнт → кухня в Restaurant API → курʼєр | `CONFIRMED` одразу; тікет на KDS; другий курʼєр — 409 `ALREADY_TAKEN`; забрати до «Готово» — 409 `NOT_READY`; `DELIVERING` через Restaurant API — 409 `USE_DELIVERY_API`; вручення → платіж `CASH` від курʼєра, відгук | як очікувалось | ✅ |
+| TC-D04 | Картка: 3-D Secure, ідемпотентність, повернення | `NEW`, відмова банку, 3DS, повтор ключа, скасування | неоплачене не видно залу й кухні; 402; `CONFIRMED`; `replayed: true`; 409 `ALREADY_PAID`; після скасування платіж `REFUNDED` | як очікувалось | ✅ |
+| TC-D05 | Скасування й ліміти | кухня почала готувати; 4-та доставка; 3-тє замовлення курʼєру; неоплачене 20 хв | 409 `TOO_LATE_TO_CANCEL`, 422 `REASON_REQUIRED`; 409 `TOO_MANY_ACTIVE_DELIVERIES`; 409 `COURIER_BUSY`, призначення диспетчером; фонова задача → `CANCELLED` | як очікувалось | ✅ |
+| TC-D06 | Збережені адреси | дві основні, видалення основної, чужа адреса, неактивна зона | одна основна; основна переходить на іншу; 404; 409 | як очікувалось | ✅ |
+| TC-D07 | Обмеження БД доставки | доставка зі столиком; рядок доставки для замовлення в залі; телефон без +380; решта для картки; дві основні адреси | CHECK `orders_type_consistency`, тригер, CHECK-и `deliveries_*`, partial UNIQUE | як очікувалось | ✅ |
+| TC-D08 | Шина між системами | `pg_notify` від іншої системи і від себе | подія іншої системи доходить, власна — ігнорується | як очікувалось | ✅ |
+| TC-D09 | Геолокація | координати Хрещатика, Броварів (зона вимкнена), Львова; `lat = 120`; центр зони лише з однієї координати | Печерський + відстань і час у дорозі; `ZONE_INACTIVE`; `OUT_OF_RANGE`; 400; 422 `CENTER_INCOMPLETE`; Київ — Львів 467,5 км (гаверсинус) | як очікувалось | ✅ |
 
 ## 9.3 Алгоритмічні компоненти — контрольні дані
 
@@ -80,14 +91,25 @@
 
 ## 9.4 Трасування вимог
 
+Requirement → Use Case → API → БД → Web / Mobile → Test Case (ідентифікатори — як у `docs/02-requirements.md` і пояснювальній записці).
+
 | Вимога | Use Case | API | БД | Web / Mobile | Тест |
 |---|---|---|---|---|---|
-| FR-C04 Бронювання | UC-03 | `GET /booking/availability`, `GET /booking/tables`, `POST /reservations` | reservations, tables | `Booking.tsx` / `BookingScreen` | TC-10, TC-11, TC-12, TC-13 |
-| FR-C07 Check-in QR | UC-05 | `POST /reservations/scan-table`, `POST /reservations/walk-in` | reservations | – / `ScanScreen` | TC-18, TC-21 |
-| FR-S05 Check-in хостес | UC-11 | `POST /reservations/check-in` | reservations | `staff/Scan.tsx` | TC-16 |
-| FR-C09 Замовлення | UC-06 | `POST /orders` | orders, order_items | `CartDrawer` / `CartScreen` | TC-20, TC-22, TC-23 |
-| FR-K02 Кухня | UC-15 | `PATCH /kitchen/orders/:id/items/:itemId` | order_items | `Kitchen.tsx` | TC-26 |
-| FR-C12 Оплата | UC-08 | `POST /payments/card`, `POST /payments/:id/confirm` | payments | `PaymentModal` / `PaymentScreen` | TC-27, TC-29–TC-32 |
+| FR-C03, FR-C04 Бронювання | UC-03 | `GET /booking/availability`, `GET /booking/tables`, `POST /reservations` | reservations, tables | `Booking.tsx` / `BookingScreen` | TC-10, TC-11, TC-12, TC-13 |
 | FR-S03 Підтвердження | UC-10 | `PATCH /reservations/:id/status` | reservations, status_changes | `staff/Reservations.tsx` | TC-14, TC-15 |
-| FR-C14 Відгук | UC-09 | `POST /orders/:id/review` | reviews | `ReviewModal` / `ReviewScreen` | TC-34 |
-| FR-C15 Рекомендації | UC-06 | `GET /recommendations` | order_items, reviews | меню, кошик / Home, Cart | TC-37, модульні |
+| FR-C06 Check-in за QR столика | UC-05 | `POST /reservations/scan-table`, `POST /reservations/walk-in` | reservations | – / `ScanScreen` | TC-18, TC-21 |
+| FR-S04 Check-in хостес | UC-11 | `POST /reservations/check-in` | reservations | `staff/Scan.tsx` / `StaffScanScreen` | TC-16 |
+| FR-C07 Замовлення | UC-06 | `POST /orders` | orders, order_items | `CartDrawer` / `CartScreen` | TC-20, TC-22, TC-23 |
+| FR-K01–FR-K03 Кухня | UC-15 | `GET /kitchen/orders`, `PATCH /kitchen/orders/:id/items/:itemId` | order_items | `Kitchen.tsx` / `KitchenScreen` | TC-25, TC-26 |
+| FR-C09 Оплата | UC-08 | `POST /payments/card`, `POST /payments/:id/confirm` | payments | `PaymentModal` / `PaymentScreen` | TC-27, TC-29–TC-32 |
+| FR-C10 Відгук, рекомендації | UC-09, UC-06 | `POST /orders/:id/review`, `GET /recommendations` | reviews, order_items | `ReviewModal`, меню / `ReviewScreen`, Home | TC-34, TC-37 |
+| FR-D01, FR-D03, FR-D04 Оформлення доставки | UC-22 | `GET :4100/delivery/info`, `POST :4100/delivery/quote`, `POST :4100/delivery/orders` | orders, deliveries, delivery_zones | – / `CheckoutScreen` | TC-D01, TC-D02, TC-D03 |
+| FR-D04 Оплата доставки | UC-22, UC-08 | `POST :4100/delivery/orders/:id/pay`, `/delivery/payments/:id/confirm` | payments | – / `PaymentScreen` | TC-D04 |
+| FR-D02 Адреси | UC-22 | `/addresses` (CRUD) | addresses | – / `AddressesScreen`, `AddressFormScreen` | TC-D06 |
+| FR-D08 Геолокація | UC-22 («extend») | `POST :4100/delivery/locate` | delivery_zones (center, radius) | – / `LocateMeButton` у `CheckoutScreen`, `AddressFormScreen` | TC-D09 |
+| FR-D05 Відстеження | UC-23 | `GET :4100/delivery/orders/:id` + Socket.IO `delivery:updated` | deliveries, status_changes | – / `DeliveryOrderScreen` | TC-D03, E2E delivery |
+| FR-D06 Скасування з поверненням | UC-23 | `POST :4100/delivery/orders/:id/cancel` | payments (REFUNDED) | – / `DeliveryOrderScreen` | TC-D04, TC-D05 |
+| FR-K04 Доставка на KDS | UC-15 | `GET /kitchen/orders` (подія через LISTEN/NOTIFY) | orders.type | `Kitchen.tsx` / `KitchenScreen` | TC-D03, TC-D08, E2E delivery |
+| FR-R01–FR-R04 Курʼєр | UC-24, UC-25 | `/courier/orders`, `/:id/accept`, `/release`, `/pickup`, `/delivered` | deliveries, payments | – / `CourierScreens` | TC-D03, TC-D05 |
+| FR-S07, FR-A04 Диспетчерська, зони | UC-26 | `GET /delivery/orders`, `/assign`, `POST/PATCH /delivery/zones` | delivery_zones, deliveries | – / `DispatchScreen`, `ZonesScreen` | TC-D01, TC-D05, TC-D09 |
+| FR-A05, FR-A06 Аналітика | UC-20 | `GET /analytics/overview`, `GET /analytics/today` | payments, orders, deliveries | `Analytics.tsx` / `AnalyticsScreen` | TC-37 |

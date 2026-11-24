@@ -99,7 +99,7 @@ describe('Авторизація (RBAC перевіряється на серв�
     expect(dish.status).toBe(403);
   });
 
-  it('працівник залу не може редагувати меню, але може ставити страву у стоп-лист', async () => {
+  it('працівник залу не може редагувати меню, але може ставити страву у стоп-лист (TC-08)', async () => {
     const token = await login(fx.users.staff);
     const edit = await api().patch(`/api/dishes/${fx.dishes.steak.id}`).set(bearer(token)).send({ price: 1 });
     expect(edit.status).toBe(403);
@@ -109,7 +109,7 @@ describe('Авторизація (RBAC перевіряється на серв�
     await api().patch(`/api/dishes/${fx.dishes.steak.id}/availability`).set(bearer(token)).send({ isAvailable: true });
   });
 
-  it('адміністратор керує користувачами, але не може заблокувати себе', async () => {
+  it('адміністратор керує користувачами, але не може заблокувати себе (TC-09)', async () => {
     const token = await login(fx.users.admin);
     const list = await api().get('/api/users?role=CLIENT').set(bearer(token));
     expect(list.status).toBe(200);
@@ -128,10 +128,12 @@ describe('Авторизація (RBAC перевіряється на серв�
     expect(search.body.map((d: { name: string }) => d.name)).toEqual(['Борщ']);
   });
 
-  it('OpenAPI-специфікація генерується з реєстру маршрутів', async () => {
+  it('OpenAPI-специфікація генерується з реєстру маршрутів (TC-38)', async () => {
     const res = await api().get('/api/openapi.json');
     expect(res.status).toBe(200);
     expect(res.body.openapi).toBe('3.1.0');
-    expect(Object.keys(res.body.paths)).toEqual(expect.arrayContaining(['/api/reservations', '/api/orders/{id}/status', '/api/payments/card']));
+    expect(Object.keys(res.body.paths)).toEqual(
+      expect.arrayContaining(['/api/reservations', '/api/orders/{id}/status', '/api/payments/card']),
+    );
   });
 });

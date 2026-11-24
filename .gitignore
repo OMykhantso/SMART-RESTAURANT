@@ -11,3 +11,4 @@ web-build
 playwright-report
 test-results
 *.tsbuildinfo
+certs/*.pem

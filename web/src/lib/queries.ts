@@ -3,12 +3,14 @@ import { api } from './api';
 import type { BookingConfig, Category, Dish, Order, Recommendation, Reservation } from './types';
 import { useAuth } from './auth';
 
-export const useCategories = () => useQuery({ queryKey: ['categories'], queryFn: () => api.get<Category[]>('/categories'), staleTime: 60_000 });
+export const useCategories = () =>
+  useQuery({ queryKey: ['categories'], queryFn: () => api.get<Category[]>('/categories'), staleTime: 60_000 });
 
 export const useDishes = (params: Record<string, unknown> = {}) =>
   useQuery({ queryKey: ['dishes', params], queryFn: () => api.get<Dish[]>('/dishes', params), staleTime: 30_000 });
 
-export const useBookingConfig = () => useQuery({ queryKey: ['booking-config'], queryFn: () => api.get<BookingConfig>('/booking/config'), staleTime: 300_000 });
+export const useBookingConfig = () =>
+  useQuery({ queryKey: ['booking-config'], queryFn: () => api.get<BookingConfig>('/booking/config'), staleTime: 300_000 });
 
 export function useCurrentVisit() {
   const { user } = useAuth();

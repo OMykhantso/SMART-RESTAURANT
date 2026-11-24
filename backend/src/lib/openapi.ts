@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { routeRegistry } from './router';
+import { routeRegistry, type RegisteredRoute } from './router';
 
 /**
  * Генерує OpenAPI 3.1 специфікацію з реєстру маршрутів.
@@ -16,11 +16,24 @@ function toJsonSchema(schema: unknown, io: 'input' | 'output' = 'input') {
   }
 }
 
-export function buildOpenApi() {
+const RESTAURANT_INFO = {
+  title: 'SMART RESTAURANT API',
+  version: '1.0.0',
+  description:
+    'REST API системи «Smart Restaurant»: меню, столики, booking engine, бронювання, замовлення, kitchen display, ' +
+    'sandbox-оплата, QR check-in, рекомендації, аналітика.\n\n' +
+    'Real-time події — Socket.IO (той самий хост): order:created, order:updated, reservation:created, ' +
+    'reservation:updated, tables:changed, menu:changed, payment:succeeded.\n\n' +
+    'Замовлення доставки створює окремий сервіс — Delivery API (порт 4100) — у тій самій базі даних; ' +
+    'кухня бачить їх тут разом із замовленнями в залі.\n\n' +
+    'Усі грошові суми — у копійках (integer).',
+};
+
+export function buildOpenApi(registry: RegisteredRoute[] = routeRegistry, info: typeof RESTAURANT_INFO = RESTAURANT_INFO) {
   const paths: Record<string, Record<string, unknown>> = {};
   const tagSet = new Set<string>();
 
-  for (const r of routeRegistry) {
+  for (const r of registry) {
     const path = r.fullPath.replace(/:(\w+)/g, '{$1}');
     paths[path] ??= {};
     r.tags.forEach((t) => tagSet.add(t));
@@ -40,7 +53,13 @@ export function buildOpenApi() {
     const secured = r.auth === true || Boolean(r.roles);
     const description = [
       r.description,
-      r.roles ? `**Ролі:** ${r.roles.join(', ')}` : secured ? '**Потрібна автентифікація**' : r.auth === 'optional' ? 'Автентифікація опціональна' : 'Публічний endpoint',
+      r.roles
+        ? `**Ролі:** ${r.roles.join(', ')}`
+        : secured
+          ? '**Потрібна автентифікація**'
+          : r.auth === 'optional'
+            ? 'Автентифікація опціональна'
+            : 'Публічний endpoint',
     ]
       .filter(Boolean)
       .join('\n\n');
@@ -49,9 +68,14 @@ export function buildOpenApi() {
     const successStatus = String(r.status ?? 200);
     responses[successStatus] = { description: r.responses?.[Number(successStatus)] ?? 'Успішна відповідь' };
     for (const [code, text] of Object.entries(r.responses ?? {})) {
-      if (code !== successStatus) responses[code] = { description: text, content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } };
+      if (code !== successStatus)
+        responses[code] = { description: text, content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } };
     }
-    if (r.body || r.query) responses['400'] ??= { description: 'Помилка валідації', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } };
+    if (r.body || r.query)
+      responses['400'] ??= {
+        description: 'Помилка валідації',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+      };
     if (secured) {
       responses['401'] ??= { description: 'Не автентифіковано' };
       if (r.roles) responses['403'] ??= { description: 'Недостатньо прав (RBAC)' };
@@ -77,16 +101,7 @@ export function buildOpenApi() {
 
   return {
     openapi: '3.1.0',
-    info: {
-      title: 'SMART RESTAURANT API',
-      version: '1.0.0',
-      description:
-        'REST API системи «Smart Restaurant»: меню, столики, booking engine, бронювання, замовлення, kitchen display, ' +
-        'sandbox-оплата, QR check-in, рекомендації, аналітика.\n\n' +
-        'Real-time події — Socket.IO (той самий хост): order:created, order:updated, reservation:created, ' +
-        'reservation:updated, tables:changed, menu:changed, payment:succeeded.\n\n' +
-        'Усі грошові суми — у копійках (integer).',
-    },
+    info,
     servers: [{ url: '/' }],
     tags: [...tagSet].map((name) => ({ name })),
     components: {

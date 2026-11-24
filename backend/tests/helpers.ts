@@ -11,29 +11,43 @@ export const api = () => request(app);
 export { prisma };
 
 const TZ = 'Europe/Kyiv';
+/**
+ * TEST_DAY_SHIFT=N — запустити тести так, ніби сьогодні на N днів пізніше
+ * (npm run test:weekdays проганяє всі 7 днів тижня). Годинник зсувається ще до входу
+ * користувачів, тому JWT і бізнес-правила бачать один і той самий «зсунутий» час.
+ */
+const SHIFT = Number(process.env.TEST_DAY_SHIFT ?? 0);
+const ORIGIN = DateTime.now().setZone(TZ).plus({ days: SHIFT });
+const base = () => (SHIFT ? ORIGIN : DateTime.now().setZone(TZ));
 
 /** Фіксуємо «зараз» = сьогодні о HH:mm за Києвом (підміняємо лише Date, таймери працюють як зазвичай). */
 export function setNow(hour: number, minute = 0, dayOffset = 0) {
-  const dt = DateTime.now().setZone(TZ).startOf('day').plus({ days: dayOffset }).set({ hour, minute });
+  const dt = base().startOf('day').plus({ days: dayOffset }).set({ hour, minute });
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(dt.toJSDate());
   return dt;
 }
 
 export function realTime() {
+  if (SHIFT) {
+    vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true });
+    vi.setSystemTime(base().toJSDate());
+    return;
+  }
   vi.useRealTimers();
 }
+if (SHIFT) realTime();
 
 /** Локальний час ресторану → ISO */
 export function at(hour: number, minute = 0, dayOffset = 0) {
-  return DateTime.now().setZone(TZ).startOf('day').plus({ days: dayOffset }).set({ hour, minute }).toISO()!;
+  return base().startOf('day').plus({ days: dayOffset }).set({ hour, minute }).toISO()!;
 }
 
-export const today = (offset = 0) => DateTime.now().setZone(TZ).plus({ days: offset }).toISODate()!;
+export const today = (offset = 0) => base().plus({ days: offset }).toISODate()!;
 
 export async function resetDb() {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE status_changes, reviews, payments, order_items, orders, reservations, refresh_tokens, dishes, categories, tables, users RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE status_changes, reviews, payments, deliveries, order_items, orders, reservations, addresses, delivery_zones, refresh_tokens, dishes, categories, tables, users RESTART IDENTITY CASCADE',
   );
 }
 
@@ -46,8 +60,7 @@ export interface Fixtures {
 export async function seedFixtures(): Promise<Fixtures> {
   await resetDb();
   const hash = await bcrypt.hash('Passw0rd!', 4);
-  const mk = (email: string, role: Role, name: string) =>
-    prisma.user.create({ data: { email, role, name, passwordHash: hash } });
+  const mk = (email: string, role: Role, name: string) => prisma.user.create({ data: { email, role, name, passwordHash: hash } });
   const [admin, staff, kitchen, client, client2] = await Promise.all([
     mk('admin@test.ua', 'ADMIN', 'Адмін'),
     mk('staff@test.ua', 'STAFF', 'Офіціант'),
@@ -75,9 +88,7 @@ export async function seedFixtures(): Promise<Fixtures> {
     [2, 4],
     [3, 6],
   ] as const) {
-    tables.push(
-      await prisma.diningTable.create({ data: { number, seats, qrToken: `qr-table-${number}`, zone: 'HALL' } }),
-    );
+    tables.push(await prisma.diningTable.create({ data: { number, seats, qrToken: `qr-table-${number}`, zone: 'HALL' } }));
   }
   const u = (x: { id: number; email: string }) => ({ id: x.id, email: x.email, password: 'Passw0rd!' });
   const d = (x: { id: number; price: number }) => ({ id: x.id, price: x.price });

@@ -26,7 +26,8 @@ define({
   path: '/card',
   summary: 'Оплата замовлення карткою через sandbox-шлюз',
   description:
-    'Дозволено лише для замовлень у статусі SERVED. Заголовок Idempotency-Key захищає від подвійного списання. ' +
+    'У залі — для замовлень у статусі SERVED; доставка карткою — одразу після оформлення (NEW), після оплати замовлення йде на кухню. ' +
+    'Заголовок Idempotency-Key захищає від подвійного списання. ' +
     'Відповідь 402 — картку відхилено; requiresAction=true — потрібне підтвердження 3-D Secure.',
   tags: ['Payments (sandbox)'],
   roles: ['CLIENT', 'STAFF', 'ADMIN'],
@@ -41,7 +42,12 @@ define({
       holder: z.string().trim().max(100).optional(),
     }),
   }),
-  responses: { 200: 'Оплачено або потрібна 3DS-дія', 402: 'Картку відхилено', 409: 'Замовлення не можна оплатити', 422: 'Некоректні дані картки' },
+  responses: {
+    200: 'Оплачено або потрібна 3DS-дія',
+    402: 'Картку відхилено',
+    409: 'Замовлення не можна оплатити',
+    422: 'Некоректні дані картки',
+  },
   handler: ({ user, body, req }) =>
     svc.payByCard(user!, {
       ...body,
@@ -56,7 +62,12 @@ define({
   tags: ['Payments (sandbox)'],
   roles: ['CLIENT', 'STAFF', 'ADMIN'],
   params: idParam,
-  body: z.object({ otp: z.string().trim().regex(/^\d{4,8}$/, 'Код складається з цифр') }),
+  body: z.object({
+    otp: z
+      .string()
+      .trim()
+      .regex(/^\d{4,8}$/, 'Код складається з цифр'),
+  }),
   handler: ({ user, params, body }) => svc.confirm3ds(user!, params.id, body.otp),
 });
 
@@ -84,9 +95,9 @@ define({
     const payments = await prisma.payment.findMany({
       where: { createdAt: { gte: day.toJSDate(), lt: day.plus({ days: 1 }).toJSDate() } },
       orderBy: { createdAt: 'desc' },
-      include: { order: { select: { table: { select: { number: true } } } } },
+      include: { order: { select: { type: true, table: { select: { number: true } } } } },
     });
-    return payments.map((p) => ({ ...svc.serializePayment(p), tableNumber: p.order.table.number }));
+    return payments.map((p) => ({ ...svc.serializePayment(p), orderType: p.order.type, tableNumber: p.order.table?.number ?? null }));
   },
 });
 

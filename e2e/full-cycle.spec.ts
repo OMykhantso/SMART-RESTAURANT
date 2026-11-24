@@ -32,7 +32,10 @@ test('повний цикл: бронювання → замовлення → �
 
   // 2. Бронювання: перший вільний слот, рекомендований столик на плані залу
   await page.goto('/booking');
-  const slot = page.locator('button:has(span.font-display):not([disabled])').filter({ hasText: /\d\d:\d\d/ }).first();
+  const slot = page
+    .locator('button:has(span.font-display):not([disabled])')
+    .filter({ hasText: /\d\d:\d\d/ })
+    .first();
   const noSlots = page.getByText('вільних слотів не залишилось', { exact: false });
   await expect(slot.or(noSlots)).toBeVisible();
   if (await noSlots.isVisible()) test.skip(true, 'Ресторан на сьогодні вже не приймає бронювань — запустіть тест у робочі години');
@@ -54,18 +57,27 @@ test('повний цикл: бронювання → замовлення → �
   //    QR столика (walk-in) — процес замовлення той самий.
   let tableNumber = reservation.table.number as number;
   let visitId = reservation.id as number;
-  const checkIn = await request.post('/api/reservations/check-in', { data: { qr: reservation.qrPayload }, headers: { Authorization: `Bearer ${staff}` } });
+  const checkIn = await request.post('/api/reservations/check-in', {
+    data: { qr: reservation.qrPayload },
+    headers: { Authorization: `Bearer ${staff}` },
+  });
   if (!checkIn.ok()) {
     expect(['CHECKIN_TOO_EARLY', 'TABLE_STILL_OCCUPIED', 'TABLE_NOT_READY']).toContain((await checkIn.json()).error.code);
     const admin = await login(request, 'admin@smartrest.ua', 'Admin123!');
     const live = await (await request.get('/api/tables/live', { headers: { Authorization: `Bearer ${staff}` } })).json();
-    const free = live.find((t: { state: string; seats: number; next: { minutesToStart: number } | null }) => t.state === 'FREE' && t.seats >= 2 && (!t.next || t.next.minutesToStart > 90));
+    const free = live.find(
+      (t: { state: string; seats: number; next: { minutesToStart: number } | null }) =>
+        t.state === 'FREE' && t.seats >= 2 && (!t.next || t.next.minutesToStart > 90),
+    );
     const qr = await (await request.get(`/api/tables/${free.id}/qr?format=json`, { headers: { Authorization: `Bearer ${admin}` } })).json();
     const walkIn = await call(request, 'POST', '/api/reservations/walk-in', token!, { qr: qr.payload, guests: 2 });
     tableNumber = free.number;
     visitId = walkIn.id;
     // бронювання, яке не знадобилось, скасовує хостес — щоб не блокувати столик для наступних прогонів
-    await call(request, 'PATCH', `/api/reservations/${reservation.id}/status`, staff, { status: 'CANCELLED', reason: 'E2E: гостя посаджено за інший столик' });
+    await call(request, 'PATCH', `/api/reservations/${reservation.id}/status`, staff, {
+      status: 'CANCELLED',
+      reason: 'E2E: гостя посаджено за інший столик',
+    });
   }
 
   // 5. Замовлення за столиком через UI
@@ -113,10 +125,13 @@ test('RBAC у UI: клієнт не потрапляє в панель перс�
   const res = await request.post('/api/auth/login', { data: { email: 'client@smartrest.ua', password: 'Client123!' } });
   const { accessToken, refreshToken } = await res.json();
   await page.goto('/');
-  await page.evaluate(([a, r]) => {
-    sessionStorage.setItem('sr.access', a);
-    sessionStorage.setItem('sr.refresh', r);
-  }, [accessToken, refreshToken]);
+  await page.evaluate(
+    ([a, r]) => {
+      sessionStorage.setItem('sr.access', a);
+      sessionStorage.setItem('sr.refresh', r);
+    },
+    [accessToken, refreshToken],
+  );
   await page.goto('/staff');
   await expect(page).toHaveURL(/\/account$/);
 });
@@ -124,7 +139,10 @@ test('RBAC у UI: клієнт не потрапляє в панель перс�
 test('кожна вкладка має власну сесію: клієнт і офіціант поруч без F5', async ({ context }) => {
   const client = await context.newPage();
   await client.goto('/login');
-  await client.getByRole('button', { name: /Клієнт/ }).first().click();
+  await client
+    .getByRole('button', { name: /Клієнт/ })
+    .first()
+    .click();
   await expect(client).toHaveURL(/\/account$/);
 
   // нова вкладка підхоплює останній вхід (окрема сесія через /auth/fork)
@@ -134,7 +152,10 @@ test('кожна вкладка має власну сесію: клієнт і 
 
   // у другій вкладці входимо офіціантом — перша вкладка лишається клієнтом без перезавантаження
   await staff.goto('/login');
-  await staff.getByRole('button', { name: /Офіціант/ }).first().click();
+  await staff
+    .getByRole('button', { name: /Офіціант/ })
+    .first()
+    .click();
   await expect(staff).toHaveURL(/\/staff$/);
 
   await client.getByRole('link', { name: 'Меню', exact: true }).first().click();

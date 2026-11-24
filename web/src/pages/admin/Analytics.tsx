@@ -44,11 +44,23 @@ type Period = '7' | '14' | '30' | '90';
 
 export default function Analytics() {
   const [days, setDays] = useState<Period>('30');
-  const { data, isFetching } = useQuery({ queryKey: ['analytics', days], queryFn: () => api.get<Overview>('/analytics/overview', { days }), placeholderData: (prev) => prev });
+  const { data, isFetching } = useQuery({
+    queryKey: ['analytics', days],
+    queryFn: () => api.get<Overview>('/analytics/overview', { days }),
+    placeholderData: (prev) => prev,
+  });
 
   return (
     <div className="space-y-6">
-      <SectionTitle eyebrow="Аналітика" title="Показники ресторану" subtitle={data ? `${fmtDateShort(`${data.period.from}T12:00:00Z`)} — ${fmtDateShort(`${data.period.to}T12:00:00Z`)} · порівняння з попереднім періодом` : ' '} />
+      <SectionTitle
+        eyebrow="Аналітика"
+        title="Показники ресторану"
+        subtitle={
+          data
+            ? `${fmtDateShort(`${data.period.from}T12:00:00Z`)} — ${fmtDateShort(`${data.period.to}T12:00:00Z`)} · порівняння з попереднім періодом`
+            : ' '
+        }
+      />
 
       {/* Фільтр — один рядок над усіма графіками */}
       <Segmented
@@ -71,21 +83,66 @@ export default function Analytics() {
       ) : (
         <div className={cn('space-y-6 transition-opacity', isFetching && 'opacity-60')}>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Stat label="Виручка" value={money(data.kpis.revenue)} delta={data.deltas.revenue} icon={<Banknote className="size-4" />} hint={`+ ${money(data.kpis.tips)} чайових`} />
-            <Stat label="Оплачені замовлення" value={data.kpis.paidOrders.toLocaleString('uk-UA')} delta={data.deltas.ordersCount} icon={<Receipt className="size-4" />} />
-            <Stat label="Середній чек" value={money(data.kpis.avgCheck)} delta={data.deltas.avgCheck} icon={<Banknote className="size-4" />} />
-            <Stat label="Гостей обслуговано" value={data.kpis.guests.toLocaleString('uk-UA')} delta={data.deltas.guests} icon={<Users className="size-4" />} />
-            <Stat label="Бронювань" value={data.kpis.reservationsCount} delta={data.deltas.reservationsCount} icon={<CalendarCheck2 className="size-4" />} hint={`скасовано ${data.kpis.cancellationRate}%`} />
-            <Stat label="No-show" value={`${data.kpis.noShowRate}%`} icon={<UserX className="size-4" />} hint="частка гостей, що не прийшли" />
-            <Stat label="Середня оцінка" value={data.kpis.avgRating ? `${data.kpis.avgRating} ★` : '—'} icon={<Star className="size-4" />} hint={`${data.kpis.reviewsCount} відгуків`} />
-            <Stat label="Приготування" value={`${data.kpis.avgPrepMin} хв`} icon={<ChefHat className="size-4" />} hint={`візит у середньому ${data.kpis.avgVisitMin} хв`} />
+            <Stat
+              label="Виручка"
+              value={money(data.kpis.revenue)}
+              delta={data.deltas.revenue}
+              icon={<Banknote className="size-4" />}
+              hint={`+ ${money(data.kpis.tips)} чайових`}
+            />
+            <Stat
+              label="Оплачені замовлення"
+              value={data.kpis.paidOrders.toLocaleString('uk-UA')}
+              delta={data.deltas.ordersCount}
+              icon={<Receipt className="size-4" />}
+            />
+            <Stat
+              label="Середній чек"
+              value={money(data.kpis.avgCheck)}
+              delta={data.deltas.avgCheck}
+              icon={<Banknote className="size-4" />}
+            />
+            <Stat
+              label="Гостей обслуговано"
+              value={data.kpis.guests.toLocaleString('uk-UA')}
+              delta={data.deltas.guests}
+              icon={<Users className="size-4" />}
+            />
+            <Stat
+              label="Бронювань"
+              value={data.kpis.reservationsCount}
+              delta={data.deltas.reservationsCount}
+              icon={<CalendarCheck2 className="size-4" />}
+              hint={`скасовано ${data.kpis.cancellationRate}%`}
+            />
+            <Stat
+              label="No-show"
+              value={`${data.kpis.noShowRate}%`}
+              icon={<UserX className="size-4" />}
+              hint="частка гостей, що не прийшли"
+            />
+            <Stat
+              label="Середня оцінка"
+              value={data.kpis.avgRating ? `${data.kpis.avgRating} ★` : '—'}
+              icon={<Star className="size-4" />}
+              hint={`${data.kpis.reviewsCount} відгуків`}
+            />
+            <Stat
+              label="Приготування"
+              value={`${data.kpis.avgPrepMin} хв`}
+              icon={<ChefHat className="size-4" />}
+              hint={`візит у середньому ${data.kpis.avgVisitMin} хв`}
+            />
           </div>
 
           <Card className="p-5">
             <ChartTitle title="Виручка по днях" subtitle="Сума успішних оплат, ₴" />
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.revenueByDay.map((d) => ({ ...d, uah: d.revenue / 100 }))} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
+                <AreaChart
+                  data={data.revenueByDay.map((d) => ({ ...d, uah: d.revenue / 100 }))}
+                  margin={{ top: 10, right: 8, left: 0, bottom: 0 }}
+                >
                   <defs>
                     <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor={GOLD} stopOpacity={0.22} />
@@ -93,10 +150,40 @@ export default function Analytics() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid stroke={GRID} vertical={false} />
-                  <XAxis dataKey="date" tickFormatter={(d) => fmtDateShort(`${d}T12:00:00Z`)} stroke={AXIS} tickLine={false} axisLine={false} fontSize={11} minTickGap={24} />
-                  <YAxis stroke={AXIS} tickLine={false} axisLine={false} fontSize={11} width={56} tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}K` : String(v))} />
-                  <Tooltip cursor={{ stroke: 'rgba(255,255,255,0.25)', strokeWidth: 1 }} content={<ChartTip format={(p) => [money(p.revenue), `${p.orders} оплат`]} label={(p) => fmtDateShort(`${p.date}T12:00:00Z`)} />} />
-                  <Area type="monotone" dataKey="uah" stroke={GOLD} strokeWidth={2} fill="url(#rev)" activeDot={{ r: 5, stroke: '#121217', strokeWidth: 2, fill: GOLD }} />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(d) => fmtDateShort(`${d}T12:00:00Z`)}
+                    stroke={AXIS}
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={11}
+                    minTickGap={24}
+                  />
+                  <YAxis
+                    stroke={AXIS}
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={11}
+                    width={56}
+                    tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}K` : String(v))}
+                  />
+                  <Tooltip
+                    cursor={{ stroke: 'rgba(255,255,255,0.25)', strokeWidth: 1 }}
+                    content={
+                      <ChartTip
+                        format={(p) => [money(p.revenue), `${p.orders} оплат`]}
+                        label={(p) => fmtDateShort(`${p.date}T12:00:00Z`)}
+                      />
+                    }
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="uah"
+                    stroke={GOLD}
+                    strokeWidth={2}
+                    fill="url(#rev)"
+                    activeDot={{ r: 5, stroke: '#121217', strokeWidth: 2, fill: GOLD }}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -109,9 +196,20 @@ export default function Analytics() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.ordersByHour} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
                     <CartesianGrid stroke={GRID} vertical={false} />
-                    <XAxis dataKey="hour" tickFormatter={(h) => `${h}:00`} stroke={AXIS} tickLine={false} axisLine={false} fontSize={11} interval={1} />
+                    <XAxis
+                      dataKey="hour"
+                      tickFormatter={(h) => `${h}:00`}
+                      stroke={AXIS}
+                      tickLine={false}
+                      axisLine={false}
+                      fontSize={11}
+                      interval={1}
+                    />
                     <YAxis stroke={AXIS} tickLine={false} axisLine={false} fontSize={11} width={40} allowDecimals={false} />
-                    <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<ChartTip format={(p) => [`${p.orders} замовлень`]} label={(p) => `${p.hour}:00–${p.hour + 1}:00`} />} />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                      content={<ChartTip format={(p) => [`${p.orders} замовлень`]} label={(p) => `${p.hour}:00–${p.hour + 1}:00`} />}
+                    />
                     <Bar dataKey="orders" fill={GOLD} radius={[4, 4, 0, 0]} maxBarSize={24} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -134,7 +232,15 @@ export default function Analytics() {
 
             <Card className="p-5">
               <ChartTitle title="Виручка за категоріями" subtitle="Оплачені страви, ₴" />
-              <HBars rows={data.categories.map((c) => ({ key: c.category, label: `${c.emoji ?? ''} ${c.category}`, value: c.revenue, display: money(c.revenue), hint: `${c.quantity} порцій` }))} />
+              <HBars
+                rows={data.categories.map((c) => ({
+                  key: c.category,
+                  label: `${c.emoji ?? ''} ${c.category}`,
+                  value: c.revenue,
+                  display: money(c.revenue),
+                  hint: `${c.quantity} порцій`,
+                }))}
+              />
             </Card>
 
             <Card className="p-5">
@@ -155,7 +261,15 @@ export default function Analytics() {
                       );
                     })}
                 </div>
-                <HBars rows={data.reservationsBySource.map((s) => ({ key: s.source, label: SOURCE_LABEL[s.source], value: s.count, display: String(s.count) }))} compact />
+                <HBars
+                  rows={data.reservationsBySource.map((s) => ({
+                    key: s.source,
+                    label: SOURCE_LABEL[s.source],
+                    value: s.count,
+                    display: String(s.count),
+                  }))}
+                  compact
+                />
               </div>
             </Card>
           </div>
@@ -177,8 +291,17 @@ function ChartTitle({ title, subtitle }: { title: string; subtitle: string }) {
   );
 }
 
-
-function ChartTip({ active, payload, format, label }: { active?: boolean; payload?: any[]; format: (p: any) => string[]; label: (p: any) => string }) {
+function ChartTip({
+  active,
+  payload,
+  format,
+  label,
+}: {
+  active?: boolean;
+  payload?: any[];
+  format: (p: any) => string[];
+  label: (p: any) => string;
+}) {
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
   const [main, ...rest] = format(p);
@@ -198,13 +321,23 @@ function ChartTip({ active, payload, format, label }: { active?: boolean; payloa
 }
 
 /** Горизонтальні смуги (HTML): значення на кінці смуги, підказка при наведенні. */
-function HBars({ rows, compact }: { rows: { key: string | number; label: string; value: number; display: string; hint?: string; icon?: React.ReactNode }[]; compact?: boolean }) {
+function HBars({
+  rows,
+  compact,
+}: {
+  rows: { key: string | number; label: string; value: number; display: string; hint?: string; icon?: React.ReactNode }[];
+  compact?: boolean;
+}) {
   const max = Math.max(1, ...rows.map((r) => r.value));
   if (!rows.length) return <div className="py-8 text-center text-sm text-ink-500">Немає даних за період</div>;
   return (
     <ul className={cn(compact ? 'space-y-2.5' : 'space-y-3')}>
       {rows.map((r) => (
-        <li key={r.key} className="group flex items-center gap-3" title={r.hint ? `${r.label}: ${r.display} · ${r.hint}` : `${r.label}: ${r.display}`}>
+        <li
+          key={r.key}
+          className="group flex items-center gap-3"
+          title={r.hint ? `${r.label}: ${r.display} · ${r.hint}` : `${r.label}: ${r.display}`}
+        >
           {r.icon}
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
@@ -215,7 +348,10 @@ function HBars({ rows, compact }: { rows: { key: string | number; label: string;
               </span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-white/[0.04]">
-              <div className="h-full rounded-r-[4px] transition-all duration-700 group-hover:brightness-125" style={{ width: `${(r.value / max) * 100}%`, background: GOLD }} />
+              <div
+                className="h-full rounded-r-[4px] transition-all duration-700 group-hover:brightness-125"
+                style={{ width: `${(r.value / max) * 100}%`, background: GOLD }}
+              />
             </div>
           </div>
         </li>

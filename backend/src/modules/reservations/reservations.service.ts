@@ -5,13 +5,7 @@ import { AppError, conflict, forbidden, notFound, unprocessable } from '../../li
 import { randomCode, randomToken } from '../../lib/http';
 import { emit } from '../../lib/realtime';
 import { formatHm, now, openingWindow, toLocal } from '../../lib/time';
-import {
-  actorsFor,
-  assertTransition,
-  canTransition,
-  RESERVATION_FLOW,
-  RESERVATION_LABELS,
-} from '../../lib/stateMachine';
+import { actorsFor, assertTransition, canTransition, RESERVATION_FLOW, RESERVATION_LABELS } from '../../lib/stateMachine';
 import type { AuthUser } from '../../middleware/auth';
 import {
   ACTIVE_RESERVATION_STATUSES,
@@ -82,8 +76,7 @@ export function serializeReservation(r: ReservationFull, viewer?: AuthUser | 'SY
         nowMs < r.endAt.getTime(),
       canComplete: canTransition(RESERVATION_FLOW, r.status, 'COMPLETED', actors) && unpaid.length === 0,
       canMarkNoShow:
-        canTransition(RESERVATION_FLOW, r.status, 'NO_SHOW', actors) &&
-        nowMs >= r.startAt.getTime() + restaurant.noShowGraceMin * 60000,
+        canTransition(RESERVATION_FLOW, r.status, 'NO_SHOW', actors) && nowMs >= r.startAt.getTime() + restaurant.noShowGraceMin * 60000,
       canOrder: r.status === 'CHECKED_IN' && (isOwner || Boolean(isStaff)),
     },
   };
@@ -102,7 +95,8 @@ export async function logStatus(
   note?: string,
 ) {
   await db.statusChange.create({
-    data: { ...target, fromStatus: from, toStatus: to, actorId, note: note?.slice(0, 255) },
+    // час — з годинника застосунку (той самий, що в бізнес-правилах), а не з БД
+    data: { ...target, fromStatus: from, toStatus: to, actorId, note: note?.slice(0, 255), createdAt: now() },
   });
 }
 
@@ -199,6 +193,7 @@ export async function createReservation(actor: AuthUser, input: CreateReservatio
     const status: ReservationStatus = isStaff ? 'CONFIRMED' : 'PENDING';
     const reservation = await tx.reservation.create({
       data: {
+        createdAt: now(),
         code: `R-${randomCode(6)}`,
         checkinToken: randomToken(18),
         userId: isStaff ? null : actor.id,
@@ -340,11 +335,9 @@ export async function transitionReservation(
       case 'COMPLETED': {
         const unpaid = r.orders.filter((o) => o.status !== 'PAID' && o.status !== 'CANCELLED');
         if (unpaid.length > 0) {
-          throw conflict(
-            `Не можна завершити візит: ${unpaid.length} замовлення(нь) ще не оплачено`,
-            'UNPAID_ORDERS',
-            { orderIds: unpaid.map((o) => o.id) },
-          );
+          throw conflict(`Не можна завершити візит: ${unpaid.length} замовлення(нь) ще не оплачено`, 'UNPAID_ORDERS', {
+            orderIds: unpaid.map((o) => o.id),
+          });
         }
         data.completedAt = t;
         break;
@@ -483,10 +476,7 @@ export async function walkInWindow(tableId: number, t: Date, db: Tx = prisma) {
 }
 
 /** Walk-in: гість без бронювання сідає за вільний столик (через QR або хостес). */
-export async function createWalkIn(
-  actor: AuthUser,
-  input: { qrToken?: string; tableId?: number; guests: number; guestName?: string },
-) {
+export async function createWalkIn(actor: AuthUser, input: { qrToken?: string; tableId?: number; guests: number; guestName?: string }) {
   assertGuests(input.guests);
   const isStaff = actor.role === 'STAFF' || actor.role === 'ADMIN';
   if (!isStaff && actor.role !== 'CLIENT') throw forbidden();
@@ -516,6 +506,7 @@ export async function createWalkIn(
 
     const r = await tx.reservation.create({
       data: {
+        createdAt: now(),
         code: `R-${randomCode(6)}`,
         checkinToken: randomToken(18),
         userId: isStaff ? null : actor.id,
@@ -541,11 +532,7 @@ export async function createWalkIn(
 }
 
 /** Працівник змінює столик / кількість гостей / нотатки (з перевіркою доступності). */
-export async function updateReservation(
-  actor: AuthUser,
-  id: number,
-  input: { tableId?: number; guests?: number; notes?: string | null },
-) {
+export async function updateReservation(actor: AuthUser, id: number, input: { tableId?: number; guests?: number; notes?: string | null }) {
   const updated = await prisma.$transaction(async (tx) => {
     await lockBooking(tx);
     const r = await loadReservation(id, tx);

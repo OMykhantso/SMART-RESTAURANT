@@ -65,7 +65,11 @@ export function DishImage({
         />
         {!loaded && (
           <div className="absolute inset-0 grid place-items-center">
-            <span className="select-none leading-none drop-shadow-[0_8px_24px_rgba(0,0,0,0.6)]" style={{ fontSize: 'clamp(12px, 42cqmin, 72px)' }} aria-hidden>
+            <span
+              className="select-none leading-none drop-shadow-[0_8px_24px_rgba(0,0,0,0.6)]"
+              style={{ fontSize: 'clamp(12px, 42cqmin, 72px)' }}
+              aria-hidden
+            >
               {emoji ?? EMOJI[category ?? ''] ?? '🍽️'}
             </span>
           </div>

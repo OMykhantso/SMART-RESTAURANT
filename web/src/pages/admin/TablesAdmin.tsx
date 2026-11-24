@@ -37,7 +37,7 @@ async function printQrCards(tables: Table[]) {
       .qr svg { width: 62mm; height: 62mm; margin: 5mm auto; display: block; }
       .num { font-size: 26pt; }
       .hint { margin-top: 2mm; font-family: Arial, sans-serif; font-size: 9pt; color: #555; }
-    </style></head><body><div class="grid">${cards.join('')}</div><script>window.onload = () => setTimeout(() => window.print(), 300);<\/script></body></html>`);
+    </style></head><body><div class="grid">${cards.join('')}</div><script>window.onload = () => setTimeout(() => window.print(), 300);</script></body></html>`);
     w.document.close();
   } catch (e) {
     w.close();
@@ -77,7 +77,12 @@ export default function TablesAdmin() {
         subtitle="Перетягуйте столики на плані — позиції одразу оновляться у бронюванні та в залі."
         action={
           <div className="flex gap-2">
-            <Button variant="glass" icon={<Printer className="size-4" />} disabled={!tables.data} onClick={() => printQrCards((tables.data ?? []).filter((t) => t.isActive !== false))}>
+            <Button
+              variant="glass"
+              icon={<Printer className="size-4" />}
+              disabled={!tables.data}
+              onClick={() => printQrCards((tables.data ?? []).filter((t) => t.isActive !== false))}
+            >
               Друк усіх QR
             </Button>
             <Button variant="gold" icon={<Plus className="size-4" />} onClick={() => setCreating(true)}>
@@ -104,12 +109,20 @@ export default function TablesAdmin() {
           )}
         </Card>
         <div className="space-y-4">
-          {selected ? <TableEditor key={selected.id} table={selected} onSaved={invalidate} onQr={() => setQrFor(selected)} /> : <Card className="p-6 text-sm text-ink-300">Оберіть столик на плані для редагування.</Card>}
+          {selected ? (
+            <TableEditor key={selected.id} table={selected} onSaved={invalidate} onQr={() => setQrFor(selected)} />
+          ) : (
+            <Card className="p-6 text-sm text-ink-300">Оберіть столик на плані для редагування.</Card>
+          )}
           <Card className="p-4">
             <div className="mb-3 text-xs font-medium uppercase tracking-wider text-ink-400">Усі столики</div>
             <div className="grid grid-cols-4 gap-2">
               {tables.data?.map((t) => (
-                <button key={t.id} onClick={() => setSelectedId(t.id)} className={`rounded-xl border px-2 py-2 text-center text-sm transition ${t.id === selectedId ? 'border-gold-300/60 bg-gold-400/15 text-gold-100' : 'border-white/8 text-ink-200 hover:border-white/20'} ${t.isActive === false ? 'opacity-40' : ''}`}>
+                <button
+                  key={t.id}
+                  onClick={() => setSelectedId(t.id)}
+                  className={`rounded-xl border px-2 py-2 text-center text-sm transition ${t.id === selectedId ? 'border-gold-300/60 bg-gold-400/15 text-gold-100' : 'border-white/8 text-ink-200 hover:border-white/20'} ${t.isActive === false ? 'opacity-40' : ''}`}
+                >
                   №{t.number}
                   <div className="text-[10px] text-ink-500">{t.seats} міс.</div>
                 </button>
@@ -125,7 +138,14 @@ export default function TablesAdmin() {
 }
 
 function TableEditor({ table, onSaved, onQr }: { table: Table; onSaved: () => void; onQr: () => void }) {
-  const [f, setF] = useState({ number: table.number, seats: table.seats, zone: table.zone, shape: table.shape, description: table.description ?? '', isActive: table.isActive !== false });
+  const [f, setF] = useState({
+    number: table.number,
+    seats: table.seats,
+    zone: table.zone,
+    shape: table.shape,
+    description: table.description ?? '',
+    isActive: table.isActive !== false,
+  });
   const save = useMutation({
     mutationFn: () => api.patch(`/tables/${table.id}`, { ...f, description: f.description || null }),
     onSuccess: () => {
@@ -182,7 +202,13 @@ function TableEditor({ table, onSaved, onQr }: { table: Table; onSaved: () => vo
         <Button variant="gold" className="flex-1" loading={save.isPending} icon={<Save className="size-4" />} onClick={() => save.mutate()}>
           Зберегти
         </Button>
-        <Button variant="danger" size="icon" loading={remove.isPending} onClick={() => confirm(`Видалити столик №${table.number}?`) && remove.mutate()} aria-label="Видалити">
+        <Button
+          variant="danger"
+          size="icon"
+          loading={remove.isPending}
+          onClick={() => confirm(`Видалити столик №${table.number}?`) && remove.mutate()}
+          aria-label="Видалити"
+        >
           <Trash2 className="size-4" />
         </Button>
       </div>
@@ -194,7 +220,9 @@ function CreateTable({ open, onClose, onSaved }: { open: boolean; onClose: () =>
   const [f, setF] = useState({ number: 15, seats: 4, zone: 'HALL' as TableZone, shape: 'SQUARE' as TableShape });
   useEffect(() => {
     if (!open) return;
-    api.get<Table[]>('/tables', { includeInactive: true }).then((t) => setF((x) => ({ ...x, number: Math.max(0, ...t.map((y) => y.number)) + 1 })));
+    api
+      .get<Table[]>('/tables', { includeInactive: true })
+      .then((t) => setF((x) => ({ ...x, number: Math.max(0, ...t.map((y) => y.number)) + 1 })));
   }, [open]);
   const create = useMutation({
     mutationFn: () => api.post('/tables', { ...f, posX: 50, posY: 30 }),
@@ -206,7 +234,19 @@ function CreateTable({ open, onClose, onSaved }: { open: boolean; onClose: () =>
     onError: (e) => toast.error(errorMessage(e)),
   });
   return (
-    <Modal open={open} onClose={onClose} size="sm" title="Новий столик" footer={<div className="flex justify-end"><Button variant="gold" loading={create.isPending} onClick={() => create.mutate()}>Додати</Button></div>}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="sm"
+      title="Новий столик"
+      footer={
+        <div className="flex justify-end">
+          <Button variant="gold" loading={create.isPending} onClick={() => create.mutate()}>
+            Додати
+          </Button>
+        </div>
+      }
+    >
       <div className="grid grid-cols-2 gap-3">
         <Field label="Номер">
           <Input type="number" value={f.number} onChange={(e) => setF((x) => ({ ...x, number: Number(e.target.value) }))} />
@@ -237,7 +277,11 @@ function CreateTable({ open, onClose, onSaved }: { open: boolean; onClose: () =>
 
 function QrPrint({ table, onClose }: { table: Table | null; onClose: () => void }) {
   const qc = useQueryClient();
-  const qr = useQuery({ queryKey: ['table-qr', table?.id], queryFn: () => api.get<{ payload: string }>(`/tables/${table!.id}/qr`, { format: 'json' }), enabled: Boolean(table) });
+  const qr = useQuery({
+    queryKey: ['table-qr', table?.id],
+    queryFn: () => api.get<{ payload: string }>(`/tables/${table!.id}/qr`, { format: 'json' }),
+    enabled: Boolean(table),
+  });
   const rotate = useMutation({
     mutationFn: () => api.post(`/tables/${table!.id}/qr/rotate`),
     onSuccess: () => {
@@ -246,7 +290,13 @@ function QrPrint({ table, onClose }: { table: Table | null; onClose: () => void 
     },
   });
   return (
-    <Modal open={Boolean(table)} onClose={onClose} size="sm" title={`QR-код столика №${table?.number}`} subtitle="Роздрукуйте й поставте на столик — гості скануватимуть його для check-in та замовлення.">
+    <Modal
+      open={Boolean(table)}
+      onClose={onClose}
+      size="sm"
+      title={`QR-код столика №${table?.number}`}
+      subtitle="Роздрукуйте й поставте на столик — гості скануватимуть його для check-in та замовлення."
+    >
       {qr.data && table && (
         <div>
           <div className="mx-auto w-fit rounded-3xl bg-cream p-6 text-center text-ink-950">
@@ -259,11 +309,7 @@ function QrPrint({ table, onClose }: { table: Table | null; onClose: () => void 
             <div className="text-xs text-ink-600">Відскануйте в застосунку, щоб замовити</div>
           </div>
           <div className="mt-6 grid grid-cols-2 gap-2">
-            <Button
-              variant="gold"
-              icon={<Printer className="size-4" />}
-              onClick={() => printQrCards([table])}
-            >
+            <Button variant="gold" icon={<Printer className="size-4" />} onClick={() => printQrCards([table])}>
               Друк
             </Button>
             <Button variant="glass" icon={<RefreshCw className="size-4" />} loading={rotate.isPending} onClick={() => rotate.mutate()}>

@@ -62,7 +62,12 @@ createRoot(document.getElementById('root')!).render(
                 closeButton
                 toastOptions={{
                   className: 'sonner-toast-custom',
-                  style: { background: 'rgba(18,18,23,0.92)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', color: '#f5f0e8' },
+                  style: {
+                    background: 'rgba(18,18,23,0.92)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    backdropFilter: 'blur(16px)',
+                    color: '#f5f0e8',
+                  },
                 }}
               />
             </CartProvider>

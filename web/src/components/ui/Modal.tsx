@@ -22,25 +22,44 @@ const SIZES = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl'
 /** Доступне модальне вікно / бокова панель: Esc, клік поза вікном, повернення фокусу. */
 export function Modal({ open, onClose, title, subtitle, children, footer, size = 'md', side, className, hideClose }: ModalProps) {
   const panel = useRef<HTMLDivElement>(null);
+  // Актуальний onClose без перезапуску ефекту: батьківські компоненти передають нову функцію на кожен рендер,
+  // а перезапуск ефекту повертав фокус на попередній елемент — поле вводу втрачало фокус після кожного символу.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseRef.current();
+    };
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
-    setTimeout(() => panel.current?.focus(), 30);
+    const t = setTimeout(() => {
+      // фокус на вікно лише якщо користувач ще нікуди не поставив курсор усередині нього
+      if (!panel.current?.contains(document.activeElement)) panel.current?.focus();
+    }, 30);
     return () => {
+      clearTimeout(t);
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
       previous?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   return createPortal(
     <AnimatePresence>
       {open && (
         <div className={cn('fixed inset-0 z-50 flex', side ? 'justify-end' : 'items-end justify-center sm:items-center sm:p-6')}>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={onClose}
+          />
           <motion.div
             ref={panel}
             role="dialog"
@@ -63,7 +82,11 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
                   {subtitle && <p className="mt-1 text-sm text-ink-300">{subtitle}</p>}
                 </div>
                 {!hideClose && (
-                  <button onClick={onClose} className="grid size-9 shrink-0 place-items-center rounded-full bg-white/5 text-ink-300 transition hover:bg-white/10 hover:text-cream" aria-label="Закрити">
+                  <button
+                    onClick={onClose}
+                    className="grid size-9 shrink-0 place-items-center rounded-full bg-white/5 text-ink-300 transition hover:bg-white/10 hover:text-cream"
+                    aria-label="Закрити"
+                  >
                     <X className="size-4" />
                   </button>
                 )}

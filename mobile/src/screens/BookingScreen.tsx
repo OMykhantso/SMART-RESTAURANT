@@ -46,7 +46,15 @@ export function BookingScreen({ navigation }: ScreenProps<'Booking'>) {
   const selected = tables.data?.tables.find((t) => t.id === tableId);
 
   const book = useMutation({
-    mutationFn: () => api.post<Reservation>('/reservations', { startAt: slot!.startAt, guests, tableId: tableId ?? undefined, zone: zone ?? undefined, notes: notes || undefined, source: 'APP' }),
+    mutationFn: () =>
+      api.post<Reservation>('/reservations', {
+        startAt: slot!.startAt,
+        guests,
+        tableId: tableId ?? undefined,
+        zone: zone ?? undefined,
+        notes: notes || undefined,
+        source: 'APP',
+      }),
     onSuccess: (r) => {
       haptic.success();
       qc.invalidateQueries({ queryKey: ['reservations'] });
@@ -56,7 +64,11 @@ export function BookingScreen({ navigation }: ScreenProps<'Booking'>) {
     onError: (e) => {
       haptic.error();
       const alts = e instanceof ApiError ? (e.details as { alternatives?: { time: string }[] } | undefined)?.alternatives : undefined;
-      toast({ title: (e as Error).message, body: alts?.length ? `Вільно: ${alts.map((a) => a.time).join(', ')}` : undefined, tone: 'danger' });
+      toast({
+        title: (e as Error).message,
+        body: alts?.length ? `Вільно: ${alts.map((a) => a.time).join(', ')}` : undefined,
+        tone: 'danger',
+      });
       qc.invalidateQueries({ queryKey: ['availability'] });
     },
   });
@@ -67,15 +79,24 @@ export function BookingScreen({ navigation }: ScreenProps<'Booking'>) {
         <Header title="Бронювання" subtitle="Booking engine підбере найкращий столик" />
 
         <Eyebrow style={styles.step}>Дата</Eyebrow>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginHorizontal: -20 }}
+          contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+        >
           {days.map((d) => {
             const active = d === date;
             const dt = new Date(`${d}T12:00:00Z`);
             const inner = (
               <>
-                <Text style={[styles.dayW, active && { color: '#141008' }]}>{d === isoDay() ? 'Сьог.' : new Intl.DateTimeFormat('uk-UA', { weekday: 'short', timeZone: 'UTC' }).format(dt)}</Text>
+                <Text style={[styles.dayW, active && { color: '#141008' }]}>
+                  {d === isoDay() ? 'Сьог.' : new Intl.DateTimeFormat('uk-UA', { weekday: 'short', timeZone: 'UTC' }).format(dt)}
+                </Text>
                 <Text style={[styles.dayN, active && { color: '#141008' }]}>{dt.getUTCDate()}</Text>
-                <Text style={[styles.dayM, active && { color: '#141008' }]}>{new Intl.DateTimeFormat('uk-UA', { month: 'short', timeZone: 'UTC' }).format(dt)}</Text>
+                <Text style={[styles.dayM, active && { color: '#141008' }]}>
+                  {new Intl.DateTimeFormat('uk-UA', { month: 'short', timeZone: 'UTC' }).format(dt)}
+                </Text>
               </>
             );
             return (
@@ -110,12 +131,19 @@ export function BookingScreen({ navigation }: ScreenProps<'Booking'>) {
                 <Plus size={18} color={colors.text} />
               </Pressable>
             </View>
-            <Caption style={{ marginTop: 8, textAlign: 'center' }}>{availability.data ? `${availability.data.durationMin} хв візиту` : ' '}</Caption>
+            <Caption style={{ marginTop: 8, textAlign: 'center' }}>
+              {availability.data ? `${availability.data.durationMin} хв візиту` : ' '}
+            </Caption>
           </Card>
         </View>
 
         <Eyebrow style={styles.step}>Зона</Eyebrow>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginHorizontal: -20 }}
+          contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+        >
           <Chip label="Будь-яка" active={zone === null} onPress={() => setZone(null)} />
           {(Object.keys(ZONE_LABEL) as TableZone[]).map((z) => (
             <Chip key={z} label={ZONE_LABEL[z]} active={zone === z} onPress={() => setZone(z)} />
@@ -151,9 +179,22 @@ export function BookingScreen({ navigation }: ScreenProps<'Booking'>) {
                       <Text style={[styles.slotT, { color: '#141008' }]}>{s.time}</Text>
                     </LinearGradient>
                   ) : (
-                    <View style={[styles.slot, { backgroundColor: s.available ? colors.surface : 'transparent', borderWidth: 1, borderColor: s.available ? colors.border : 'rgba(255,255,255,0.04)' }]}>
-                      <Text style={[styles.slotT, !s.available && { color: colors.faint, textDecorationLine: 'line-through' }]}>{s.time}</Text>
-                      {s.available && s.tablesLeft <= 2 && <Text style={{ fontFamily: fonts.semibold, fontSize: 9, color: colors.warning }}>останні</Text>}
+                    <View
+                      style={[
+                        styles.slot,
+                        {
+                          backgroundColor: s.available ? colors.surface : 'transparent',
+                          borderWidth: 1,
+                          borderColor: s.available ? colors.border : 'rgba(255,255,255,0.04)',
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.slotT, !s.available && { color: colors.faint, textDecorationLine: 'line-through' }]}>
+                        {s.time}
+                      </Text>
+                      {s.available && s.tablesLeft <= 2 && (
+                        <Text style={{ fontFamily: fonts.semibold, fontSize: 9, color: colors.warning }}>останні</Text>
+                      )}
                     </View>
                   )}
                 </Pressable>
@@ -192,7 +233,15 @@ export function BookingScreen({ navigation }: ScreenProps<'Booking'>) {
             ) : (
               <Skeleton height={200} />
             )}
-            <TextInput value={notes} onChangeText={setNotes} placeholder="Побажання: день народження, біля вікна…" placeholderTextColor={colors.faint} style={styles.notes} multiline maxLength={500} />
+            <TextInput
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Побажання: день народження, біля вікна…"
+              placeholderTextColor={colors.faint}
+              style={styles.notes}
+              multiline
+              maxLength={500}
+            />
           </>
         )}
       </Screen>
@@ -222,6 +271,29 @@ const styles = StyleSheet.create({
   slotT: { fontFamily: fonts.bold, fontSize: 15, color: colors.text },
   error: { color: colors.danger, fontFamily: fonts.medium },
   muted: { color: colors.muted, fontFamily: fonts.medium },
-  notes: { marginTop: 16, minHeight: 70, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(255,255,255,0.03)', padding: 14, color: colors.text, fontFamily: fonts.medium, textAlignVertical: 'top' },
-  bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 20, paddingTop: 14, backgroundColor: 'rgba(12,12,16,0.98)', borderTopWidth: 1, borderTopColor: colors.border, borderTopLeftRadius: 26, borderTopRightRadius: 26 },
+  notes: {
+    marginTop: 16,
+    minHeight: 70,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    padding: 14,
+    color: colors.text,
+    fontFamily: fonts.medium,
+    textAlignVertical: 'top',
+  },
+  bottom: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    backgroundColor: 'rgba(12,12,16,0.98)',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+  },
 });

@@ -12,6 +12,8 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:5173',
+    // локальний HTTPS у Docker може мати самопідписаний сертифікат (див. scripts/setup-https.sh)
+    ignoreHTTPSErrors: true,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     locale: 'uk-UA',

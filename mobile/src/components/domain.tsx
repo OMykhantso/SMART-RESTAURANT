@@ -102,7 +102,11 @@ export function DishTile({ dish, onPress, reason, width }: { dish: Dish; onPress
         )}
         <View style={styles.tileBottom}>
           <Text style={styles.price}>{money(dish.price)}</Text>
-          {qty > 0 ? <QtyStepper compact value={qty} onChange={(v) => cart.setQty(dish.id, v)} /> : <AddButton disabled={!dish.isAvailable} onPress={() => cart.add(dish)} />}
+          {qty > 0 ? (
+            <QtyStepper compact value={qty} onChange={(v) => cart.setQty(dish.id, v)} />
+          ) : (
+            <AddButton disabled={!dish.isAvailable} onPress={() => cart.add(dish)} />
+          )}
         </View>
       </View>
     </PressableScale>
@@ -155,16 +159,35 @@ export function OrderTimeline({ order }: { order: Order }) {
                     <Check size={14} color="#141008" strokeWidth={3} />
                   </LinearGradient>
                 ) : (
-                  <View style={[styles.stepDot, { backgroundColor: active ? colors.goldSoft : colors.surfaceHigh, borderWidth: 1.5, borderColor: active ? colors.gold : colors.border }]}>
+                  <View
+                    style={[
+                      styles.stepDot,
+                      {
+                        backgroundColor: active ? colors.goldSoft : colors.surfaceHigh,
+                        borderWidth: 1.5,
+                        borderColor: active ? colors.gold : colors.border,
+                      },
+                    ]}
+                  >
                     {active && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.gold }} />}
                   </View>
                 )}
               </View>
-              {i < ORDER_FLOW.length - 1 && <View style={{ width: 2, flex: 1, minHeight: 22, backgroundColor: done ? colors.gold : colors.border, borderRadius: 1 }} />}
+              {i < ORDER_FLOW.length - 1 && (
+                <View style={{ width: 2, flex: 1, minHeight: 22, backgroundColor: done ? colors.gold : colors.border, borderRadius: 1 }} />
+              )}
             </View>
             <View style={{ flex: 1, paddingBottom: 18 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontFamily: active ? fonts.bold : fonts.semibold, fontSize: 15, color: active ? colors.goldLight : done ? colors.text : colors.faint }}>{meta.label}</Text>
+                <Text
+                  style={{
+                    fontFamily: active ? fonts.bold : fonts.semibold,
+                    fontSize: 15,
+                    color: active ? colors.goldLight : done ? colors.text : colors.faint,
+                  }}
+                >
+                  {meta.label}
+                </Text>
                 <Text style={{ fontFamily: fonts.medium, fontSize: 12, color: colors.faint }}>{times[s] ? fmtTime(times[s]!) : ''}</Text>
               </View>
               {active && <Caption style={{ marginTop: 2 }}>{meta.hint}</Caption>}
@@ -194,7 +217,14 @@ export function OrderRow({ order, onPress }: { order: Order; onPress: () => void
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ flexDirection: 'row' }}>
           {order.items.slice(0, 3).map((it, k) => (
-            <DishImage key={it.id} uri={it.imageUrl} category={it.category.slug} size={38} radius={19} style={{ marginLeft: k ? -12 : 0, borderWidth: 2, borderColor: colors.surface }} />
+            <DishImage
+              key={it.id}
+              uri={it.imageUrl}
+              category={it.category.slug}
+              size={38}
+              radius={19}
+              style={{ marginLeft: k ? -12 : 0, borderWidth: 2, borderColor: colors.surface }}
+            />
           ))}
         </View>
         <View style={{ flex: 1 }}>
@@ -245,7 +275,15 @@ const SHAPE_SIZE = (seats: number, shape: TableShape) => {
 };
 
 /** Компактний план залу для мобільного бронювання. */
-export function MiniFloorPlan<T extends Table & { state?: string; recommended?: boolean }>({ tables, selectedId, onSelect }: { tables: T[]; selectedId: number | null; onSelect: (t: T) => void }) {
+export function MiniFloorPlan<T extends Table & { state?: string; recommended?: boolean }>({
+  tables,
+  selectedId,
+  onSelect,
+}: {
+  tables: T[];
+  selectedId: number | null;
+  onSelect: (t: T) => void;
+}) {
   const { width } = useWindowDimensions();
   const w = Math.min(width - 40, 520);
   const h = w * 0.62;
@@ -256,10 +294,37 @@ export function MiniFloorPlan<T extends Table & { state?: string; recommended?: 
     ['ТЕРАСА', 35, 63, 64, 35],
   ];
   return (
-    <View style={{ width: w, height: h, borderRadius: 20, backgroundColor: colors.bgElevated, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+    <View
+      style={{
+        width: w,
+        height: h,
+        borderRadius: 20,
+        backgroundColor: colors.bgElevated,
+        borderWidth: 1,
+        borderColor: colors.border,
+        overflow: 'hidden',
+      }}
+    >
       {zones.map(([label, x, y, zw, zh]) => (
-        <View key={label} style={{ position: 'absolute', left: (x / 100) * w, top: (y / 100) * h, width: (zw / 100) * w, height: (zh / 100) * h, borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.07)' }}>
-          <Text style={{ position: 'absolute', left: 8, top: 5, fontSize: 8, letterSpacing: 1.5, color: colors.faint, fontFamily: fonts.bold }}>{label}</Text>
+        <View
+          key={label}
+          style={{
+            position: 'absolute',
+            left: (x / 100) * w,
+            top: (y / 100) * h,
+            width: (zw / 100) * w,
+            height: (zh / 100) * h,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderStyle: 'dashed',
+            borderColor: 'rgba(255,255,255,0.07)',
+          }}
+        >
+          <Text
+            style={{ position: 'absolute', left: 8, top: 5, fontSize: 8, letterSpacing: 1.5, color: colors.faint, fontFamily: fonts.bold }}
+          >
+            {label}
+          </Text>
         </View>
       ))}
       {tables.map((t) => {
@@ -312,14 +377,33 @@ export function SectionTitle({ title, action }: { title: string; action?: ReactN
 }
 
 const styles = StyleSheet.create({
-  stepper: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.goldSoft, borderRadius: radius.pill, padding: 3, borderWidth: 1, borderColor: colors.goldBorder },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.goldSoft,
+    borderRadius: radius.pill,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+  },
   stepBtn: { borderRadius: 99, alignItems: 'center', justifyContent: 'center' },
   stepVal: { minWidth: 18, textAlign: 'center', fontFamily: fonts.bold, fontSize: 14, color: colors.goldLight },
   addBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   tile: { backgroundColor: colors.surface, borderRadius: 24, padding: 8, borderWidth: 1, borderColor: colors.border },
   tagChef: { position: 'absolute', top: 8, left: 8, borderRadius: 99, paddingHorizontal: 8, paddingVertical: 3 },
   tagChefText: { fontFamily: fonts.bold, fontSize: 9, letterSpacing: 1, color: '#141008' },
-  soldOut: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(8,8,11,0.65)', borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  soldOut: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(8,8,11,0.65)',
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   soldOutText: { fontFamily: fonts.semibold, color: colors.text, fontSize: 12 },
   tileName: { fontFamily: fonts.display, fontSize: 15.5, lineHeight: 20, color: colors.text, minHeight: 40 },
   reason: { marginTop: 4, fontFamily: fonts.semibold, fontSize: 11, color: colors.gold },
@@ -329,10 +413,26 @@ const styles = StyleSheet.create({
   tileBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingBottom: 4 },
   price: { fontFamily: fonts.bold, fontSize: 15, color: colors.goldLight },
   stepDot: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  row: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.border, marginBottom: 10 },
+  row: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 10,
+  },
   rowTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.text },
   rowSub: { fontFamily: fonts.body, fontSize: 12.5, color: colors.muted, marginTop: 2 },
-  dateBox: { width: 50, height: 54, borderRadius: 14, backgroundColor: colors.goldSoft, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.goldBorder },
+  dateBox: {
+    width: 50,
+    height: 54,
+    borderRadius: 14,
+    backgroundColor: colors.goldSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+  },
   dateDay: { fontFamily: fonts.display, fontSize: 20, color: colors.goldLight },
   dateMonth: { fontFamily: fonts.semibold, fontSize: 10, color: colors.gold, textTransform: 'uppercase' },
 });

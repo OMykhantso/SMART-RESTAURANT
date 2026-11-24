@@ -32,6 +32,7 @@ const StaffReservations = lazy(() => import('./pages/staff/Reservations'));
 const StaffOrders = lazy(() => import('./pages/staff/Orders'));
 const Scan = lazy(() => import('./pages/staff/Scan'));
 const Kitchen = lazy(() => import('./pages/kitchen/Kitchen'));
+const CourierInfo = lazy(() => import('./pages/courier/CourierInfo'));
 const AdminMenu = lazy(() => import('./pages/admin/MenuAdmin'));
 const AdminTables = lazy(() => import('./pages/admin/TablesAdmin'));
 const AdminUsers = lazy(() => import('./pages/admin/UsersAdmin'));
@@ -75,25 +76,95 @@ export function App() {
           <Route path="booking" element={<Booking />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
-          <Route path="account" element={<RequireRole roles={['CLIENT']}><Account /></RequireRole>} />
-          <Route path="account/reservations/:id" element={<RequireRole roles={['CLIENT']}><ReservationDetails /></RequireRole>} />
-          <Route path="account/orders/:id" element={<RequireRole roles={['CLIENT']}><OrderDetails /></RequireRole>} />
-          <Route path="order" element={<RequireRole roles={['CLIENT']}><TableOrder /></RequireRole>} />
+          <Route
+            path="account"
+            element={
+              <RequireRole roles={['CLIENT']}>
+                <Account />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="account/reservations/:id"
+            element={
+              <RequireRole roles={['CLIENT']}>
+                <ReservationDetails />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="account/orders/:id"
+            element={
+              <RequireRole roles={['CLIENT']}>
+                <OrderDetails />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="order"
+            element={
+              <RequireRole roles={['CLIENT']}>
+                <TableOrder />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="courier"
+            element={
+              <RequireRole roles={['COURIER']}>
+                <CourierInfo />
+              </RequireRole>
+            }
+          />
         </Route>
 
-        <Route element={<RequireRole roles={['STAFF', 'ADMIN']}><StaffLayout /></RequireRole>}>
+        <Route
+          element={
+            <RequireRole roles={['STAFF', 'ADMIN']}>
+              <StaffLayout />
+            </RequireRole>
+          }
+        >
           <Route path="staff" element={<StaffDashboard />} />
           <Route path="staff/floor" element={<Floor />} />
           <Route path="staff/reservations" element={<StaffReservations />} />
           <Route path="staff/orders" element={<StaffOrders />} />
           <Route path="staff/scan" element={<Scan />} />
           <Route path="admin/analytics" element={<Analytics />} />
-          <Route path="admin/menu" element={<RequireRole roles={['ADMIN']}><AdminMenu /></RequireRole>} />
-          <Route path="admin/tables" element={<RequireRole roles={['ADMIN']}><AdminTables /></RequireRole>} />
-          <Route path="admin/users" element={<RequireRole roles={['ADMIN']}><AdminUsers /></RequireRole>} />
+          <Route
+            path="admin/menu"
+            element={
+              <RequireRole roles={['ADMIN']}>
+                <AdminMenu />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="admin/tables"
+            element={
+              <RequireRole roles={['ADMIN']}>
+                <AdminTables />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="admin/users"
+            element={
+              <RequireRole roles={['ADMIN']}>
+                <AdminUsers />
+              </RequireRole>
+            }
+          />
         </Route>
 
-        <Route path="kitchen" element={<RequireRole roles={['KITCHEN', 'STAFF', 'ADMIN']}><Kitchen /></RequireRole>} />
+        <Route
+          path="kitchen"
+          element={
+            <RequireRole roles={['KITCHEN', 'STAFF', 'ADMIN']}>
+              <Kitchen />
+            </RequireRole>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

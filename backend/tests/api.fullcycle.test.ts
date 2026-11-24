@@ -57,7 +57,10 @@ describe('Повний цикл: бронювання → замовлення �
 
   it('1. Клієнт (Mobile) створює бронювання', async () => {
     setNow(18, 20);
-    const res = await api().post('/api/reservations').set(bearer(client)).send({ startAt: at(19, 0), guests: 2, notes: 'Біля вікна' });
+    const res = await api()
+      .post('/api/reservations')
+      .set(bearer(client))
+      .send({ startAt: at(19, 0), guests: 2, notes: 'Біля вікна' });
     expect(res.status).toBe(201);
     expect(res.body.status).toBe('PENDING');
     ctx.reservationId = res.body.id;
@@ -66,7 +69,7 @@ describe('Повний цикл: бронювання → замовлення �
     ctx.tableQr = fx.tables.find((t) => t.number === res.body.table.number)!.qrToken;
   });
 
-  it('2. Працівник (Web) бачить бронювання і підтверджує його → клієнт отримує подію real-time', async () => {
+  it('2. Працівник (Web) бачить бронювання і підтверджує його → клієнт отримує подію real-time (TC-36)', async () => {
     const list = await api().get('/api/reservations?status=PENDING').set(bearer(staff));
     expect(list.body.map((r: { id: number }) => r.id)).toContain(ctx.reservationId);
     const res = await api().patch(`/api/reservations/${ctx.reservationId}/status`).set(bearer(staff)).send({ status: 'CONFIRMED' });
@@ -74,33 +77,45 @@ describe('Повний цикл: бронювання → замовлення �
     await waitForEvent('reservation:updated', 'CONFIRMED');
   });
 
-  it('3. Замовлення до check-in неможливе', async () => {
-    const res = await api().post('/api/orders').set(bearer(client)).send({ items: [{ dishId: fx.dishes.steak.id, quantity: 1 }] });
+  it('3. Замовлення до check-in неможливе (TC-20)', async () => {
+    const res = await api()
+      .post('/api/orders')
+      .set(bearer(client))
+      .send({ items: [{ dishId: fx.dishes.steak.id, quantity: 1 }] });
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('NOT_CHECKED_IN');
   });
 
-  it('4. Клієнт сканує QR іншого столика → підказка; свого → check-in', async () => {
+  it('4. Клієнт сканує QR іншого столика → підказка; свого → check-in (TC-21)', async () => {
     setNow(18, 55);
     const wrongTable = fx.tables.find((t) => t.number !== ctx.tableNumber)!;
-    const wrong = await api().post('/api/reservations/scan-table').set(bearer(client)).send({ qr: `smartrest://table/${wrongTable.qrToken}` });
+    const wrong = await api()
+      .post('/api/reservations/scan-table')
+      .set(bearer(client))
+      .send({ qr: `smartrest://table/${wrongTable.qrToken}` });
     expect(wrong.status).toBe(409);
     expect(wrong.body.error.code).toBe('WRONG_TABLE');
-    const ok = await api().post('/api/reservations/scan-table').set(bearer(client)).send({ qr: `smartrest://table/${ctx.tableQr}` });
+    const ok = await api()
+      .post('/api/reservations/scan-table')
+      .set(bearer(client))
+      .send({ qr: `smartrest://table/${ctx.tableQr}` });
     expect(ok.status).toBe(200);
     expect(ok.body.action).toBe('CHECKED_IN');
     expect(ok.body.reservation.status).toBe('CHECKED_IN');
   });
 
-  it('5. Стоп-лист: недоступну страву замовити не можна', async () => {
+  it('5. Стоп-лист: недоступну страву замовити не можна (TC-22)', async () => {
     await api().patch(`/api/dishes/${fx.dishes.pizza.id}/availability`).set(bearer(kitchen)).send({ isAvailable: false });
-    const res = await api().post('/api/orders').set(bearer(client)).send({ items: [{ dishId: fx.dishes.pizza.id, quantity: 1 }] });
+    const res = await api()
+      .post('/api/orders')
+      .set(bearer(client))
+      .send({ items: [{ dishId: fx.dishes.pizza.id, quantity: 1 }] });
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('DISH_UNAVAILABLE');
     await api().patch(`/api/dishes/${fx.dishes.pizza.id}/availability`).set(bearer(kitchen)).send({ isAvailable: true });
   });
 
-  it('6. Клієнт робить замовлення; сума рахується на сервері', async () => {
+  it('6. Клієнт робить замовлення; сума рахується на сервері (TC-23)', async () => {
     const res = await api()
       .post('/api/orders')
       .set(bearer(client))
@@ -121,7 +136,7 @@ describe('Повний цикл: бронювання → замовлення �
     ctx.orderId = res.body.id;
   });
 
-  it('7. Чужий клієнт не бачить замовлення, а неготове замовлення не можна оплатити', async () => {
+  it('7. Чужий клієнт не бачить замовлення, а неготове замовлення не можна оплатити (TC-24, TC-27)', async () => {
     expect((await api().get(`/api/orders/${ctx.orderId}`).set(bearer(client2))).status).toBe(403);
     const pay = await api()
       .post('/api/payments/card')
@@ -141,12 +156,12 @@ describe('Повний цикл: бронювання → замовлення �
     await waitForEvent('order:updated', 'CONFIRMED');
   });
 
-  it('9. Офіціант не може «приготувати» замовлення — це дія кухні', async () => {
+  it('9. Офіціант не може «приготувати» замовлення — це дія кухні (TC-25)', async () => {
     const res = await api().patch(`/api/orders/${ctx.orderId}/status`).set(bearer(staff)).send({ status: 'PREPARING' });
     expect(res.status).toBe(403);
   });
 
-  it('10. Kitchen display: відмітка першої страви → PREPARING, усіх → READY автоматично', async () => {
+  it('10. Kitchen display: відмітка першої страви → PREPARING, усіх → READY автоматично (TC-26)', async () => {
     const order = await api().get(`/api/orders/${ctx.orderId}`).set(bearer(kitchen));
     const [first, second] = order.body.items;
     const r1 = await api().patch(`/api/kitchen/orders/${ctx.orderId}/items/${first.id}`).set(bearer(kitchen)).send({ status: 'READY' });
@@ -164,13 +179,13 @@ describe('Повний цикл: бронювання → замовлення �
     expect(mine.body.actions.canPay).toBe(true);
   });
 
-  it('12. Завершити візит з неоплаченим замовленням не можна', async () => {
+  it('12. Завершити візит з неоплаченим замовленням не можна (TC-28)', async () => {
     const res = await api().patch(`/api/reservations/${ctx.reservationId}/status`).set(bearer(staff)).send({ status: 'COMPLETED' });
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('UNPAID_ORDERS');
   });
 
-  it('13. Sandbox-оплата: відмова банку → 402; некоректний номер → 422', async () => {
+  it('13. Sandbox-оплата: відмова банку → 402; некоректний номер → 422 (TC-29)', async () => {
     const declined = await api()
       .post('/api/payments/card')
       .set(bearer(client))
@@ -185,7 +200,7 @@ describe('Повний цикл: бронювання → замовлення �
     expect(invalid.body.error.code).toBe('CARD_INVALID');
   });
 
-  it('14. 3-D Secure: невірний код → відмова, правильний → оплачено', async () => {
+  it('14. 3-D Secure: невірний код → відмова, правильний → оплачено (TC-30)', async () => {
     const pay3ds = async () =>
       api()
         .post('/api/payments/card')
@@ -205,7 +220,7 @@ describe('Повний цикл: бронювання → замовлення �
     await waitForEvent('payment:succeeded');
   });
 
-  it('15. Повторна оплата неможлива; у БД рівно один успішний платіж', async () => {
+  it('15. Повторна оплата неможлива; у БД рівно один успішний платіж (TC-31)', async () => {
     const again = await api()
       .post('/api/payments/card')
       .set(bearer(client))
@@ -218,7 +233,7 @@ describe('Повний цикл: бронювання → замовлення �
     expect(JSON.stringify(card)).not.toContain('4000000000003220'); // повний номер картки не зберігається
   });
 
-  it('16. Клієнт залишає відгук (лише один раз)', async () => {
+  it('16. Клієнт залишає відгук (лише один раз) (TC-34)', async () => {
     const review = {
       rating: 5,
       comment: 'Чудово!',
@@ -233,7 +248,7 @@ describe('Повний цикл: бронювання → замовлення �
     expect(dish.body.avgRating).toBe(5);
   });
 
-  it('17. Клієнт завершує візит → столик звільняється; історія статусів збережена', async () => {
+  it('17. Клієнт завершує візит → столик звільняється; історія статусів збережена (TC-35)', async () => {
     const res = await api().patch(`/api/reservations/${ctx.reservationId}/status`).set(bearer(client)).send({ status: 'COMPLETED' });
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('COMPLETED');
@@ -245,9 +260,12 @@ describe('Повний цикл: бронювання → замовлення �
 });
 
 describe('Офіціант (POS) та ідемпотентність оплат', () => {
-  it('офіціант створює замовлення для столика — одразу CONFIRMED; оплата готівкою', async () => {
+  it('офіціант створює замовлення для столика — одразу CONFIRMED; оплата готівкою (TC-33)', async () => {
     setNow(20, 0);
-    const walk = await api().post('/api/reservations/walk-in').set(bearer(staff)).send({ tableId: fx.tables[2].id, guests: 5, guestName: 'Компанія' });
+    const walk = await api()
+      .post('/api/reservations/walk-in')
+      .set(bearer(staff))
+      .send({ tableId: fx.tables[2].id, guests: 5, guestName: 'Компанія' });
     expect(walk.status).toBe(201);
     const order = await api()
       .post('/api/orders')
@@ -265,10 +283,13 @@ describe('Офіціант (POS) та ідемпотентність оплат'
     expect(cash.body.payment).toMatchObject({ method: 'CASH', status: 'SUCCEEDED' });
   });
 
-  it('Idempotency-Key: повторний запит не створює другий платіж', async () => {
+  it('Idempotency-Key: повторний запит не створює другий платіж (TC-32)', async () => {
     const walk = await api().post('/api/reservations/walk-in').set(bearer(client2)).send({ qr: fx.tables[1].qrToken, guests: 2 });
     expect(walk.status).toBe(201);
-    const order = await api().post('/api/orders').set(bearer(client2)).send({ items: [{ dishId: fx.dishes.lemonade.id, quantity: 2 }] });
+    const order = await api()
+      .post('/api/orders')
+      .set(bearer(client2))
+      .send({ items: [{ dishId: fx.dishes.lemonade.id, quantity: 2 }] });
     await api().patch(`/api/orders/${order.body.id}/status`).set(bearer(staff)).send({ status: 'CONFIRMED' });
     await api().patch(`/api/orders/${order.body.id}/status`).set(bearer(kitchen)).send({ status: 'PREPARING' });
     await api().patch(`/api/orders/${order.body.id}/status`).set(bearer(kitchen)).send({ status: 'READY' });
@@ -282,7 +303,7 @@ describe('Офіціант (POS) та ідемпотентність оплат'
     expect(await prisma.payment.count({ where: { orderId: order.body.id } })).toBe(1);
   });
 
-  it('аналітика враховує оплачені замовлення', async () => {
+  it('аналітика враховує оплачені замовлення (TC-37)', async () => {
     const admin = await login(fx.users.admin);
     const res = await api().get('/api/analytics/overview?days=7').set(bearer(admin));
     expect(res.status).toBe(200);
@@ -292,7 +313,7 @@ describe('Офіціант (POS) та ідемпотентність оплат'
     expect(todayStats.body.revenue).toBeGreaterThan(0);
   });
 
-  it('рекомендації повертають пояснення', async () => {
+  it('рекомендації повертають пояснення (TC-37)', async () => {
     const res = await api().get(`/api/recommendations?cart=${fx.dishes.steak.id}`).set(bearer(client));
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThan(0);

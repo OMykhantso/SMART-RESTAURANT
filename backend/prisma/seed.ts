@@ -3,7 +3,8 @@
  *  - облікові записи всіх ролей (див. README → «Тестові облікові записи»);
  *  - меню (10 категорій, 38 страв), 14 столиків з планом залу;
  *  - 45 днів історії візитів, замовлень, оплат і відгуків (для аналітики та рекомендацій);
- *  - «живий» стан ресторану на сьогодні (гості за столиками, замовлення на різних етапах, бронювання).
+ *  - «живий» стан ресторану на сьогодні (гості за столиками, замовлення на різних етапах, бронювання);
+ *  - служба доставки: 8 зон Києва (одна вимкнена), 2 курʼєри, збережені адреси, 45 днів історії доставок і активні доставки.
  *
  * Запуск: npm run db:seed   (УВАГА: повністю очищує таблиці)
  */
@@ -14,7 +15,18 @@ import { randomBytes } from 'node:crypto';
 import { restaurant } from '../src/config';
 import { openingWindow } from '../src/lib/time';
 import { rankTables, type BusyInterval, type EngineTable } from '../src/modules/booking/engine';
-import { CATEGORIES, CLIENT_NAMES, DISHES, PAIRINGS, TABLES, USERS, VISIT_COMMENTS, WALKIN_NAMES } from './data';
+import {
+  CATEGORIES,
+  CLIENT_NAMES,
+  DELIVERY_COMMENTS,
+  DELIVERY_ZONES,
+  DISHES,
+  PAIRINGS,
+  TABLES,
+  USERS,
+  VISIT_COMMENTS,
+  WALKIN_NAMES,
+} from './data';
 
 const prisma = new PrismaClient();
 const TZ = restaurant.timezone;
@@ -33,7 +45,7 @@ function mulberry32(seed: number) {
 const rng = mulberry32(20261001);
 const chance = (p: number) => rng() < p;
 const randInt = (min: number, max: number) => min + Math.floor(rng() * (max - min + 1));
-const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(rng() * arr.length)];
+const pick = <T>(arr: readonly T[]): T => arr[Math.floor(rng() * arr.length)];
 function weighted<T>(items: [T, number][]): T {
   const total = items.reduce((s, [, w]) => s + w, 0);
   let r = rng() * total;
@@ -55,11 +67,10 @@ function reservationCode() {
   return code;
 }
 const token = (n = 18) => randomBytes(n).toString('base64url');
-const minutes = (m: number) => m * 60000;
 
 async function wipe() {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE status_changes, reviews, payments, order_items, orders, reservations, refresh_tokens, dishes, categories, tables, users RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE status_changes, reviews, payments, deliveries, order_items, orders, reservations, addresses, delivery_zones, refresh_tokens, dishes, categories, tables, users RESTART IDENTITY CASCADE',
   );
   await prisma.$executeRawUnsafe('ALTER SEQUENCE orders_id_seq RESTART WITH 1001');
 }
@@ -90,7 +101,9 @@ async function main() {
           phone: `+38063${String(1000000 + i * 7919).slice(0, 7)}`,
           role: 'CLIENT',
           passwordHash: clientHash,
-          createdAt: DateTime.now().minus({ days: randInt(50, 200) }).toJSDate(),
+          createdAt: DateTime.now()
+            .minus({ days: randInt(50, 200) })
+            .toJSDate(),
         },
       }),
     );
@@ -98,6 +111,8 @@ async function main() {
   const demoClient = users.find((u) => u.email === 'client@smartrest.ua')!;
   const maria = users.find((u) => u.email === 'maria@smartrest.ua')!;
   const waiters = users.filter((u) => u.role === 'STAFF');
+  const couriers = users.filter((u) => u.role === 'COURIER');
+  const cook = users.find((u) => u.role === 'KITCHEN')!;
   const allClients = [demoClient, maria, ...extraClients];
 
   // ─────────────────────────────── Меню ───────────────────────────────
@@ -135,7 +150,15 @@ async function main() {
   const tables: EngineTable[] = [];
   for (const t of TABLES) {
     const created = await prisma.diningTable.create({ data: { ...t, qrToken: token(16) } });
-    tables.push({ id: created.id, number: created.number, seats: created.seats, zone: created.zone, shape: created.shape, posX: created.posX, posY: created.posY });
+    tables.push({
+      id: created.id,
+      number: created.number,
+      seats: created.seats,
+      zone: created.zone,
+      shape: created.shape,
+      posX: created.posX,
+      posY: created.posY,
+    });
   }
 
   // ─────────────────────────────── Генератор замовлень ───────────────────────────────
@@ -194,7 +217,6 @@ async function main() {
   console.log(`📅 Історія за ${HISTORY_DAYS} днів…`);
   const today = DateTime.now().setZone(TZ).startOf('day');
   let reservationsCount = 0;
-  let ordersCount = 0;
   let reviewsCount = 0;
 
   const seedNow = DateTime.now().setZone(TZ);
@@ -208,7 +230,15 @@ async function main() {
     const busy: BusyInterval[] = [];
 
     for (let v = 0; v < target; v++) {
-      const guests = weighted<number>([[1, 5], [2, 45], [3, 13], [4, 22], [5, 5], [6, 6], [8, 2]]);
+      const guests = weighted<number>([
+        [1, 5],
+        [2, 45],
+        [3, 13],
+        [4, 22],
+        [5, 5],
+        [6, 6],
+        [8, 2],
+      ]);
       const slot = weighted<[number, number]>([
         [[10, 12], day.weekday >= 6 ? 14 : 8],
         [[12, 16], 30],
@@ -228,8 +258,19 @@ async function main() {
       if (!ranked.length) continue;
       const table = ranked[0].table;
 
-      const status = isToday ? 'COMPLETED' : weighted<ReservationStatus>([['COMPLETED', 85], ['NO_SHOW', 6], ['CANCELLED', 9]]);
-      const source = weighted<ReservationSource>([['APP', 45], ['WEB', 22], ['STAFF', 21], ['WALK_IN', 12]]);
+      const status = isToday
+        ? 'COMPLETED'
+        : weighted<ReservationStatus>([
+            ['COMPLETED', 85],
+            ['NO_SHOW', 6],
+            ['CANCELLED', 9],
+          ]);
+      const source = weighted<ReservationSource>([
+        ['APP', 45],
+        ['WEB', 22],
+        ['STAFF', 21],
+        ['WALK_IN', 12],
+      ]);
       const hasAccount = source === 'APP' || source === 'WEB' || (source === 'WALK_IN' && chance(0.4));
       const client = hasAccount ? (chance(0.07) ? demoClient : chance(0.05) ? maria : pick(allClients)) : null;
       const waiter = pick(waiters);
@@ -271,7 +312,10 @@ async function main() {
         const lines =
           round === 0
             ? composeOrder(guests, start.hour, favorites)
-            : new Map<string, number>([[pick(keysBy('desserts')), randInt(1, guests)], [pick(['cappuccino', 'matcha', 'aperol']), 1]]);
+            : new Map<string, number>([
+                [pick(keysBy('desserts')), randInt(1, guests)],
+                [pick(['cappuccino', 'matcha', 'aperol']), 1],
+              ]);
         if (!lines.size) continue;
         const { total, maxPrep } = orderTotals(lines);
         const createdOrderAt = cursor;
@@ -279,7 +323,8 @@ async function main() {
         const preparingAt = confirmedAt.plus({ minutes: randInt(1, 6) });
         const readyAt = preparingAt.plus({ minutes: Math.round(maxPrep * (0.8 + rng() * 0.6)) });
         const servedAt = readyAt.plus({ minutes: randInt(1, 5) });
-        const paidAt = round === orderRounds - 1 ? completedAt.minus({ minutes: randInt(2, 10) }) : servedAt.plus({ minutes: randInt(15, 40) });
+        const paidAt =
+          round === orderRounds - 1 ? completedAt.minus({ minutes: randInt(2, 10) }) : servedAt.plus({ minutes: randInt(15, 40) });
         const paidAtFinal = paidAt < servedAt ? servedAt.plus({ minutes: 3 }) : paidAt;
 
         const order = await prisma.order.create({
@@ -309,7 +354,6 @@ async function main() {
             },
           },
         });
-        ordersCount++;
         const card = chance(0.7);
         await prisma.payment.create({
           data: {
@@ -331,7 +375,13 @@ async function main() {
           const comment = pick(VISIT_COMMENTS);
           const reviewAt = paidAtFinal.plus({ minutes: randInt(10, 600) }).toJSDate();
           await prisma.review.create({
-            data: { userId: client.id, orderId: order.id, rating: comment.rating, comment: chance(0.8) ? comment.text : null, createdAt: reviewAt },
+            data: {
+              userId: client.id,
+              orderId: order.id,
+              rating: comment.rating,
+              comment: chance(0.8) ? comment.text : null,
+              createdAt: reviewAt,
+            },
           });
           const rated = [...lines.keys()].filter(() => chance(0.6)).slice(0, 3);
           for (const key of rated) {
@@ -341,7 +391,18 @@ async function main() {
                 userId: client.id,
                 orderId: order.id,
                 dishId: dishByKey.get(key)!.id,
-                rating: Math.max(3, Math.min(5, base + weighted<number>([[0, 6], [1, 2], [-1, 2]]))),
+                rating: Math.max(
+                  3,
+                  Math.min(
+                    5,
+                    base +
+                      weighted<number>([
+                        [0, 6],
+                        [1, 2],
+                        [-1, 2],
+                      ]),
+                  ),
+                ),
                 createdAt: reviewAt,
               },
             });
@@ -350,6 +411,315 @@ async function main() {
         }
         cursor = servedAt.plus({ minutes: randInt(20, 40) });
       }
+    }
+  }
+
+  // ─────────────────────────────── Служба доставки ───────────────────────────────
+  console.log('🛵 Зони, адреси та історія доставок…');
+  const zones: {
+    id: number;
+    name: string;
+    fee: number;
+    freeFrom: number | null;
+    travelMin: number;
+    streets: string[];
+    weight: number;
+    isActive: boolean;
+  }[] = [];
+  for (const [i, z] of DELIVERY_ZONES.entries()) {
+    const created = await prisma.deliveryZone.create({
+      data: {
+        name: z.name,
+        description: z.description,
+        fee: z.fee * 100,
+        minOrder: z.minOrder * 100,
+        freeFrom: z.freeFrom ? z.freeFrom * 100 : null,
+        travelMin: z.travelMin,
+        isActive: z.isActive ?? true,
+        sortOrder: i,
+        centerLat: z.center[0],
+        centerLng: z.center[1],
+        radiusKm: z.radiusKm,
+      },
+    });
+    zones.push({ ...created, streets: z.streets, weight: z.weight });
+  }
+  const activeZones = zones.filter((z) => z.isActive);
+  const zoneByName = (name: string) => zones.find((z) => z.name === name)!;
+  const pickZone = () => weighted<(typeof zones)[number]>(activeZones.map((z) => [z, z.weight]));
+  const feeFor = (z: (typeof zones)[number], subtotal: number) => (z.freeFrom != null && subtotal >= z.freeFrom ? 0 : z.fee);
+
+  // збережені адреси демо-клієнтів
+  await prisma.address.create({
+    data: {
+      userId: demoClient.id,
+      zoneId: zoneByName('Печерський').id,
+      label: 'Дім',
+      street: 'вул. Мечникова',
+      house: '12',
+      apartment: '5',
+      entrance: '1',
+      floor: '2',
+      comment: 'Домофон 5, двері зліва',
+      isDefault: true,
+    },
+  });
+  await prisma.address.create({
+    data: {
+      userId: demoClient.id,
+      zoneId: zoneByName('Шевченківський').id,
+      label: 'Робота',
+      street: 'вул. Січових Стрільців',
+      house: '7А',
+      apartment: '304',
+      floor: '3',
+      comment: 'Офіс IT-компанії, рецепція на 1 поверсі',
+    },
+  });
+  await prisma.address.create({
+    data: {
+      userId: maria.id,
+      zoneId: zoneByName('Подільський').id,
+      label: 'Дім',
+      street: 'вул. Покровська',
+      house: '24',
+      apartment: '8',
+      isDefault: true,
+    },
+  });
+
+  let deliveriesCount = 0;
+  async function deliveryOrder(opts: {
+    client: { id: number; name: string; phone: string | null };
+    zone: (typeof zones)[number];
+    lines: Map<string, number>;
+    createdAt: DateTime;
+    status: OrderStatus;
+    method: 'CARD' | 'CASH';
+    courier?: { id: number } | null;
+    street?: string;
+    house?: string;
+    apartment?: string;
+    review?: boolean;
+  }) {
+    const { total: subtotal, maxPrep } = orderTotals(opts.lines);
+    const fee = feeFor(opts.zone, subtotal);
+    const total = subtotal + fee;
+    const c = opts.createdAt;
+    const reached = (s: OrderStatus) => {
+      const chain: OrderStatus[] = ['NEW', 'CONFIRMED', 'PREPARING', 'READY', 'DELIVERING', 'DELIVERED'];
+      return opts.status !== 'CANCELLED' && chain.indexOf(opts.status) >= chain.indexOf(s);
+    };
+    const confirmedAt = reached('CONFIRMED') || (opts.status === 'CANCELLED' && opts.method === 'CARD') ? c.plus({ minutes: 1 }) : null;
+    const preparingAt = reached('PREPARING') ? c.plus({ minutes: randInt(2, 6) }) : null;
+    const readyAt = reached('READY') && preparingAt ? preparingAt.plus({ minutes: Math.round(maxPrep * (0.8 + rng() * 0.5)) }) : null;
+    const assignedAt = opts.courier ? (preparingAt ?? c).plus({ minutes: 1 }) : null;
+    const pickedUpAt = reached('DELIVERING') && readyAt ? readyAt.plus({ minutes: randInt(1, 7) }) : null;
+    const deliveredAt = reached('DELIVERED') && pickedUpAt ? pickedUpAt.plus({ minutes: opts.zone.travelMin + randInt(-5, 8) }) : null;
+    const cancelledAt = opts.status === 'CANCELLED' ? c.plus({ minutes: randInt(2, 8) }) : null;
+    const paidAt = opts.method === 'CARD' ? confirmedAt : deliveredAt;
+    const street = opts.street ?? pick(opts.zone.streets);
+    const order = await prisma.order.create({
+      data: {
+        type: 'DELIVERY',
+        userId: opts.client.id,
+        createdById: opts.client.id,
+        status: opts.status,
+        subtotal,
+        total,
+        createdAt: c.toJSDate(),
+        confirmedAt: confirmedAt?.toJSDate(),
+        preparingAt: preparingAt?.toJSDate(),
+        readyAt: readyAt?.toJSDate(),
+        paidAt: opts.status === 'CANCELLED' ? null : paidAt?.toJSDate(),
+        cancelledAt: cancelledAt?.toJSDate(),
+        cancelReason: cancelledAt ? pick(['Змінилися плани', 'Замовили не на ту адресу', 'Довго чекати']) : null,
+        estimatedReadyAt: (preparingAt ?? c).plus({ minutes: maxPrep + 4 }).toJSDate(),
+        updatedAt: (deliveredAt ?? pickedUpAt ?? readyAt ?? cancelledAt ?? c).toJSDate(),
+        items: {
+          create: [...opts.lines].map(([key, quantity], i) => ({
+            dishId: dishByKey.get(key)!.id,
+            quantity,
+            unitPrice: dishByKey.get(key)!.price,
+            status: reached('READY') ? 'READY' : opts.status === 'PREPARING' ? (i === 0 ? 'READY' : 'COOKING') : 'QUEUED',
+          })),
+        },
+        delivery: {
+          create: {
+            zoneId: opts.zone.id,
+            courierId: opts.courier?.id ?? null,
+            recipientName: opts.client.name,
+            phone: opts.client.phone ?? `+38063${randInt(1000000, 9999999)}`,
+            street,
+            house: opts.house ?? String(randInt(1, 120)) + (chance(0.15) ? 'А' : ''),
+            apartment: opts.apartment ?? (chance(0.7) ? String(randInt(1, 140)) : null),
+            fee,
+            paymentMethod: opts.method,
+            changeFrom: opts.method === 'CASH' && chance(0.4) ? Math.ceil(total / 50000) * 50000 : null,
+            etaAt: (readyAt ?? (preparingAt ?? c).plus({ minutes: maxPrep })).plus({ minutes: opts.zone.travelMin + 5 }).toJSDate(),
+            assignedAt: assignedAt?.toJSDate(),
+            pickedUpAt: pickedUpAt?.toJSDate(),
+            deliveredAt: deliveredAt?.toJSDate(),
+          },
+        },
+      },
+    });
+    deliveriesCount++;
+
+    // оплата: картка — одразу після оформлення; готівка — курʼєру під час вручення
+    if (opts.method === 'CARD' && confirmedAt) {
+      await prisma.payment.create({
+        data: {
+          orderId: order.id,
+          amount: total,
+          tip: chance(0.3) ? randInt(2, 6) * 1000 : 0,
+          method: 'CARD',
+          status: opts.status === 'CANCELLED' ? 'REFUNDED' : 'SUCCEEDED',
+          providerRef: `pi_sbx_${token(12)}`,
+          cardBrand: pick(['VISA', 'MASTERCARD']),
+          cardLast4: pick(['4242', '4444', '1881', '0005', '7310']),
+          failureMessage: opts.status === 'CANCELLED' ? 'Кошти повернуто: замовлення скасовано' : null,
+          createdAt: confirmedAt.toJSDate(),
+          paidAt: confirmedAt.toJSDate(),
+        },
+      });
+    } else if (opts.method === 'CASH' && deliveredAt && opts.courier) {
+      await prisma.payment.create({
+        data: {
+          orderId: order.id,
+          amount: total,
+          tip: chance(0.25) ? randInt(1, 4) * 1000 : 0,
+          method: 'CASH',
+          status: 'SUCCEEDED',
+          provider: 'courier',
+          providerRef: `cash_${token(12)}`,
+          processedById: opts.courier.id,
+          createdAt: deliveredAt.toJSDate(),
+          paidAt: deliveredAt.toJSDate(),
+        },
+      });
+    }
+
+    // журнал статусів
+    const steps: [OrderStatus | null, OrderStatus, DateTime | null, number | null, string | null][] = [
+      [
+        null,
+        opts.method === 'CASH' ? 'CONFIRMED' : 'NEW',
+        c,
+        opts.client.id,
+        opts.method === 'CASH' ? 'Оплата готівкою курʼєру' : 'Очікує онлайн-оплати',
+      ],
+      ...(opts.method === 'CARD'
+        ? [['NEW', 'CONFIRMED', confirmedAt, null, 'Оплата онлайн'] as [OrderStatus, OrderStatus, DateTime | null, null, string]]
+        : []),
+      ['CONFIRMED', 'PREPARING', preparingAt, cook.id, null],
+      ['PREPARING', 'READY', readyAt, cook.id, null],
+      ['READY', 'DELIVERING', pickedUpAt, opts.courier?.id ?? null, null],
+      ['DELIVERING', 'DELIVERED', deliveredAt, opts.courier?.id ?? null, null],
+    ];
+    for (const [from, to, at, actorId, note] of steps) {
+      if (!at) continue;
+      await prisma.statusChange.create({
+        data: { orderId: order.id, fromStatus: from, toStatus: to, actorId, note, createdAt: at.toJSDate() },
+      });
+    }
+    if (cancelledAt) {
+      await prisma.statusChange.create({
+        data: {
+          orderId: order.id,
+          fromStatus: confirmedAt ? 'CONFIRMED' : 'NEW',
+          toStatus: 'CANCELLED',
+          actorId: opts.client.id,
+          createdAt: cancelledAt.toJSDate(),
+        },
+      });
+    }
+
+    if (opts.review && deliveredAt) {
+      const comment = pick(DELIVERY_COMMENTS);
+      const reviewAt = deliveredAt.plus({ minutes: randInt(10, 240) }).toJSDate();
+      await prisma.review.create({
+        data: {
+          userId: opts.client.id,
+          orderId: order.id,
+          rating: comment.rating,
+          comment: chance(0.85) ? comment.text : null,
+          createdAt: reviewAt,
+        },
+      });
+      for (const key of [...opts.lines.keys()].filter(() => chance(0.5)).slice(0, 2)) {
+        await prisma.review.create({
+          data: {
+            userId: opts.client.id,
+            orderId: order.id,
+            dishId: dishByKey.get(key)!.id,
+            rating: weighted<number>([
+              [5, 6],
+              [4, 3],
+              [3, 1],
+            ]),
+            createdAt: reviewAt,
+          },
+        });
+      }
+      reviewsCount++;
+    }
+    return order;
+  }
+
+  for (let offset = HISTORY_DAYS; offset >= 0; offset--) {
+    const day = today.minus({ days: offset });
+    const { open, close } = openingWindow(day);
+    const weekend = day.weekday >= 5;
+    const target = weekend ? randInt(7, 12) : randInt(3, 8);
+    for (let n = 0; n < target; n++) {
+      const hour = weighted<number>([
+        [11, 1],
+        [12, 3],
+        [13, 4],
+        [14, 2],
+        [17, 2],
+        [18, 4],
+        [19, 5],
+        [20, 4],
+        [21, 2],
+      ]);
+      const createdAt = day.set({ hour, minute: randInt(0, 59) });
+      if (createdAt < open || createdAt > close.minus({ minutes: 90 })) continue;
+      if (offset === 0 && createdAt > seedNow.minus({ minutes: 100 })) continue;
+      const client = chance(0.1) ? demoClient : chance(0.06) ? maria : pick(allClients);
+      const zone = pickZone();
+      let lines = composeOrder(
+        weighted<number>([
+          [1, 4],
+          [2, 5],
+          [3, 2],
+          [4, 1],
+        ]),
+        hour,
+        client.id === demoClient.id ? DEMO_FAVORITES : undefined,
+      );
+      // доставка — без коктейлів, а сума не нижча за мінімальну для зони
+      lines = new Map([...lines].filter(([key]) => dishByKey.get(key)!.category !== 'cocktails'));
+      if (!lines.size) continue;
+      while (orderTotals(lines).total < DELIVERY_ZONES.find((z) => z.name === zone.name)!.minOrder * 100) {
+        const extra = pick(keysBy(pick(['pizza', 'pasta', 'desserts', 'drinks'])));
+        lines.set(extra, (lines.get(extra) ?? 0) + 1);
+      }
+      const status = weighted<OrderStatus>([
+        ['DELIVERED', 92],
+        ['CANCELLED', 8],
+      ]);
+      await deliveryOrder({
+        client,
+        zone,
+        lines,
+        createdAt,
+        status,
+        method: chance(0.65) ? 'CARD' : 'CASH',
+        courier: status === 'DELIVERED' ? pick(couriers) : null,
+        review: status === 'DELIVERED' && chance(0.35),
+      });
     }
   }
 
@@ -377,10 +747,19 @@ async function main() {
     let end = opts.start.plus({ minutes: duration });
     if (end > opts.window.close) end = opts.window.close;
     if (end <= opts.start) return null;
-    const ranked = rankTables(tables, busyToday, opts.guests, opts.start.toJSDate(), end.toJSDate(), opts.window.open.toJSDate(), opts.window.close.toJSDate(), {
-      bufferMin: restaurant.bufferMin,
-      minUsefulGapMin: 90,
-    });
+    const ranked = rankTables(
+      tables,
+      busyToday,
+      opts.guests,
+      opts.start.toJSDate(),
+      end.toJSDate(),
+      opts.window.open.toJSDate(),
+      opts.window.close.toJSDate(),
+      {
+        bufferMin: restaurant.bufferMin,
+        minUsefulGapMin: 90,
+      },
+    );
     const table = (opts.preferTable && ranked.find((r) => r.table.number === opts.preferTable)?.table) || ranked[0]?.table;
     if (!table) return null;
     busyToday.push({ reservationId: busyToday.length + 1, tableId: table.id, startAt: opts.start.toJSDate(), endAt: end.toJSDate() });
@@ -406,14 +785,35 @@ async function main() {
         createdAt: createdAt.toJSDate(),
       },
     });
-    await prisma.statusChange.create({ data: { reservationId: r.id, fromStatus: null, toStatus: opts.status === 'CHECKED_IN' ? 'CONFIRMED' : opts.status, actorId: opts.client?.id ?? staff.id, createdAt: createdAt.toJSDate() } });
+    await prisma.statusChange.create({
+      data: {
+        reservationId: r.id,
+        fromStatus: null,
+        toStatus: opts.status === 'CHECKED_IN' ? 'CONFIRMED' : opts.status,
+        actorId: opts.client?.id ?? staff.id,
+        createdAt: createdAt.toJSDate(),
+      },
+    });
     if (opts.status === 'CHECKED_IN') {
-      await prisma.statusChange.create({ data: { reservationId: r.id, fromStatus: 'CONFIRMED', toStatus: 'CHECKED_IN', actorId: staff.id, createdAt: opts.checkedInAt!.toJSDate() } });
+      await prisma.statusChange.create({
+        data: {
+          reservationId: r.id,
+          fromStatus: 'CONFIRMED',
+          toStatus: 'CHECKED_IN',
+          actorId: staff.id,
+          createdAt: opts.checkedInAt!.toJSDate(),
+        },
+      });
     }
     return { ...r, table };
   }
 
-  async function liveOrder(r: { id: number; tableId: number; userId: number | null }, keys: [string, number][], status: OrderStatus, ageMin: number) {
+  async function liveOrder(
+    r: { id: number; tableId: number; userId: number | null },
+    keys: [string, number][],
+    status: OrderStatus,
+    ageMin: number,
+  ) {
     const lines = new Map(keys);
     const { total, maxPrep } = orderTotals(lines);
     const created = now.minus({ minutes: ageMin });
@@ -450,30 +850,172 @@ async function main() {
     const upto = chain.indexOf(status);
     for (let i = 0; i <= upto; i++) {
       await prisma.statusChange.create({
-        data: { orderId: order.id, fromStatus: i ? chain[i - 1] : null, toStatus: chain[i], actorId: i === 0 ? r.userId : i === 2 || i === 3 ? users[3].id : waiters[1].id, createdAt: created.plus({ minutes: i * 2 }).toJSDate() },
+        data: {
+          orderId: order.id,
+          fromStatus: i ? chain[i - 1] : null,
+          toStatus: chain[i],
+          actorId: i === 0 ? r.userId : i === 2 || i === 3 ? users[3].id : waiters[1].id,
+          createdAt: created.plus({ minutes: i * 2 }).toJSDate(),
+        },
       });
     }
-    ordersCount++;
     return order;
   }
 
   const openNow = now > todayWindow.open.plus({ minutes: 50 }) && now < todayWindow.close.minus({ minutes: 60 });
   if (openNow) {
     const seatedStart = (ago: number) => now.minus({ minutes: ago }).startOf('minute');
-    const a = await place({ start: seatedStart(55), guests: 4, status: 'CHECKED_IN', client: maria, preferTable: 5, checkedInAt: seatedStart(55), window: todayWindow });
+    const a = await place({
+      start: seatedStart(55),
+      guests: 4,
+      status: 'CHECKED_IN',
+      client: maria,
+      preferTable: 5,
+      checkedInAt: seatedStart(55),
+      window: todayWindow,
+    });
     if (a) {
-      await liveOrder(a, [['bruschetta', 1], ['carbonara', 2], ['ribeye', 1], ['redwine', 2], ['lemonade', 2]], 'SERVED', 48);
-      await liveOrder(a, [['tiramisu', 2], ['cappuccino', 2]], 'NEW', 2);
+      await liveOrder(
+        a,
+        [
+          ['bruschetta', 1],
+          ['carbonara', 2],
+          ['ribeye', 1],
+          ['redwine', 2],
+          ['lemonade', 2],
+        ],
+        'SERVED',
+        48,
+      );
+      await liveOrder(
+        a,
+        [
+          ['tiramisu', 2],
+          ['cappuccino', 2],
+        ],
+        'NEW',
+        2,
+      );
     }
-    const b = await place({ start: seatedStart(30), guests: 2, status: 'CHECKED_IN', client: extraClients[0], preferTable: 11, checkedInAt: seatedStart(30), window: todayWindow });
-    if (b) await liveOrder(b, [['salmon', 1], ['risotto', 1], ['whitewine', 2]], 'PREPARING', 14);
-    const c = await place({ start: seatedStart(25), guests: 3, status: 'CHECKED_IN', guestName: 'Родина Іваненків', source: 'WALK_IN', preferTable: 3, checkedInAt: seatedStart(25), window: todayWindow });
+    const b = await place({
+      start: seatedStart(30),
+      guests: 2,
+      status: 'CHECKED_IN',
+      client: extraClients[0],
+      preferTable: 11,
+      checkedInAt: seatedStart(30),
+      window: todayWindow,
+    });
+    if (b)
+      await liveOrder(
+        b,
+        [
+          ['salmon', 1],
+          ['risotto', 1],
+          ['whitewine', 2],
+        ],
+        'PREPARING',
+        14,
+      );
+    const c = await place({
+      start: seatedStart(25),
+      guests: 3,
+      status: 'CHECKED_IN',
+      guestName: 'Родина Іваненків',
+      source: 'WALK_IN',
+      preferTable: 3,
+      checkedInAt: seatedStart(25),
+      window: todayWindow,
+    });
     if (c) {
-      await liveOrder(c, [['borsch', 2], ['varenyky', 1], ['margherita', 1]], 'READY', 20);
+      await liveOrder(
+        c,
+        [
+          ['borsch', 2],
+          ['varenyky', 1],
+          ['margherita', 1],
+        ],
+        'READY',
+        20,
+      );
       await liveOrder(c, [['orange', 3]], 'CONFIRMED', 3);
     }
-    const d = await place({ start: seatedStart(12), guests: 2, status: 'CHECKED_IN', client: extraClients[3], preferTable: 13, checkedInAt: seatedStart(12), window: todayWindow });
-    if (d) await liveOrder(d, [['burger', 1], ['fries', 1], ['pepperoni', 1], ['mojito', 2]], 'CONFIRMED', 5);
+    const d = await place({
+      start: seatedStart(12),
+      guests: 2,
+      status: 'CHECKED_IN',
+      client: extraClients[3],
+      preferTable: 13,
+      checkedInAt: seatedStart(12),
+      window: todayWindow,
+    });
+    if (d)
+      await liveOrder(
+        d,
+        [
+          ['burger', 1],
+          ['fries', 1],
+          ['pepperoni', 1],
+          ['mojito', 2],
+        ],
+        'CONFIRMED',
+        5,
+      );
+
+    // активні доставки: у дорозі, чекає курʼєра, готується, щойно оплачена
+    const ago = (m: number) => now.minus({ minutes: m });
+    await deliveryOrder({
+      client: extraClients[14],
+      zone: zoneByName('Шевченківський'),
+      lines: new Map([
+        ['margherita', 1],
+        ['carbonara', 1],
+        ['lemonade', 2],
+      ]),
+      createdAt: ago(42),
+      status: 'DELIVERING',
+      method: 'CARD',
+      courier: couriers[1],
+    });
+    await deliveryOrder({
+      client: extraClients[15],
+      zone: zoneByName('Печерський'),
+      lines: new Map([
+        ['pepperoni', 2],
+        ['tiramisu', 1],
+      ]),
+      createdAt: ago(28),
+      status: 'READY',
+      method: 'CASH',
+    });
+    await deliveryOrder({
+      client: maria,
+      zone: zoneByName('Подільський'),
+      street: 'вул. Покровська',
+      house: '24',
+      apartment: '8',
+      lines: new Map([
+        ['borsch', 2],
+        ['varenyky', 2],
+        ['orange', 2],
+      ]),
+      createdAt: ago(16),
+      status: 'PREPARING',
+      method: 'CARD',
+      courier: couriers[0],
+    });
+    await deliveryOrder({
+      client: extraClients[16],
+      zone: zoneByName('Голосіївський'),
+      lines: new Map([
+        ['burger', 2],
+        ['fries', 2],
+        ['lemonade', 2],
+      ]),
+      createdAt: ago(4),
+      status: 'CONFIRMED',
+      method: 'CASH',
+    });
   }
 
   // Найближчі бронювання на сьогодні (якщо ще працюємо) та на завтра
@@ -499,12 +1041,21 @@ async function main() {
     [20, 0, 2, 'CONFIRMED', null],
   ];
   for (const [h, m, guests, status, client] of tomorrowPlan) {
-    await place({ start: tomorrow.set({ hour: h, minute: m }), guests, status, client, window: tomorrowWindow, notes: client?.id === demoClient.id ? 'Столик біля вікна, якщо можна' : undefined });
+    await place({
+      start: tomorrow.set({ hour: h, minute: m }),
+      guests,
+      status,
+      client,
+      window: tomorrowWindow,
+      notes: client?.id === demoClient.id ? 'Столик біля вікна, якщо можна' : undefined,
+    });
   }
 
   const counts = await Promise.all([prisma.reservation.count(), prisma.order.count(), prisma.review.count()]);
   console.log(`\n✅ Готово за ${((Date.now() - started) / 1000).toFixed(1)} с`);
-  console.log(`   Бронювань: ${counts[0]}, замовлень: ${counts[1]}, відгуків: ${counts[2]} (візитів з відгуком: ${reviewsCount})`);
+  console.log(
+    `   Бронювань: ${counts[0]}, замовлень: ${counts[1]} (з них доставок: ${deliveriesCount}), відгуків: ${counts[2]} (замовлень з відгуком: ${reviewsCount})`,
+  );
   console.log('\n   Тестові облікові записи:');
   for (const u of USERS) console.log(`   ${u.role.padEnd(8)} ${u.email.padEnd(24)} ${u.password}`);
   void reservationsCount;

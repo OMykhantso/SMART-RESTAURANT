@@ -4,6 +4,13 @@ export function money(kop: number): string {
   return new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 0 }).format(kop / 100) + ' ₴';
 }
 
+/** Компактна сума для плиток статистики: 120 949 ₴ → «121 тис. ₴». */
+export function moneyShort(kop: number): string {
+  const uah = kop / 100;
+  if (uah >= 100_000) return `${new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 0 }).format(uah / 1000)} тис ₴`;
+  return money(kop);
+}
+
 const dtf = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('uk-UA', { timeZone: TZ, ...opts });
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -25,7 +32,11 @@ export function relativeDay(isoDate: string): string {
   const today = isoDay();
   if (isoDate === today) return 'Сьогодні';
   if (isoDate === addDays(today, 1)) return 'Завтра';
-  return cap(new Intl.DateTimeFormat('uk-UA', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${isoDate}T12:00:00Z`)));
+  return cap(
+    new Intl.DateTimeFormat('uk-UA', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(
+      new Date(`${isoDate}T12:00:00Z`),
+    ),
+  );
 }
 
 export function plural(n: number, one: string, few: string, many: string) {

@@ -42,10 +42,26 @@ export default function Login() {
     <AuthShell title="З поверненням" subtitle="Увійдіть, щоб бронювати, замовляти та оплачувати в один дотик.">
       <form onSubmit={doLogin} className="space-y-4">
         <Field label="Email">
-          <Input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" icon={<Mail className="size-4" />} />
+          <Input
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            icon={<Mail className="size-4" />}
+          />
         </Field>
         <Field label="Пароль">
-          <Input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" icon={<KeyRound className="size-4" />} />
+          <Input
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            icon={<KeyRound className="size-4" />}
+          />
         </Field>
         {error && <div className="rounded-xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200 ring-1 ring-rose-400/20">{error}</div>}
         <Button type="submit" variant="gold" size="lg" className="w-full" loading={loading}>
@@ -90,8 +106,19 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
           Вечір, який <span className="text-gold italic">організовує</span> себе сам
         </h1>
         <ul className="mt-10 space-y-4 text-ink-200">
-          {['Бронювання з розумним підбором столика', 'Check-in одним скануванням QR', 'Статус страв у реальному часі', 'Оплата без очікування рахунку'].map((t, i) => (
-            <motion.li key={t} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.08 }} className="flex items-center gap-3">
+          {[
+            'Бронювання з розумним підбором столика',
+            'Check-in одним скануванням QR',
+            'Статус страв у реальному часі',
+            'Оплата без очікування рахунку',
+          ].map((t, i) => (
+            <motion.li
+              key={t}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 + i * 0.08 }}
+              className="flex items-center gap-3"
+            >
               <span className="gold-gradient size-1.5 rounded-full" /> {t}
             </motion.li>
           ))}

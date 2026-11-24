@@ -39,8 +39,10 @@ export interface RegisteredRoute extends RouteDef {
   fullPath: string;
 }
 
-/** Реєстр усіх endpoint — використовується для генерації OpenAPI (Swagger). */
+/** Реєстр усіх endpoint Restaurant API — використовується для генерації OpenAPI (Swagger). */
 export const routeRegistry: RegisteredRoute[] = [];
+/** Окремий реєстр Delivery API (окремий сервіс — окрема специфікація). */
+export const deliveryRegistry: RegisteredRoute[] = [];
 
 export const idParam = z.object({ id: z.coerce.number().int().positive() });
 
@@ -48,11 +50,11 @@ export const idParam = z.object({ id: z.coerce.number().int().positive() });
  * Створює Express Router, у якому кожен маршрут описаний декларативно:
  * валідація (zod) + автентифікація + авторизація за ролями + документація.
  */
-export function createRouter(basePath: string) {
+export function createRouter(basePath: string, registry: RegisteredRoute[] = routeRegistry) {
   const router = Router();
 
   function define<B = unknown, Q = unknown, P = unknown>(def: RouteDef<B, Q, P>) {
-    routeRegistry.push({ ...(def as RouteDef), fullPath: `/api${basePath}${def.path === '/' ? '' : def.path}` });
+    registry.push({ ...(def as RouteDef), fullPath: `/api${basePath}${def.path === '/' ? '' : def.path}` });
 
     const chain: RequestHandler[] = [];
     if (def.auth === true || def.roles) chain.push(authenticate);

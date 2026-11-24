@@ -4,7 +4,21 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
-import { CalendarDays, ChefHat, ClipboardList, House, LayoutGrid, Receipt, ScanLine, Soup, UserRound, UtensilsCrossed } from 'lucide-react-native';
+import {
+  Bike,
+  CalendarDays,
+  ChefHat,
+  ClipboardList,
+  House,
+  LayoutGrid,
+  PackageSearch,
+  Receipt,
+  ScanLine,
+  Soup,
+  UserRound,
+  UtensilsCrossed,
+  Wallet,
+} from 'lucide-react-native';
 import { colors, fonts, goldGradient } from '../theme';
 import { haptic } from '../lib/notify';
 
@@ -20,11 +34,15 @@ const ICONS = {
   KitchenBoard: ChefHat,
   StopListTab: Soup,
   KitchenProfile: UserRound,
+  CourierQueue: PackageSearch,
+  CourierActive: Bike,
+  CourierShift: Wallet,
+  CourierProfile: UserRound,
 } as const;
 const LABELS: Record<keyof typeof ICONS, string> = {
   Home: 'Головна',
   Menu: 'Меню',
-  Visits: 'Візити',
+  Visits: 'Історія',
   Profile: 'Профіль',
   Shift: 'Зміна',
   Floor: 'Зал',
@@ -33,6 +51,10 @@ const LABELS: Record<keyof typeof ICONS, string> = {
   KitchenBoard: 'Кухня',
   StopListTab: 'Стоп-лист',
   KitchenProfile: 'Профіль',
+  CourierQueue: 'Замовлення',
+  CourierActive: 'Мої',
+  CourierShift: 'Зміна',
+  CourierProfile: 'Профіль',
 };
 /** Центральна кнопка сканера: гість сканує QR столика, офіціант — QR бронювання гостя. */
 const SCAN_TARGET = { ScanTab: 'Scan', StaffScanTab: 'StaffScan' } as const;
@@ -114,7 +136,20 @@ const styles = StyleSheet.create({
   },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, height: '100%' },
   label: { fontFamily: fonts.semibold, fontSize: 10.5 },
-  badge: { position: 'absolute', top: 9, left: '56%', minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#141419' },
+  badge: {
+    position: 'absolute',
+    top: 9,
+    left: '56%',
+    minWidth: 17,
+    height: 17,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#141419',
+  },
   badgeText: { fontFamily: fonts.bold, fontSize: 9.5, color: '#fff' },
   dot: { position: 'absolute', bottom: 6, width: 4, height: 4, borderRadius: 2, backgroundColor: colors.gold },
   scanWrap: { flex: 1, alignItems: 'center', marginTop: -30 },

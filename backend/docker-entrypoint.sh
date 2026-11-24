@@ -7,6 +7,9 @@ if [ "${SEED_ON_START:-true}" = "true" ]; then
   if [ "$USERS" = "0" ]; then
     echo "🌱 База порожня — заповнюю демо-даними…"
     npx tsx prisma/seed.ts
+  else
+    # база вже була (наприклад, до появи доставки) — доповнюємо довідники доставки, нічого не видаляючи
+    npx tsx prisma/seed-delivery.ts
   fi
 fi
 exec node dist/server.js

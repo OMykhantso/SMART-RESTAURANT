@@ -40,7 +40,12 @@ export function Caption({ style, ...p }: TextProps) {
   return <Text {...p} style={[{ fontFamily: fonts.medium, fontSize: 12, color: colors.muted }, style]} />;
 }
 export function Eyebrow({ style, ...p }: TextProps) {
-  return <Text {...p} style={[{ fontFamily: fonts.bold, fontSize: 11, color: colors.gold, letterSpacing: 2.4, textTransform: 'uppercase' }, style]} />;
+  return (
+    <Text
+      {...p}
+      style={[{ fontFamily: fonts.bold, fontSize: 11, color: colors.gold, letterSpacing: 2.4, textTransform: 'uppercase' }, style]}
+    />
+  );
 }
 export function Strong({ style, ...p }: TextProps) {
   return <Text {...p} style={[{ fontFamily: fonts.semibold, fontSize: 15, color: colors.text }, style]} />;
@@ -78,7 +83,16 @@ export function Button({
         style={{
           fontFamily: fonts.bold,
           fontSize: size === 'sm' ? 13 : 15,
-          color: variant === 'gold' ? '#141008' : variant === 'danger' ? colors.danger : variant === 'success' ? colors.success : variant === 'outline' ? colors.goldLight : colors.text,
+          color:
+            variant === 'gold'
+              ? '#141008'
+              : variant === 'danger'
+                ? colors.danger
+                : variant === 'success'
+                  ? colors.success
+                  : variant === 'outline'
+                    ? colors.goldLight
+                    : colors.text,
         }}
       >
         {title}
@@ -115,7 +129,17 @@ export function Button({
   );
 }
 
-export function IconButton({ children, onPress, style, label }: { children: ReactNode; onPress?: () => void; style?: StyleProp<ViewStyle>; label: string }) {
+export function IconButton({
+  children,
+  onPress,
+  style,
+  label,
+}: {
+  children: ReactNode;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
+  label: string;
+}) {
   return (
     <Pressable
       accessibilityLabel={label}
@@ -168,13 +192,35 @@ export function Chip({ active, label, onPress, icon }: { active?: boolean; label
   );
 }
 
-export function Screen({ children, scroll = true, edges = ['top'], contentStyle, refreshControl }: { children: ReactNode; scroll?: boolean; edges?: Edge[]; contentStyle?: StyleProp<ViewStyle>; refreshControl?: React.ReactElement<any> }) {
+export function Screen({
+  children,
+  scroll = true,
+  edges = ['top'],
+  contentStyle,
+  refreshControl,
+}: {
+  children: ReactNode;
+  scroll?: boolean;
+  edges?: Edge[];
+  contentStyle?: StyleProp<ViewStyle>;
+  refreshControl?: React.ReactElement<any>;
+}) {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <LinearGradient colors={['rgba(200,147,58,0.16)', 'rgba(8,8,11,0)']} style={StyleSheet.absoluteFill} start={{ x: 1, y: 0 }} end={{ x: 0.2, y: 0.45 }} />
+      <LinearGradient
+        colors={['rgba(200,147,58,0.16)', 'rgba(8,8,11,0)']}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.2, y: 0.45 }}
+      />
       <SafeAreaView edges={edges} style={{ flex: 1 }}>
         {scroll ? (
-          <ScrollView contentContainerStyle={[{ padding: 20, paddingBottom: 140 }, contentStyle]} showsVerticalScrollIndicator={false} refreshControl={refreshControl} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={[{ padding: 20, paddingBottom: 140 }, contentStyle]}
+            showsVerticalScrollIndicator={false}
+            refreshControl={refreshControl}
+            keyboardShouldPersistTaps="handled"
+          >
             {children}
           </ScrollView>
         ) : (
@@ -219,7 +265,12 @@ export function Field({ label, error, ...props }: TextInputProps & { label?: str
           setFocus(false);
           props.onBlur?.(e);
         }}
-        style={[styles.input, focus && { borderColor: colors.goldBorder, backgroundColor: 'rgba(255,255,255,0.06)' }, error ? { borderColor: 'rgba(251,113,133,0.6)' } : null, props.style]}
+        style={[
+          styles.input,
+          focus && { borderColor: colors.goldBorder, backgroundColor: 'rgba(255,255,255,0.06)' },
+          error ? { borderColor: 'rgba(251,113,133,0.6)' } : null,
+          props.style,
+        ]}
       />
       {error ? <Text style={{ color: colors.danger, fontSize: 12, marginTop: 6, fontFamily: fonts.medium }}>{error}</Text> : null}
     </View>
@@ -258,18 +309,43 @@ export function Divider() {
 
 // ─────────────────────────────── Фото страви ───────────────────────────────
 
-export function DishImage({ uri, category, size, style, radius: r = radius.lg }: { uri: string | null | undefined; category?: string; size?: number; style?: StyleProp<ViewStyle>; radius?: number }) {
+export function DishImage({
+  uri,
+  category,
+  size,
+  style,
+  radius: r = radius.lg,
+}: {
+  uri: string | null | undefined;
+  category?: string;
+  size?: number;
+  style?: StyleProp<ViewStyle>;
+  radius?: number;
+}) {
   const [failed, setFailed] = useState(false);
   const tint = CATEGORY_TINT[category ?? ''] ?? ['#6a4a18', '#1a1206'];
   const src = imageUrl(uri);
   return (
-    <View style={[{ overflow: 'hidden', borderRadius: r, backgroundColor: colors.surfaceHigh }, size ? { width: size, height: size } : null, style]}>
+    <View
+      style={[
+        { overflow: 'hidden', borderRadius: r, backgroundColor: colors.surfaceHigh },
+        size ? { width: size, height: size } : null,
+        style,
+      ]}
+    >
       <LinearGradient colors={tint} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={StyleSheet.absoluteFill} />
       <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
         <Text style={{ fontSize: size ? Math.max(14, size * 0.42) : 44 }}>{CATEGORY_EMOJI[category ?? ''] ?? '🍽️'}</Text>
       </View>
       {src && !failed ? (
-        <Image source={{ uri: src }} style={StyleSheet.absoluteFill} contentFit="cover" transition={400} onError={() => setFailed(true)} cachePolicy="memory-disk" />
+        <Image
+          source={{ uri: src }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={400}
+          onError={() => setFailed(true)}
+          cachePolicy="memory-disk"
+        />
       ) : null}
     </View>
   );
@@ -287,15 +363,75 @@ const styles = StyleSheet.create({
   btn: { borderRadius: radius.md, overflow: 'hidden' },
   btnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   goldShadow: { shadowColor: colors.gold, shadowOpacity: 0.45, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
-  iconBtn: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceHigh, borderWidth: 1, borderColor: colors.border },
+  iconBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceHigh,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   card: { backgroundColor: colors.surface, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, padding: 18 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
   badgeDot: { width: 6, height: 6, borderRadius: 3 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, height: 38, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(255,255,255,0.03)' },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    height: 38,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
   chipActive: { borderColor: colors.goldBorder, backgroundColor: colors.goldSoft },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 18 },
-  fieldLabel: { fontFamily: fonts.bold, fontSize: 11, letterSpacing: 1.2, color: colors.muted, textTransform: 'uppercase', marginBottom: 8 },
-  input: { height: 52, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: 'rgba(255,255,255,0.035)', paddingHorizontal: 16, color: colors.text, fontFamily: fonts.medium, fontSize: 16 },
-  empty: { alignItems: 'center', paddingVertical: 36, paddingHorizontal: 20, borderRadius: radius.xl, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderStrong },
-  emptyIcon: { width: 64, height: 64, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.goldSoft, marginBottom: 14 },
+  fieldLabel: {
+    fontFamily: fonts.bold,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    color: colors.muted,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  input: {
+    height: 52,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.035)',
+    paddingHorizontal: 16,
+    color: colors.text,
+    fontFamily: fonts.medium,
+    fontSize: 16,
+  },
+  empty: {
+    alignItems: 'center',
+    paddingVertical: 36,
+    paddingHorizontal: 20,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.borderStrong,
+  },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.goldSoft,
+    marginBottom: 14,
+  },
 });

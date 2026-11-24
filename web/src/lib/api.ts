@@ -149,7 +149,12 @@ export async function get<T>(url: string, params?: Record<string, unknown>): Pro
   }
 }
 
-export async function send<T>(method: 'post' | 'patch' | 'put' | 'delete', url: string, data?: unknown, headers?: Record<string, string>): Promise<T> {
+export async function send<T>(
+  method: 'post' | 'patch' | 'put' | 'delete',
+  url: string,
+  data?: unknown,
+  headers?: Record<string, string>,
+): Promise<T> {
   try {
     return (await http.request<T>({ method, url, data, headers })).data;
   } catch (e) {
@@ -159,7 +164,7 @@ export async function send<T>(method: 'post' | 'patch' | 'put' | 'delete', url: 
 
 export const api = {
   get,
-  post: <T,>(url: string, data?: unknown, headers?: Record<string, string>) => send<T>('post', url, data, headers),
-  patch: <T,>(url: string, data?: unknown) => send<T>('patch', url, data),
-  del: <T,>(url: string) => send<T>('delete', url),
+  post: <T>(url: string, data?: unknown, headers?: Record<string, string>) => send<T>('post', url, data, headers),
+  patch: <T>(url: string, data?: unknown) => send<T>('patch', url, data),
+  del: <T>(url: string) => send<T>('delete', url),
 };

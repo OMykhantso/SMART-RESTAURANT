@@ -45,19 +45,55 @@ export default function Register() {
     <AuthShell title="Створити акаунт" subtitle="Одна реєстрація — для сайту та мобільного застосунку.">
       <form onSubmit={submit} className="space-y-4" noValidate>
         <Field label="Імʼя" error={errors.name}>
-          <Input required value={form.name} onChange={set('name')} placeholder="Олександр" icon={<UserRound className="size-4" />} autoComplete="name" />
+          <Input
+            required
+            value={form.name}
+            onChange={set('name')}
+            placeholder="Олександр"
+            icon={<UserRound className="size-4" />}
+            autoComplete="name"
+          />
         </Field>
         <Field label="Email" error={errors.email}>
-          <Input type="email" required value={form.email} onChange={set('email')} placeholder="you@example.com" icon={<Mail className="size-4" />} autoComplete="email" />
+          <Input
+            type="email"
+            required
+            value={form.email}
+            onChange={set('email')}
+            placeholder="you@example.com"
+            icon={<Mail className="size-4" />}
+            autoComplete="email"
+          />
         </Field>
         <Field label="Телефон (необовʼязково)" error={errors.phone}>
-          <Input type="tel" value={form.phone} onChange={set('phone')} placeholder="+380 50 123 45 67" icon={<Phone className="size-4" />} autoComplete="tel" />
+          <Input
+            type="tel"
+            value={form.phone}
+            onChange={set('phone')}
+            placeholder="+380 50 123 45 67"
+            icon={<Phone className="size-4" />}
+            autoComplete="tel"
+          />
         </Field>
         <Field label="Пароль" error={errors.password} hint="Мінімум 8 символів, літера та цифра">
-          <Input type="password" required value={form.password} onChange={set('password')} placeholder="••••••••" icon={<KeyRound className="size-4" />} autoComplete="new-password" />
+          <Input
+            type="password"
+            required
+            value={form.password}
+            onChange={set('password')}
+            placeholder="••••••••"
+            icon={<KeyRound className="size-4" />}
+            autoComplete="new-password"
+          />
           <div className="mt-2 flex gap-1">
             {[0, 1, 2, 3].map((i) => (
-              <span key={i} className={cn('h-1 flex-1 rounded-full transition-colors', i < strength ? (strength >= 3 ? 'bg-emerald-400' : 'bg-amber-400') : 'bg-white/10')} />
+              <span
+                key={i}
+                className={cn(
+                  'h-1 flex-1 rounded-full transition-colors',
+                  i < strength ? (strength >= 3 ? 'bg-emerald-400' : 'bg-amber-400') : 'bg-white/10',
+                )}
+              />
             ))}
           </div>
         </Field>

@@ -85,7 +85,11 @@ export default function Floor() {
                       <span className="text-xs text-ink-400">Рахунок столу</span>
                       <span className="font-display text-2xl text-gold-100">{money(selected.current.ordersTotal)}</span>
                     </div>
-                    <div className="mt-4 space-y-2">{orders.data?.map((o) => <MiniOrder key={o.id} o={o} />)}</div>
+                    <div className="mt-4 space-y-2">
+                      {orders.data?.map((o) => (
+                        <MiniOrder key={o.id} o={o} />
+                      ))}
+                    </div>
                     <div className="mt-4 grid grid-cols-2 gap-2">
                       <Button size="sm" variant="gold" icon={<Plus className="size-4" />} onClick={() => setPos(true)}>
                         Замовлення
@@ -106,7 +110,13 @@ export default function Floor() {
                 ) : (
                   <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
                     <div className="text-sm text-ink-200">Столик вільний</div>
-                    <Button size="sm" variant="gold" className="mt-3 w-full" icon={<UserPlus className="size-4" />} onClick={() => setWalkIn(true)}>
+                    <Button
+                      size="sm"
+                      variant="gold"
+                      className="mt-3 w-full"
+                      icon={<UserPlus className="size-4" />}
+                      onClick={() => setWalkIn(true)}
+                    >
                       Посадити гостей без бронювання
                     </Button>
                   </div>
@@ -121,10 +131,20 @@ export default function Floor() {
                       {selected.next.time} · {selected.next.guestName ?? 'Гість'} · {guestsLabel(selected.next.guests)}
                     </div>
                     <div className="mt-0.5 text-xs text-ink-400">
-                      {selected.next.code} · {selected.next.minutesToStart >= 0 ? `через ${selected.next.minutesToStart} хв` : `запізнюється на ${-selected.next.minutesToStart} хв`}
+                      {selected.next.code} ·{' '}
+                      {selected.next.minutesToStart >= 0
+                        ? `через ${selected.next.minutesToStart} хв`
+                        : `запізнюється на ${-selected.next.minutesToStart} хв`}
                     </div>
                     {!selected.current && selected.next.minutesToStart <= 60 && (
-                      <Button size="sm" variant="success" className="mt-3 w-full" loading={action.isPending} icon={<LogIn className="size-4" />} onClick={() => action.mutate({ id: selected.next!.reservationId, status: 'CHECKED_IN' })}>
+                      <Button
+                        size="sm"
+                        variant="success"
+                        className="mt-3 w-full"
+                        loading={action.isPending}
+                        icon={<LogIn className="size-4" />}
+                        onClick={() => action.mutate({ id: selected.next!.reservationId, status: 'CHECKED_IN' })}
+                      >
                         Гості прийшли — check-in
                       </Button>
                     )}
@@ -134,13 +154,22 @@ export default function Floor() {
             </motion.div>
           ) : (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <EmptyState icon={<MousePointerClick className="size-7" />} title="Оберіть столик" text="Натисніть на столик на плані, щоб побачити гостей, замовлення та швидкі дії." />
+              <EmptyState
+                icon={<MousePointerClick className="size-7" />}
+                title="Оберіть столик"
+                text="Натисніть на столик на плані, щоб побачити гостей, замовлення та швидкі дії."
+              />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
       <WalkInModal open={walkIn} onClose={() => setWalkIn(false)} table={selected} />
-      <NewOrderModal open={pos} onClose={() => setPos(false)} tableId={selected?.state === 'OCCUPIED' ? selected.id : null} tables={tables.data ?? []} />
+      <NewOrderModal
+        open={pos}
+        onClose={() => setPos(false)}
+        tableId={selected?.state === 'OCCUPIED' ? selected.id : null}
+        tables={tables.data ?? []}
+      />
     </div>
   );
 }

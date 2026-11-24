@@ -73,7 +73,8 @@ export function QrScanner({ onScan, paused }: { onScan: (text: string) => void; 
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [active]); // emit читає актуальні значення через ref
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- emit читає актуальні значення через ref
+  }, [active]);
 
   useEffect(() => stop, []);
 
@@ -108,7 +109,12 @@ export function QrScanner({ onScan, paused }: { onScan: (text: string) => void; 
         {active && (
           <>
             <div className="pointer-events-none absolute inset-[14%] rounded-3xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
-            {['left-[14%] top-[14%] border-l-4 border-t-4 rounded-tl-3xl', 'right-[14%] top-[14%] border-r-4 border-t-4 rounded-tr-3xl', 'left-[14%] bottom-[14%] border-l-4 border-b-4 rounded-bl-3xl', 'right-[14%] bottom-[14%] border-r-4 border-b-4 rounded-br-3xl'].map((c) => (
+            {[
+              'left-[14%] top-[14%] border-l-4 border-t-4 rounded-tl-3xl',
+              'right-[14%] top-[14%] border-r-4 border-t-4 rounded-tr-3xl',
+              'left-[14%] bottom-[14%] border-l-4 border-b-4 rounded-bl-3xl',
+              'right-[14%] bottom-[14%] border-r-4 border-b-4 rounded-br-3xl',
+            ].map((c) => (
               <span key={c} className={cn('pointer-events-none absolute size-10 border-gold-300', c)} />
             ))}
             <span className="pointer-events-none absolute inset-x-[16%] top-[16%] h-0.5 animate-[scan_2.2s_ease-in-out_infinite] bg-gold-300 shadow-[0_0_16px_3px_rgb(220_171_74/0.8)]" />

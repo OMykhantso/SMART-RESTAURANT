@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { authorize, detectBrand, luhnCheck, validateCard } from '../src/modules/payments/sandbox';
 import { associationRule, buildAssociations, recommend, type RecDish } from '../src/modules/recommendations/engine';
-import { actorsFor, assertTransition, canTransition, ORDER_FLOW, ORDER_LABELS, RESERVATION_FLOW, RESERVATION_LABELS } from '../src/lib/stateMachine';
+import {
+  actorsFor,
+  assertTransition,
+  canTransition,
+  ORDER_FLOW,
+  ORDER_LABELS,
+  RESERVATION_FLOW,
+  RESERVATION_LABELS,
+} from '../src/lib/stateMachine';
 
 describe('Sandbox payment gateway', () => {
   it('перевіряє номер картки алгоритмом Луна', () => {

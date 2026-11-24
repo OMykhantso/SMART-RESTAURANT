@@ -1,0 +1,70 @@
+# Шаблон конфігурації nginx (офіційний образ підставляє ${HTTPS_PORT} при старті).
+# HTTP лише перенаправляє на HTTPS: дані картки й токени ніколи не йдуть відкритим текстом.
+server {
+  listen 80;
+  server_name _;
+  return 301 https://$host:${HTTPS_PORT}$request_uri;
+}
+
+server {
+  listen 443 ssl;
+  http2 on;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+  client_max_body_size 6m;
+
+  ssl_certificate     /etc/nginx/certs/localhost.pem;
+  ssl_certificate_key /etc/nginx/certs/localhost-key.pem;
+  ssl_protocols       TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers off;
+  ssl_session_cache   shared:SSL:10m;
+
+  # Базові заголовки безпеки
+  add_header X-Content-Type-Options "nosniff" always;
+  add_header X-Frame-Options "DENY" always;
+  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  add_header Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=(self)" always;
+
+  gzip on;
+  gzip_types text/css application/javascript application/json image/svg+xml;
+
+  location /api/ {
+    proxy_pass http://backend:4000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  location /uploads/ {
+    proxy_pass http://backend:4000;
+  }
+
+  # WebSocket (Socket.IO) — real-time статуси (wss:// через той самий HTTPS)
+  location /socket.io/ {
+    proxy_pass http://backend:4000;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_read_timeout 3600s;
+  }
+
+  location /assets/ {
+    expires 30d;
+    add_header Cache-Control "public, immutable";
+    add_header X-Content-Type-Options "nosniff" always;
+    try_files $uri =404;
+  }
+
+  # SPA: усі інші маршрути віддає index.html (React Router).
+  # index.html не кешується: після перезбирання браузер одразу отримує нові імена файлів сторінок.
+  location / {
+    add_header Cache-Control "no-cache, must-revalidate" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=(self)" always;
+    try_files $uri $uri/ /index.html;
+  }
+}

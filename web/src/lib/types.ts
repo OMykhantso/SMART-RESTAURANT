@@ -1,8 +1,9 @@
-export type Role = 'CLIENT' | 'STAFF' | 'KITCHEN' | 'ADMIN';
+export type Role = 'CLIENT' | 'STAFF' | 'KITCHEN' | 'ADMIN' | 'COURIER';
 export type TableZone = 'HALL' | 'TERRACE' | 'VIP' | 'BAR';
 export type TableShape = 'ROUND' | 'SQUARE' | 'RECT';
 export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CHECKED_IN' | 'COMPLETED' | 'CANCELLED' | 'REJECTED' | 'NO_SHOW';
-export type OrderStatus = 'NEW' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'SERVED' | 'PAID' | 'CANCELLED';
+export type OrderStatus = 'NEW' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'SERVED' | 'PAID' | 'DELIVERING' | 'DELIVERED' | 'CANCELLED';
+export type OrderType = 'DINE_IN' | 'DELIVERY';
 export type OrderItemStatus = 'QUEUED' | 'COOKING' | 'READY';
 
 export interface User {
@@ -169,14 +170,32 @@ export interface OrderItem {
   status: OrderItemStatus;
 }
 
+/** Доставка (створюється в Delivery API, у Web — лише відображення на кухні та в залі). */
+export interface DeliveryInfo {
+  zone: { id: number; name: string; travelMin: number };
+  courier: { id: number; name: string; phone: string | null } | null;
+  recipientName: string;
+  phone: string;
+  addressLine: string;
+  comment: string | null;
+  fee: number;
+  paymentMethod: 'CARD' | 'CASH';
+  changeFrom: number | null;
+  etaAt: string | null;
+  pickedUpAt: string | null;
+  deliveredAt: string | null;
+}
+
 export interface Order {
   id: number;
   number: number;
+  type: OrderType;
   status: OrderStatus;
   statusLabel: string;
-  reservationId: number;
-  reservation: { id: number; code: string; status: ReservationStatus; guests: number };
-  table: { id: number; number: number; zone: TableZone };
+  reservationId: number | null;
+  reservation: { id: number; code: string; status: ReservationStatus; guests: number } | null;
+  table: { id: number; number: number; zone: TableZone } | null;
+  delivery: DeliveryInfo | null;
   user: { id: number; name: string } | null;
   createdBy: { id: number; name: string; role: Role };
   items: OrderItem[];

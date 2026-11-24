@@ -20,20 +20,41 @@ export function DishCard({ dish, onOpen, reason }: { dish: Dish; onOpen?: () => 
       )}
     >
       <button type="button" onClick={onOpen} className="relative block text-left" aria-label={`Деталі: ${dish.name}`}>
-        <DishImage src={dish.imageUrl} alt={dish.name} category={dish.category?.slug} emoji={dish.category?.emoji} className="aspect-[4/3] w-full" rounded="rounded-[1.25rem]" />
+        <DishImage
+          src={dish.imageUrl}
+          alt={dish.name}
+          category={dish.category?.slug}
+          emoji={dish.category?.emoji}
+          className="aspect-[4/3] w-full"
+          rounded="rounded-[1.25rem]"
+        />
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-          {dish.isChefChoice && <span className="gold-gradient rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-950">Шеф радить</span>}
-          {dish.isHit && <span className="rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-gold-100 backdrop-blur">Хіт</span>}
+          {dish.isChefChoice && (
+            <span className="gold-gradient rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-950">
+              Шеф радить
+            </span>
+          )}
+          {dish.isHit && (
+            <span className="rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-gold-100 backdrop-blur">
+              Хіт
+            </span>
+          )}
         </div>
         {!dish.isAvailable && (
           <div className="absolute inset-0 grid place-items-center rounded-[1.25rem] bg-ink-950/70 backdrop-blur-[2px]">
-            <span className="rounded-full border border-white/15 bg-black/50 px-4 py-1.5 text-xs font-medium text-ink-100">Тимчасово немає</span>
+            <span className="rounded-full border border-white/15 bg-black/50 px-4 py-1.5 text-xs font-medium text-ink-100">
+              Тимчасово немає
+            </span>
           </div>
         )}
       </button>
       <div className="flex flex-1 flex-col px-3 pb-3 pt-4">
         <div className="flex items-start justify-between gap-3">
-          <button type="button" onClick={onOpen} className="text-left font-display text-[1.15rem] leading-snug text-cream transition-colors hover:text-gold-100">
+          <button
+            type="button"
+            onClick={onOpen}
+            className="text-left font-display text-[1.15rem] leading-snug text-cream transition-colors hover:text-gold-100"
+          >
             {dish.name}
           </button>
           {dish.avgRating != null && (
@@ -67,11 +88,19 @@ export function DishCard({ dish, onOpen, reason }: { dish: Dish; onOpen?: () => 
           <span className="text-lg font-semibold tracking-tight text-gold-100">{money(dish.price)}</span>
           {inCart > 0 ? (
             <div className="flex items-center gap-1 rounded-full bg-gold-400/15 p-1 ring-1 ring-gold-400/30">
-              <button onClick={() => cart.setQty(dish.id, inCart - 1)} className="grid size-8 place-items-center rounded-full text-gold-100 hover:bg-white/10" aria-label="Менше">
+              <button
+                onClick={() => cart.setQty(dish.id, inCart - 1)}
+                className="grid size-8 place-items-center rounded-full text-gold-100 hover:bg-white/10"
+                aria-label="Менше"
+              >
                 <Minus className="size-4" />
               </button>
               <span className="w-5 text-center text-sm font-semibold tabular-nums text-gold-50">{inCart}</span>
-              <button onClick={() => cart.add(dish)} className="grid size-8 place-items-center rounded-full text-gold-100 hover:bg-white/10" aria-label="Більше">
+              <button
+                onClick={() => cart.add(dish)}
+                className="grid size-8 place-items-center rounded-full text-gold-100 hover:bg-white/10"
+                aria-label="Більше"
+              >
                 <Plus className="size-4" />
               </button>
             </div>
