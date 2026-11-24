@@ -100,7 +100,7 @@ async function dims(file) {
   text(s, [
     { text: 'Курсова робота «Інтернет-проєкт» · 2026', options: { breakLine: true, color: C.accent1, bold: true } },
     { text: 'Керівник: доцент, к.т.н. Машевська М. В.', options: { breakLine: true } },
-    { text: 'Виконав: студент гр. ________' },
+    { text: 'Виконав: студент гр. КН-41 Миханцьо Олександр Михайлович' },
   ], { x: 0.7, y: 5.2, w: 6.4, h: 1.1, fontSize: 15, color: C.accent6, paraSpaceAfter: 4, objectName: 'Автор і керівник' });
   const phones = [S('mobile-home.jpg'), S('mobile-delivery-tracking.jpg'), S('mobile-courier-active.jpg')];
   for (const [i, f] of phones.entries()) {

@@ -428,8 +428,8 @@ def right_block(text, before=0):
 right_block('Керівник курсової роботи', before=80 if KT1 else 96)
 right_block('доцент, к.т.н. Машевська М. В.')
 right_block('«___» ____________ 2026 р.')
-right_block('Розробив студент гр. ________', before=14)
-right_block('____________________________')
+right_block('Розробив студент гр. КН-41', before=14)
+right_block('Миханцьо О. М.')
 para('Львів 2026', align=C, indent=False, before=70)
 
 # ───────────────────────────── анотація ─────────────────────────────
