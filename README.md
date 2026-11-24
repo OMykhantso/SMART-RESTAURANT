@@ -227,6 +227,8 @@ npm run e2e                                       # повний цикл у з�
 | Сценарій захисту | [docs/10-demo-script.md](docs/10-demo-script.md) |
 | **Пояснювальна записка** (Word, за методичкою) | [docs/KR_SMART_RESTAURANT.docx](docs/KR_SMART_RESTAURANT.docx) |
 | **КТ №1** — аналіз та проєктування (Word) | [docs/KT1_SMART_RESTAURANT.docx](docs/KT1_SMART_RESTAURANT.docx) |
+| **КТ №2** — база даних, Backend/API, Web (Word) | [docs/KT2_SMART_RESTAURANT.docx](docs/KT2_SMART_RESTAURANT.docx) |
+| **КТ №3** — Mobile, інтеграція, ADVANCED, тестування (Word) | [docs/KT3_SMART_RESTAURANT.docx](docs/KT3_SMART_RESTAURANT.docx) |
 | **Презентація** для захисту | [docs/Presentation_SMART_RESTAURANT.pptx](docs/Presentation_SMART_RESTAURANT.pptx) |
 | Діаграми (use case, архітектура, ER, стани) і вихідні файли документів | [docs/diagrams](docs/diagrams), [docs/coursework-src](docs/coursework-src) |
 
