@@ -320,12 +320,13 @@ def read_lines(path):
 
 
 def normalize(src):
-    """Апостроф U+02BC → U+2019 (його розпізнає перевірка правопису Word); код у лістингах не змінюється."""
+    """Апостроф U+02BC → U+2019 (його розпізнає перевірка правопису Word), тире — «–»; код у лістингах не змінюється."""
     out, in_code = [], False
     for ln in src:
         if ln.startswith('```'):
             in_code = not in_code
-        out.append(ln if in_code else ln.replace('ʼ', '’'))
+        # тире як у прикладах методички («Таблиця 1.1 – Назва»): одне коротке тире з пробілами
+        out.append(ln if in_code else ln.replace('ʼ', '’').replace('—', '–'))
     return out
 
 

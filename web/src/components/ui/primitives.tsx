@@ -265,14 +265,16 @@ export function Segmented<T extends string>({
   size?: 'sm' | 'md';
 }) {
   return (
-    <div className={cn('inline-flex rounded-2xl border border-white/8 bg-white/[0.03] p-1', className)}>
+    <div
+      className={cn('no-scrollbar inline-flex max-w-full overflow-x-auto rounded-2xl border border-white/8 bg-white/[0.03] p-1', className)}
+    >
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           onClick={() => onChange(o.value)}
           className={cn(
-            'relative rounded-xl font-medium transition-colors',
+            'relative shrink-0 whitespace-nowrap rounded-xl font-medium transition-colors',
             size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm',
             value === o.value ? 'text-ink-950' : 'text-ink-300 hover:text-cream',
           )}

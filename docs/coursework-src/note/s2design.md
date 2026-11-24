@@ -31,7 +31,7 @@
 
 !fig 2.2 | ../../diagrams/er-diagram.png | Логічна модель бази даних
 
-На діаграмі показано первинні (PK), зовнішні (FK) та унікальні (UK) ключі й кардинальність звʼязків. Для читабельності не намальовано допоміжні звʼязки: users → addresses, users → deliveries (courier_id), users → reviews, tables → orders, dishes → reviews та orders → status_changes.
+На діаграмі показано первинні (PK), зовнішні (FK) та унікальні (UK) ключі й кардинальність звʼязків. Для читабельності не намальовано допоміжні звʼязки таблиць users і addresses, users і deliveries (courier_id), users і reviews, tables і orders, dishes і reviews, orders і status_changes.
 
 Таблиці за призначенням:
 

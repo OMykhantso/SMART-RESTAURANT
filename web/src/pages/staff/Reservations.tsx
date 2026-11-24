@@ -34,7 +34,7 @@ export default function StaffReservations() {
         subtitle={`${data?.length ?? 0} бронювань · очікується ${guests} гостей`}
         action={
           <Button variant="gold" icon={<CalendarPlus className="size-4" />} onClick={() => setCreating(true)}>
-            Бронювання по телефону
+            Бронювання телефоном
           </Button>
         }
       />

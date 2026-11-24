@@ -179,3 +179,11 @@
 .sonner-toast-custom {
   font-family: var(--font-sans) !important;
 }
+
+/* горизонтальна прокрутка без смуги (вкладки на вузьких екранах) */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

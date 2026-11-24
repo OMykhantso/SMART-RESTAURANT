@@ -246,7 +246,7 @@ export function WalkInModal({ open, onClose, table }: { open: boolean; onClose: 
   );
 }
 
-/** Бронювання по телефону (працівник): одразу CONFIRMED. */
+/** Бронювання телефоном (працівник): одразу CONFIRMED. */
 export function NewReservationModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const invalidate = useInvalidateAll();
   const [date, setDate] = useState(isoDay());
@@ -301,7 +301,7 @@ export function NewReservationModal({ open, onClose }: { open: boolean; onClose:
       open={open}
       onClose={onClose}
       size="lg"
-      title="Бронювання по телефону"
+      title="Бронювання телефоном"
       subtitle="Створюється одразу підтвердженим"
       footer={
         <div className="flex justify-end">

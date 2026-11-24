@@ -123,7 +123,7 @@ export function FloorPlan<T extends Table>({ tables, visual, onSelect, editable,
             style={{ left: `${a.x}%`, top: `${a.y}%`, width: `${a.w}%`, height: `${a.h}%` }}
           >
             <span
-              className="absolute left-3 top-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-ink-500"
+              className="pointer-events-none absolute left-2 top-1.5 z-[2] rounded-md bg-ink-900/85 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-ink-500"
               style={{ fontSize: Math.max(8, 10 * scale) }}
             >
               {a.label}
